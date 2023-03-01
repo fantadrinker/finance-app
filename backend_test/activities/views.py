@@ -34,6 +34,14 @@ def get_users_all(request):
         "data": serializer.data
     })
 
+def sanitize_desc(str):
+    # remove extra characters, convert to all lower case
+    return str.replace("|", "")
+
+def sanitize_category(str):
+    # remove extra characters, convert to all lower case
+    return str.replace("|", "").lower()
+
 
 # processes user form, but should integrate some logic.
 # e.g. mapping headers to categories.
@@ -49,20 +57,21 @@ def upload_activities(request, user_id):
         # add an option to dedup? Or just botch it if it's screwed up
         for line in request.body.splitlines():
             values = line.decode("utf-8").split(',')
-
+            description_text = sanitize_desc(values[2])
             # this code works for capitalone export
             if values[3]:
                 # check 
-                category = Category.objects.filter(user=user.id).filter(description=values[2]).filter(category=values[3]).first()
+                category_text = sanitize_category(values[3])
+                category = Category.objects.filter(user=user.id).filter(description=description_text).filter(category=category_text).first()
                 if not category:
-                    category = Category(user=user, category=values[3], description=values[2])
+                    category = Category(user=user, category=category_text, description=description_text)
                     category.save()
-            # TODO: need some sanitizing on descriptions and category value
+
             activityEntry = ActivitySerializer(data={
                 "user": user.id,
                 "account_type": values[0],
                 "date": values[1],
-                "descriptions": values[2],
+                "descriptions": description_text,
                 "amount": values[4],
                 "category": category.id
             })
@@ -130,7 +139,7 @@ def _agg_category_results(user):
             activities = Activity.objects.filter(user=user.id, descriptions=desc)
             for act in activities:
                 sum += act.amount
-        cat_sum_mapping[key] = sum
+        cat_sum_mapping[key] = str(round(sum, 2))
     return [{
         "category": key,
         "descriptions": cat_desc_mapping[key],

@@ -11,7 +11,7 @@ class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = ['user', 'account_type', 'date', 'descriptions', 'amount', 'category']
-    
+
     def create(self, validated_data):
         return Activity.objects.create(**validated_data)
 
