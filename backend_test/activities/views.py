@@ -3,7 +3,7 @@ from django.http import HttpResponse, Http404, JsonResponse
 from django.db import DatabaseError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
-from activities.models import User, Activity, DescriptionToCategoryMapping
+from activities.models import User, Activity, Category, DescriptionToCategoryMapping
 from activities.serializers import UserSerializer, ActivitySerializer, DescriptionToCategoryMappingSerializer
 
 # Create your views here.
@@ -44,17 +44,29 @@ def upload_activities(request, user_id):
     success_count = 0
     processed_count = 0
     try:
-        user = User.objects.filter(user_name=user_id).values('id')[0]
-        print(user)
+        user = User.objects.filter(user_name=user_id)[0]
+        # TODO: need to account for potential duplicates
+        # add an option to dedup? Or just botch it if it's screwed up
         for line in request.body.splitlines():
-            values = line.split(b',')
+            values = line.decode("utf-8").split(',')
+
+            # this code works for capitalone export
+            if values[3]:
+                # check 
+                category = Category.objects.filter(user=user.id).filter(description=values[2]).filter(category=values[3]).first()
+                if not category:
+                    category = Category(user=user, category=values[3], description=values[2])
+                    category.save()
+            # TODO: need some sanitizing on descriptions and category value
             activityEntry = ActivitySerializer(data={
-                "user": user['id'],
-                "account_type": values[0].decode("utf-8") ,
-                "date": values[1].decode("utf-8") ,
-                "descriptions": values[2].decode("utf-8") + values[3].decode("utf-8") ,
-                "amount": values[4].decode("utf-8")
+                "user": user.id,
+                "account_type": values[0],
+                "date": values[1],
+                "descriptions": values[2],
+                "amount": values[4],
+                "category": category.id
             })
+
             processed_count += 1
             if activityEntry.is_valid():
                 success_count += 1
@@ -89,6 +101,7 @@ def get_activities(request, user_id):
     # GET, get activites for user
     try:
         user = User.objects.filter(user_name=user_id).values('id')[0]
+        print(user)
         result = Activity.objects.filter(user_id=user["id"])
         activitiesData = ActivitySerializer(result, many=True)
         return JsonResponse({
@@ -99,7 +112,7 @@ def get_activities(request, user_id):
         raise Http404("no activities")
     
 def _agg_category_results(user):
-    result = DescriptionToCategoryMapping.objects.filter(user=user.id).values('description', 'category')
+    result = Category.objects.filter(user=user.id).values('description', 'category')
     cat_desc_mapping = {}
     for row in result:
         categoryText = row['category']
@@ -110,6 +123,7 @@ def _agg_category_results(user):
             cat_desc_mapping[categoryText].append(descriptionText)
     cat_sum_mapping = {}
     # need to clean this up with aggregation
+    # also the number value needs to be rounded to 2 decimal places
     for key in cat_desc_mapping:
         sum = 0
         for desc in cat_desc_mapping[key]:
@@ -144,13 +158,13 @@ def new_user_categories(request, user_id):
     try:
         user = User.objects.filter(user_name=user_id)[0]
         mapping = json.loads(request.body)
-        existingMapping = DescriptionToCategoryMapping.objects.filter(user=user, description=mapping["description"])
+        existingMapping = Category.objects.filter(user=user, description=mapping["description"])
         if existingMapping:
             for item in existingMapping:
                 item.category = mapping["category"]
                 item.save()
         else:
-            mappingObj = DescriptionToCategoryMapping(
+            mappingObj = Category(
                 user=user)
             mappingObj.category = mapping["category"]
             mappingObj.description = mapping["description"]
