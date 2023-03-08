@@ -12,6 +12,7 @@ import { Home } from './Pages/home';
 import './App.css';
 import { Categories } from './Components/categories';
 import LoginButton from './Components/LoginAuth0';
+import NavBar from './Components/NavBar';
 
 function App() {
   const { isLoading, error } = useAuth0();
@@ -28,12 +29,7 @@ function App() {
     <Router>
       <div>
         <nav>
-          <ul>
-            <li>
-              <Link to="/">Home</Link>
-              <LoginButton />
-            </li>
-          </ul>
+          <NavBar />
         </nav>
         <Routes>
           <Route path="/categories/:userId" element={<Categories />} />

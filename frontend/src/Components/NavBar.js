@@ -3,6 +3,7 @@ import { NavLink as RouterNavLink, Link } from "react-router-dom";
 
 import { useAuth0 } from "@auth0/auth0-react";
 import LoginButton from "./LoginAuth0";
+import LogoutButton from "./LogoutAuth0";
 
 const NavBar = () => {
     const {
@@ -40,18 +41,18 @@ const NavBar = () => {
               {isAuthenticated && (
                 <>
                     <li>
-                        My Profile
+                        Hello, {user.name}
                     </li>
                     <li>
-                        <LogoutButton>
+                        <LogoutButton onClick={() => logoutWithRedirect()}>
                             Logout
                         </LogoutButton>
                     </li>
                 </>
                 
               )}
-
-              
         </ul>
     )
 }
+
+export default NavBar
