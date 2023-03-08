@@ -57,11 +57,13 @@ def upload_activities(request, user_id):
         # add an option to dedup? Or just botch it if it's screwed up
         for line in request.body.splitlines():
             values = line.decode("utf-8").split(',')
-            description_text = sanitize_desc(values[2])
+            if len(values) < 6:
+                continue
+            description_text = sanitize_desc(values[3])
             # this code works for capitalone export
-            if values[3]:
+            if values[4]:
                 # check 
-                category_text = sanitize_category(values[3])
+                category_text = sanitize_category(values[4])
                 category = Category.objects.filter(user=user.id).filter(description=description_text).filter(category=category_text).first()
                 if not category:
                     category = Category(user=user, category=category_text, description=description_text)
@@ -69,10 +71,10 @@ def upload_activities(request, user_id):
 
             activityEntry = ActivitySerializer(data={
                 "user": user.id,
-                "account_type": values[0],
-                "date": values[1],
+                "account_type": values[2],
+                "date": values[0],
                 "descriptions": description_text,
-                "amount": values[4],
+                "amount": values[5],
                 "category": category.id
             })
 
