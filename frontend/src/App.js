@@ -5,13 +5,25 @@ import {
   Route,
   Link
 } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 import { Upload } from './Pages/upload';
 import { Activities } from './Pages/activities';
 import { Home } from './Pages/home';
 import './App.css';
 import { Categories } from './Components/categories';
+import LoginButton from './Components/LoginAuth0';
 
 function App() {
+  const { isLoading, error } = useAuth0();
+
+  if (error) {
+    return <div>Oops... {error.message}</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <Router>
       <div>
@@ -19,6 +31,7 @@ function App() {
           <ul>
             <li>
               <Link to="/">Home</Link>
+              <LoginButton />
             </li>
           </ul>
         </nav>
