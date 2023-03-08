@@ -2,7 +2,7 @@
 
 # dependencies
 frontend/node_modules
-frontend/auth_config.json
+frontend/src/auth_config.json
 /.pnp
 .pnp.js
 
