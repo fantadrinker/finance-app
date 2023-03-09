@@ -39,6 +39,7 @@ jobs:
         with:
           node-version: "16"
           cache: npm
+          path: ./frontend
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Install dependencies
