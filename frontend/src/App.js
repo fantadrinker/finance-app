@@ -23,7 +23,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename={process.env.PRODUCTION ? '/finance-app': ''}>
       <div>
         <nav>
           <NavBar />
