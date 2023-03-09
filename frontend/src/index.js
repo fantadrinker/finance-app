@@ -23,7 +23,7 @@ const providerConfig = {
   clientId: config.clientId,
   onRedirectCallback,
   authorizationParams: {
-    redirect_uri: window.location.origin,
+    redirect_uri: process.env.NODE_ENV === 'production' ? `${window.location.origin}/finance-app` : window.location.origin,
     ...(config.audience ? { audience: config.audience } : null),
   },
 };
