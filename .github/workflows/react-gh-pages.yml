@@ -4,7 +4,7 @@ name: Deploy Jekyll with GitHub Pages dependencies preinstalled
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "fix-broken-pages"]
+    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build static html
-        run: PUBLIC_URL=https://fantadrinker.github.io/finance-app/ PRODUCTION=1 npx --no-install react-scripts build
+        run: PUBLIC_URL=https://fantadrinker.github.io/finance-app/ npx --no-install react-scripts build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
