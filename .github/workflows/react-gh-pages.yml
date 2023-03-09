@@ -45,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build static html
-        run: npx --no-install react-scripts build
+        run: PUBLIC_URL=https://fantadrinker.github.io/finance-app/ npx --no-install react-scripts build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
