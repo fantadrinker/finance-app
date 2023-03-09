@@ -1,9 +1,7 @@
-import logo from './logo.svg';
 import {
   BrowserRouter as Router,
   Routes,
-  Route,
-  Link
+  Route
 } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Upload } from './Pages/upload';
@@ -11,7 +9,6 @@ import { Activities } from './Pages/activities';
 import { Home } from './Pages/home';
 import './App.css';
 import { Categories } from './Components/categories';
-import LoginButton from './Components/LoginAuth0';
 import NavBar from './Components/NavBar';
 
 function App() {
