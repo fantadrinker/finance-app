@@ -15,5 +15,6 @@ run this command to run test server on local
 # Dev Plans
 
 today added auth0 integration, next steps:
-1. Set up auto deployment to github pages
+1. Set up auto deployment to github pages (done 03/08/2023)
 2. Rewrite django backend with lambda and dynamoDB
+3. Prettify UI
