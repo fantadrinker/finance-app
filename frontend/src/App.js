@@ -1,7 +1,8 @@
 import {
   BrowserRouter as Router,
   Routes,
-  Route
+  Route,
+  Navigate
 } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Upload } from './Pages/upload';
@@ -23,7 +24,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
       <div>
         <nav>
           <NavBar />
@@ -33,6 +34,7 @@ function App() {
           <Route path="/upload" element={<Upload />} />
           <Route path="/activities/:userId" element={<Activities />} />
           <Route path="/" element={<Home />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </Router>
