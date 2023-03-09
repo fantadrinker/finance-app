@@ -24,10 +24,10 @@ function App() {
   }
 
   return (
-    <Router basename={process.env.PRODUCTION ? '/finance-app': ''}>
+    <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
       <div>
         <nav>
-          <NavBar message={process.env.PRODUCTION? "production": "dev"} />
+          <NavBar message={`${process.env.PUBLIC_URL}${process.env.NODE_ENV}`} />
         </nav>
         <Routes>
           <Route path="/categories/:userId" element={<Categories />} />
