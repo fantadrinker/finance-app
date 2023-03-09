@@ -5,7 +5,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import LoginButton from "./LoginAuth0";
 import LogoutButton from "./LogoutAuth0";
 
-const NavBar = () => {
+const NavBar = ({ message }) => {
     const {
         user,
         isAuthenticated,
@@ -22,6 +22,10 @@ const NavBar = () => {
 
     return (
         <ul>
+            {
+                message &&  
+                <li>{message}</li>
+            }
             <li>
                 <Link to="/">Home</Link>
                 
