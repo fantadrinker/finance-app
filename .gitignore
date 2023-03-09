@@ -10,7 +10,7 @@ frontend/src/auth_config.json
 /coverage
 
 # production
-/build
+frontend/build
 
 # misc
 .DS_Store
