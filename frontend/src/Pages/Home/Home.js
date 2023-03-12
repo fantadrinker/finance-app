@@ -14,7 +14,6 @@ import styles from './Home.module.css'
     3. display chart grouped by category
 
     TODO:
-    1. improve visual
     2. implement download/export
     3. implement save to account
 */
@@ -48,7 +47,9 @@ export function Home() {
                 category: dataArr[4],
                 amount: dataArr[5] || `-${dataArr[6]}`
             }];
-        }, [])
+        }, []).sort((a,b) => {
+            return new Date(a.date) - new Date(b.date);
+        })
         setFinanceData(processedData);
 
         const groupByCategorySpending = processedData.reduce((acc, {
@@ -90,13 +91,13 @@ export function Home() {
                                 <Form.Label>Your Financial File</Form.Label>
                                 <Form.Control type="file" value={fileName} onChange={updateUserFile} />
                             </Form.Group>
-                            <Button onClick={processUserFile} type="submit">Process File Locally</Button>
+                            <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File Locally</Button>
                         </Form>
                     )}
                     {financeData.length > 0 && (
-                        <div className="activity-table">
-                            <Button>Download</Button>
-                            <Button>Save to Account</Button>
+                        <div className={styles.activityTable}>
+                            <Button variant="outline-primary" disabled>Download</Button>
+                            <Button variant="outline-secondary" disabled>Save to Account</Button>
                             <Table striped bordered hover>
                                 <thead>
                                     <tr>
