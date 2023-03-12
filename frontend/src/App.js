@@ -10,7 +10,7 @@ import { Activities } from './Pages/activities';
 import { Home } from './Pages/home';
 import './App.css';
 import { Categories } from './Components/categories';
-import NavBar from './Components/NavBar';
+import MyNavBar from './Components/MyNavBar';
 
 function App() {
   const { isLoading, error } = useAuth0();
@@ -27,7 +27,7 @@ function App() {
     <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
       <div>
         <nav>
-          <NavBar />
+          <MyNavBar />
         </nav>
         <Routes>
           <Route path="/categories/:userId" element={<Categories />} />

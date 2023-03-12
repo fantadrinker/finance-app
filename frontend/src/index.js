@@ -6,6 +6,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { getConfig } from "./config";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const onRedirectCallback = (appState) => {
   let history = createBrowserHistory()
