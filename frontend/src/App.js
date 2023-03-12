@@ -7,7 +7,7 @@ import {
 import { useAuth0 } from "@auth0/auth0-react";
 import { Upload } from './Pages/upload';
 import { Activities } from './Pages/activities';
-import { Home } from './Pages/home';
+import { Home } from './Pages/Home/Home';
 import './App.css';
 import { Categories } from './Components/categories';
 import MyNavBar from './Components/MyNavBar';
