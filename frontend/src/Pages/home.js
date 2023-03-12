@@ -19,8 +19,6 @@ export function Home() {
     // csv format
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
-    const [errorMessage, setErrorMessage] = useState("");
-    const [successMessage, setSuccessMessage] = useState("");
     const [financeData, setFinanceData] = useState([]);
     const [categoryData, setCategoryData] = useState({});
 
@@ -76,13 +74,6 @@ export function Home() {
 
     return (
         <>
-            {errorMessage? (<div>
-                {errorMessage}
-            </div>): null
-            }
-            {successMessage? (
-                <div>{successMessage}</div>
-            ): null}
             <Form>
                 <Form.Group controlId="file" className="mb-3">
                     <Form.Label>File</Form.Label>

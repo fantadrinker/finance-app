@@ -1,6 +1,4 @@
 
-const backendAddr = "http://localhost:8000";
-
 const awsLambdaAddr = "https://fbbvgusi51.execute-api.us-east-1.amazonaws.com/default";
 
 export const postCall = async (url, body={}, contentType = "application/json") => {

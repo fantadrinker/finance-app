@@ -6,8 +6,6 @@ import NavDropdown from 'react-bootstrap/NavDropdown';
 import Container from 'react-bootstrap/Container';
 
 import { useAuth0 } from "@auth0/auth0-react";
-import LoginButton from "./LoginAuth0";
-import LogoutButton from "./LogoutAuth0";
 
 const MyNavBar = ({ message }) => {
     const {
