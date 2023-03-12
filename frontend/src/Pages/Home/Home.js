@@ -2,10 +2,13 @@ import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 
 import styles from './Home.module.css'
+import { processCapitalOneActivities, processRBCActivities } from '../../helpers';
 
 /* 
     Implements main page, displays 3 sections:
@@ -18,38 +21,36 @@ import styles from './Home.module.css'
     3. implement save to account
 */
 
+// todo: move these to constants
+const COLUMN_FORMAT_CAP1 = "cap1";
+
+const COLUMN_FORMAT_RBC = "rbc";
+
+const funMapping = {
+    [COLUMN_FORMAT_CAP1]: processCapitalOneActivities,
+    [COLUMN_FORMAT_RBC]: processRBCActivities,
+}
+
 export function Home() {
     // csv format
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
     const [financeData, setFinanceData] = useState([]);
     const [categoryData, setCategoryData] = useState({});
+    const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
 
+    // todo: useeffect hook to retrieve categories
+    // update category mapping?
     const processUserFile = async (event) => {
         event.preventDefault();
         // processes user file, store in financeData state var
         const texts = await fileContent.text();
         const rows = texts.split('\n');
-        console.log(111, texts);
+        console.log(111, columnFormat, texts);
         // TODO: then let user assign input columns to output columns?
         // for now we can just use hard-coded mapping
         // example column names: "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
-        const processedData = rows.slice(1).reduce((acc, rowStr) => {
-            const dataArr = rowStr.split(',');
-            if (dataArr.length < 7) {
-                return acc;
-            }
-            // output columns: account, date, desc, category, amount
-            return [...acc, {
-                date: dataArr[0],
-                account: dataArr[2],
-                desc: dataArr[3],
-                category: dataArr[4],
-                amount: dataArr[5] || `-${dataArr[6]}`
-            }];
-        }, []).sort((a,b) => {
-            return new Date(a.date) - new Date(b.date);
-        })
+        const processedData = funMapping[columnFormat](rows.slice(1));
         setFinanceData(processedData);
 
         const groupByCategorySpending = processedData.reduce((acc, {
@@ -87,9 +88,18 @@ export function Home() {
                 <Tab eventKey="activities" title="Activities">
                     {financeData.length === 0 && (
                         <Form>
-                            <Form.Group controlId="file" className="mb-3">
-                                <Form.Label>Your Financial File</Form.Label>
-                                <Form.Control type="file" value={fileName} onChange={updateUserFile} />
+                            <Form.Group as={Row} controlId="file" className="mb-3">
+                                <Form.Label column sm="2">Select File</Form.Label>
+                                <Col sm="4">
+                                    <Form.Control type="file" value={fileName} onChange={updateUserFile} />
+                                </Col>
+                                <Form.Label column sm="2">Choose Format</Form.Label>
+                                <Col sm="4">
+                                    <Form.Select aria-label="select input type" value={columnFormat} onChange={e => setColumnFormat(e.target.value)}>
+                                        <option value={COLUMN_FORMAT_CAP1}>CapitalOne</option>
+                                        <option value={COLUMN_FORMAT_RBC}>RBC</option>
+                                    </Form.Select>
+                                </Col>
                             </Form.Group>
                             <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File Locally</Button>
                         </Form>
@@ -120,7 +130,12 @@ export function Home() {
                                             <td>{date}</td>
                                             <td>{account}</td>
                                             <td>{desc}</td>
-                                            <td>{category}</td>
+                                            <td>
+                                                <Form.Select onChange={() => {}}>
+                                                    {category && <option value={category}>{category}</option>}
+                                                    <option value="new category">new category</option>
+                                                </Form.Select>
+                                            </td>
                                             <td>{amount}</td>
                                         </tr>
                                     ))}
