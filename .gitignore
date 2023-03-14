@@ -25,3 +25,5 @@ yarn-error.log*
 # backend
 
 backend_test/db.sqlite3
+
+backend_lambdas_sam/.aws-sam
