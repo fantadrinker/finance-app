@@ -17,9 +17,40 @@ defaults:
     working-directory: ./backend_lambdas_sam
   
 jobs:
+  check:
+    name: Check modified files in backend_lambdas_sam
+    outputs:
+      modified_backend: ${{ steps.check_files.outputs.modified_backend }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - name: check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git diff --name-only HEAD^ HEAD
+          
+          echo "========== check paths of modified files =========="
+          git diff --name-only HEAD^ HEAD &gt; files.txt
+          while IFS= read -r file
+          do
+            echo $file
+            if [[ $file != backend_lambdas_sam/* ]]; then
+              echo "This modified file is not under the 'backend_lambdas_sam' folder."
+              echo "::set-output name=modified_backend::false"
+              break
+            else
+              echo "::set-output name=modified_backend::true"
+            fi
+          done &lt; files.txt
   setup-build-env:
     runs-on: ubuntu-latest
     environment: aws-prod
+    needs: check
+    if: needs.check.outputs.modified_backend == 'true'
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
