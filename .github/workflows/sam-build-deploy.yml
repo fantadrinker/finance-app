@@ -1,11 +1,8 @@
 # workflow for testing builds for PRs
 name: build and deploy lambdas and apis to SAM in AWS
 
-on:
-  # manual run mostly
-  push:
-    branches: ["deploy-backend"]
-
+on: 
+  workflow_dispatch:
 
 permissions:
   contents: read
