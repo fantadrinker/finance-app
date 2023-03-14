@@ -1,10 +1,10 @@
 # workflow for testing builds for PRs
-name: Check if PR can be built successfully
+name: build and deploy lambdas and apis to SAM in AWS
 
 on:
-  # Runs on pushes targeting the default branch
+  # manual run mostly
   push:
-    branches: ["*"]
+    branches: ["deploy-backend"]
 
 
 permissions:
@@ -17,40 +17,9 @@ defaults:
     working-directory: ./backend_lambdas_sam
   
 jobs:
-  check:
-    name: Check modified files in backend_lambdas_sam
-    outputs:
-      modified_backend: ${{ steps.check_files.outputs.modified_backend }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 2
-      - name: check modified files
-        id: check_files
-        run: |
-          echo "=============== list modified files ==============="
-          git diff --name-only HEAD^ HEAD
-          
-          echo "========== check paths of modified files =========="
-          git diff --name-only HEAD^ HEAD > files.txt
-          while IFS= read -r file
-          do
-            echo $file
-            if [[ $file != backend_lambdas_sam/* ]]; then
-              echo "This modified file is not under the 'backend_lambdas_sam' folder."
-              echo "modified_backend=false" >> $GITHUB_OUTPUT
-              break
-            else
-              echo "modified_backend=false" >> $GITHUB_OUTPUT
-            fi
-          done < files.txt
   setup-build-env:
     runs-on: ubuntu-latest
     environment: aws-prod
-    needs: check
-    if: needs.check.outputs.modified_backend == 'true'
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
@@ -63,10 +32,5 @@ jobs:
           aws-region: us-east-1
       # Build inside Docker containers
       - run: sam build --use-container
-  sam-deploy:
-    runs-on: ubuntu-latest
-    needs: setup-build-env
-    if: github.ref == 'refs/heads/master'
-    steps:
       # Prevent prompts and failure when the stack is unchanged
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
