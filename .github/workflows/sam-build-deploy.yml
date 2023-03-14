@@ -19,6 +19,7 @@ defaults:
 jobs:
   setup-build-env:
     runs-on: ubuntu-latest
+    environment: aws-prod
     steps:
       - uses: actions/checkout@v3
       - uses: aws-actions/setup-sam@v2
