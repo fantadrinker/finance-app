@@ -4,7 +4,7 @@ name: Check if PR can be built successfully
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main", "backend-cicd"]
+    branches: ["*"]
 
 
 permissions:
