@@ -37,3 +37,29 @@ export const processRBCActivities = (rows) => {
         return new Date(a.date) - new Date(b.date);
     })
 }
+
+const download = (filename, text) => {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+  
+    element.style.display = 'none';
+    document.body.appendChild(element);
+  
+    element.click();
+  
+    document.body.removeChild(element);
+  }
+
+export const downloadFinanceData = (data) => {
+    const text = data.reduce((acc, {
+        date,
+        account, 
+        desc,
+        category, 
+        amount
+    }) => {
+        return acc + `${date}, ${account}, ${desc}, ${category}, ${amount}\n`
+    }, "");
+    download("test.csv", text);
+}

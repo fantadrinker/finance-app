@@ -35,6 +35,7 @@ Resources:
       CodeUri: activities/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Policies: AWSLambdaDynamoDBExecutionRole
       Architectures:
       - x86_64
       Events:
@@ -43,6 +44,21 @@ Resources:
           Properties:
             Path: /activities
             Method: post
+  # dynamodb tables
+  ActivitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
