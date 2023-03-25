@@ -38,9 +38,13 @@ def lambda_handler(event, context):
         body: csv file exported from either cap1 or RBC
         response: body: formatted data with following columns 
         date, account, description, category, amount
-    """
+    """ 
+    if event and "queryStringParameters" in event:
+        input_format = event["queryStringParameters"].get("format", None)
 
-    input_format = event.get("queryStringParameters", {}).get("format", None)
+    params = event["queryStringParameters"]
+    file_format = "cap1" if not params or "format" not in params else params.get("format")
+    # "queryStringParameters": None
 
     body = event["body"]
 
@@ -49,6 +53,7 @@ def lambda_handler(event, context):
             "statusCode": 400,
             "body": "missing body content or input format",
         }
+    
     response_body = ""
     f = StringIO(body)
     reader = csv.reader(f, delimiter=',')
