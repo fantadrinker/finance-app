@@ -1,4 +1,8 @@
 import json
+from io import StringIO
+import csv
+import boto3
+
 
 # import requests
 
@@ -27,10 +31,42 @@ def lambda_handler(event, context):
 
     # processes user activities data, store in db
     # right now just pings and returns body
+    """
+    POST /activities?format=<format>
+        param:
+        - format: cap1 or rbc
+        body: csv file exported from either cap1 or RBC
+        response: body: formatted data with following columns 
+        date, account, description, category, amount
+    """ 
+    if event and "queryStringParameters" in event:
+        input_format = event["queryStringParameters"].get("format", None)
+
+    params = event["queryStringParameters"]
+    file_format = "cap1" if not params or "format" not in params else params.get("format")
+    # "queryStringParameters": None
 
     body = event["body"]
 
+    if not input_format or not body:
+        return {
+            "statusCode": 400,
+            "body": "missing body content or input format",
+        }
+    
+    response_body = ""
+    f = StringIO(body)
+    reader = csv.reader(f, delimiter=',')
+    dynamodb = boto3.resource("dynamodb")
+    table_name = "activities"
+    activities_table = dynamodb.Table(table_name)
+    
+    for row in reader:
+        # format and store them in dynamodb
+
+        response_body += '\t'.join(row)
+
     return {
         "statusCode": 200,
-        "body": body,
+        "body": response_body,
     }

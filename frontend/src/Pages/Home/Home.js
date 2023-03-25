@@ -8,7 +8,7 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 
 import styles from './Home.module.css'
-import { processCapitalOneActivities, processRBCActivities } from '../../helpers';
+import { processCapitalOneActivities, processRBCActivities, downloadFinanceData } from '../../helpers';
 
 /* 
     Implements main page, displays 3 sections:
@@ -86,27 +86,25 @@ export function Home() {
                 className="mb-3"
             >
                 <Tab eventKey="activities" title="Activities">
-                    {financeData.length === 0 && (
-                        <Form>
-                            <Form.Group as={Row} controlId="file" className="mb-3">
-                                <Form.Label column sm="2">Select File</Form.Label>
-                                <Col sm="4">
-                                    <Form.Control type="file" value={fileName} onChange={updateUserFile} />
-                                </Col>
-                                <Form.Label column sm="2">Choose Format</Form.Label>
-                                <Col sm="4">
-                                    <Form.Select aria-label="select input type" value={columnFormat} onChange={e => setColumnFormat(e.target.value)}>
-                                        <option value={COLUMN_FORMAT_CAP1}>CapitalOne</option>
-                                        <option value={COLUMN_FORMAT_RBC}>RBC</option>
-                                    </Form.Select>
-                                </Col>
-                            </Form.Group>
-                            <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File Locally</Button>
-                        </Form>
-                    )}
+                    <Form>
+                        <Form.Group as={Row} controlId="file" className="mb-3">
+                            <Form.Label column sm="2">Select File</Form.Label>
+                            <Col sm="4">
+                                <Form.Control type="file" value={fileName} onChange={updateUserFile} />
+                            </Col>
+                            <Form.Label column sm="2">Choose Format</Form.Label>
+                            <Col sm="4">
+                                <Form.Select aria-label="select input type" value={columnFormat} onChange={e => setColumnFormat(e.target.value)}>
+                                    <option value={COLUMN_FORMAT_CAP1}>CapitalOne</option>
+                                    <option value={COLUMN_FORMAT_RBC}>RBC</option>
+                                </Form.Select>
+                            </Col>
+                        </Form.Group>
+                        <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
+                    </Form>
                     {financeData.length > 0 && (
                         <div className={styles.activityTable}>
-                            <Button variant="outline-primary" disabled>Download</Button>
+                            <Button variant="outline-primary" onClick={() => downloadFinanceData(financeData)}>Download</Button>
                             <Button variant="outline-secondary" disabled>Save to Account</Button>
                             <Table striped bordered hover>
                                 <thead>

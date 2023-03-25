@@ -15,6 +15,35 @@ Globals:
     TracingEnabled: true
 
 Resources:
+  # api gateway
+  FinanceAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Test
+      Auth:
+        DefaultAuthorizer: MyLambdaTokenAuthorizer
+        Authorizers:
+          MyLambdaTokenAuthorizer:
+            FunctionArn: !GetAtt MyAuthFunction.Arn
+
+  # lambda functions
+  MyAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: financeAuthorizer/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+  
+  # required permissions
+  MyAuthPermission:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MyAuthFunction.Arn
+      Principal: "apigateway.amazonaws.com"
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${FinanceAPI}/authorizers/${MyAuthFunction}"
+    
+
   MultiplyFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -27,6 +56,7 @@ Resources:
         Multiply:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
+            RestApiId: !Ref FinanceAPI
             Path: /multiply
             Method: get
   ActivitiesFunction:
@@ -35,14 +65,31 @@ Resources:
       CodeUri: activities/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Policies: AWSLambdaDynamoDBExecutionRole
       Architectures:
       - x86_64
       Events:
         Activities:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
+            RestApiId: !Ref FinanceAPI
             Path: /activities
             Method: post
+  # dynamodb tables
+  ActivitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: id
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
 
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -70,7 +117,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   MultiplyApi:
     Description: API Gateway endpoint URL for Prod stage for Multiply function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/multiply/"
+    Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/multiply/"
   MultiplyFunction:
     Description: Multiply Lambda Function ARN
     Value: !GetAtt MultiplyFunction.Arn
