@@ -33,6 +33,10 @@ Resources:
       CodeUri: financeAuthorizer/
       Handler: app.lambda_handler
       Runtime: python3.9
+    Environment:
+      Variables:
+        JWKS_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/.well-known/jwks.json"
+        APPID: "cGKz2Of9EaChECh0YWtm2FcT3P9omdCP"
   
   # required permissions
   MyAuthPermission:
