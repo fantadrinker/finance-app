@@ -51,13 +51,11 @@ def lambda_handler(event, context):
 
     #     raise e
 
-    url = os.environ["JWKS_URL"]
-    audience = os.environ["APPID"]
+    url = os.environ.get("JWKS_URL", "")
+    audience = os.environ.get("APPID", "")
     token = event.get("authorizationToken", "")
 
     resource = event.get("methodArn", "")
-    # need to specify resource
-    print(token, resource)
     return {
         "principalId": "user",
         "policyDocument": {
