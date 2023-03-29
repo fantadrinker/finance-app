@@ -51,22 +51,40 @@ def lambda_handler(event, context):
 
     #     raise e
 
-    url = os.environ.get("JWKS_URL", "")
-    audience = os.environ.get("APPID", "")
+    url_base = os.environ.get("BASE_URL", "")
+    jwks_url = f"{url_base}/.well-known/jwks.json"
+    audiences = [
+        f"{url_base}/api/v2/", 
+        f"{url_base}/userinfo"
+    ]
     token = event.get("authorizationToken", "")
 
     resource = event.get("methodArn", "")
-    return {
-        "principalId": "user",
-        "policyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [{
-                "Action": "execute-api:Invoke",
-                "Effect": "Allow" if verify_token_with_jwks(token, url, audience) else "Deny",
-                "Resource": [resource]
-            }]
-        },
-        "context": {
-            "response": "General Kenobi!"
+
+    try:
+        return {
+            "principalId": "user",
+            "policyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [{
+                    "Action": "execute-api:Invoke",
+                    "Effect": "Allow" if verify_token_with_jwks(token, jwks_url, audiences) else "Deny",
+                    "Resource": [resource]
+                }]
+            }
         }
-    }
+    except:
+        return {
+            "principalId": "user",
+            "policyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [{
+                    "Action": "execute-api:Invoke",
+                    "Effect": "Deny",
+                    "Resource": [resource]
+                }]
+            },
+            "context": {
+                "response": "exception while validating token"
+            }
+        }
