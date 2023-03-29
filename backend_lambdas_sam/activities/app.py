@@ -1,6 +1,7 @@
 from io import StringIO
 import os
 import csv
+import json
 import uuid
 import boto3
 import botocore
@@ -86,9 +87,14 @@ def lambda_handler(event, context):
                 )
         return {
             "statusCode": 200,
-            "body": {
-                "data": response_body
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
             },
+            "body": json.dumps({
+                "data": response_body
+            }),
         }
     except botocore.exceptions.ClientError as error:
         print(error)
