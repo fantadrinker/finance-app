@@ -21,10 +21,15 @@ Resources:
     Properties:
       StageName: Test
       Auth:
-        DefaultAuthorizer: MyLambdaTokenAuthorizer
         Authorizers:
           MyLambdaTokenAuthorizer:
             FunctionArn: !GetAtt MyAuthFunction.Arn
+      Cors:
+        AllowMethods: "'POST, GET'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'http://localhost:3000'"
+        AllowCredentials: true
+        MaxAge: "'600'"
 
   # lambda functions
   MyAuthFunction:
@@ -33,10 +38,10 @@ Resources:
       CodeUri: financeAuthorizer/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Timeout: 10
       Environment:
         Variables:
-          JWKS_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/.well-known/jwks.json"
-          APPID: "cGKz2Of9EaChECh0YWtm2FcT3P9omdCP"
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
   
   # required permissions
   MyAuthPermission:
@@ -63,15 +68,23 @@ Resources:
             RestApiId: !Ref FinanceAPI
             Path: /multiply
             Method: get
+            Auth:
+              Authorizer: MyLambdaTokenAuthorizer
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: activities/
       Handler: app.lambda_handler
       Runtime: python3.9
-      Policies: AWSLambdaDynamoDBExecutionRole
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
       Architectures:
       - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+      Timeout: 7
       Events:
         Activities:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -79,6 +92,8 @@ Resources:
             RestApiId: !Ref FinanceAPI
             Path: /activities
             Method: post
+            Auth:
+              Authorizer: MyLambdaTokenAuthorizer
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table

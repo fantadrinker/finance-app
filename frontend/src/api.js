@@ -1,12 +1,13 @@
 
-const awsLambdaAddr = "https://fbbvgusi51.execute-api.us-east-1.amazonaws.com/default";
+const awsLambdaAddr = "https://4fg3idtcx1.execute-api.us-east-1.amazonaws.com/Test";
 
-export const postCall = async (url, body={}, contentType = "application/json") => {
+export const postCall = async (url, body={}, contentType = "application/json", auth = "") => {
     try {
         const result = await fetch(awsLambdaAddr + url, {
             method: 'POST',
             headers: {
                 'Content-Type': contentType,
+                'Authorization': auth
             },
             mode: 'cors',
             body: contentType === "application/json"? JSON.stringify(body): body

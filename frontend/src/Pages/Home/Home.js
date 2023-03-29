@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
@@ -6,9 +6,13 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
+import { useAuth0, withAuth0 } from "@auth0/auth0-react";
 
 import styles from './Home.module.css'
 import { processCapitalOneActivities, processRBCActivities, downloadFinanceData } from '../../helpers';
+import Login from '../Login/Login';
+import { postCall } from '../../api';
+import { getConfig } from '../../config';
 
 /* 
     Implements main page, displays 3 sections:
@@ -31,13 +35,42 @@ const funMapping = {
     [COLUMN_FORMAT_RBC]: processRBCActivities,
 }
 
-export function Home() {
+function Home(props) {
     // csv format
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
     const [financeData, setFinanceData] = useState([]);
     const [categoryData, setCategoryData] = useState({});
     const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
+    const [accessToken, setToken] = useState(null);
+    const {
+        user,
+        isAuthenticated,
+        getAccessTokenSilently
+    } = useAuth0();
+
+    useEffect(() => {
+        const fetchAuth0Token = async () => {
+            const config = getConfig();
+            try {
+                const token = await getAccessTokenSilently({
+                  authorizationParams: {
+                    audience: config.audience,
+                  },
+                });
+                setToken(token);
+            } catch (e) {
+                // Handle errors such as `login_required` and `consent_required` by re-prompting for a login
+                console.error(e);
+            }
+
+        }
+        fetchAuth0Token();
+    }, [getAccessTokenSilently])
+
+    if (!isAuthenticated) {
+        return <Login />;
+    }
 
     // todo: useeffect hook to retrieve categories
     // update category mapping?
@@ -45,6 +78,8 @@ export function Home() {
         event.preventDefault();
         // processes user file, store in financeData state var
         const texts = await fileContent.text();
+        const apiResponse = await postCall(`/activities?format=${columnFormat}`, texts, "text/html", accessToken);
+        console.log(222, apiResponse, user);
         const rows = texts.split('\n');
         console.log(111, columnFormat, texts);
         // TODO: then let user assign input columns to output columns?
@@ -157,3 +192,5 @@ export function Home() {
         </div>
     )
 }
+
+export default withAuth0(Home);
