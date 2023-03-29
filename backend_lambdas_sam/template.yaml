@@ -27,7 +27,7 @@ Resources:
       Cors:
         AllowMethods: "'POST, GET'"
         AllowHeaders: "'Content-Type,Authorization'"
-        AllowOrigin: "'http://localhost:3000'"
+        AllowOrigin: "'*'"
         AllowCredentials: true
         MaxAge: "'600'"
 
