@@ -28,7 +28,6 @@ Resources:
         AllowMethods: "'POST, GET'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowOrigin: "'*'"
-        AllowCredentials: true
         MaxAge: "'600'"
 
   # lambda functions
