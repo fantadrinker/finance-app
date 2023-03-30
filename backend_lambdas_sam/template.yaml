@@ -17,18 +17,50 @@ Globals:
 Resources:
   # api gateway
   FinanceAPI:
-    Type: AWS::Serverless::Api
+    Type: AWS::Serverless::HttpApi
     Properties:
       StageName: Test
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiLogs.Arn
+        Format: >-
+          {"requestId": "$context.requestId", "error": "$context.authorizer.error" }
       Auth:
         Authorizers:
           MyLambdaTokenAuthorizer:
-            FunctionArn: !GetAtt MyAuthFunction.Arn
-      Cors:
-        AllowMethods: "'OPTIONS,POST,GET'"
-        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-        AllowOrigin: "'*'"
-        MaxAge: "'600'"
+            AuthorizerPayloadFormatVersion: 1.0
+            FunctionArn:
+              Fn::GetAtt:
+                - MyAuthFunction
+                - Arn
+            Identity:
+              Headers:
+                - Authorization
+            EnableSimpleResponses: true
+          OAuthAuthorizer:
+            AuthorizationScopes:
+              - scope1
+            JwtConfiguration:
+              issuer: "https://www.example.com/v1/connect/oauth2"
+              audience:
+                - MyApi
+            IdentitySource: "$request.querystring.param"
+      CorsConfiguration:
+        AllowMethods: 
+          - OPTIONS
+          - POST
+          - GET
+        AllowHeaders: 
+          - Content-Type
+          - X-Amz-Date
+          - Authorization
+          - X-Api-Key
+          - X-Amz-Security-Token
+        AllowOrigins:
+          - "http://localhost:3000"
+        MaxAge: 600
+
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
 
   # lambda functions
   MyAuthFunction:
@@ -63,11 +95,12 @@ Resources:
       - x86_64
       Events:
         Multiply:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref FinanceAPI
+            ApiId:
+              Ref: FinanceAPI
             Path: /multiply
-            Method: get
+            Method: GET
             Auth:
               Authorizer: MyLambdaTokenAuthorizer
   ActivitiesFunction:
@@ -88,11 +121,12 @@ Resources:
       Timeout: 3
       Events:
         Activities:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
-            RestApiId: !Ref FinanceAPI
+            ApiId:
+              Ref: FinanceAPI
             Path: /activities
-            Method: post
+            Method: POST
             Auth:
               Authorizer: MyLambdaTokenAuthorizer
   # dynamodb tables
