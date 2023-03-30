@@ -1,5 +1,5 @@
 
-const awsLambdaAddr = "https://4fg3idtcx1.execute-api.us-east-1.amazonaws.com/Test";
+const awsLambdaAddr = "https://vzitxixnd9.execute-api.us-east-1.amazonaws.com/Test";
 
 export const postCall = async (url, body={}, contentType = "application/json", auth = "") => {
     try {

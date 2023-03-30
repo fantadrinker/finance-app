@@ -9,7 +9,7 @@ Description: >
 Globals:
   Function:
     Timeout: 3
-    MemorySize: 128
+    MemorySize: 640
     Tracing: Active
   Api:
     TracingEnabled: true
@@ -39,6 +39,7 @@ Resources:
             Identity:
               Headers:
                 - Authorization
+              ReauthorizeEvery: 0
           OAuthAuthorizer:
             AuthorizationScopes:
               - scope1
@@ -72,8 +73,6 @@ Resources:
       CodeUri: financeAuthorizer/
       Handler: app.lambda_handler
       Runtime: python3.9
-      MemorySize: 768
-      Timeout: 3
       Environment:
         Variables:
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
@@ -126,7 +125,6 @@ Resources:
       CodeUri: activities/
       Handler: app.lambda_handler
       Runtime: python3.9
-      MemorySize: 768
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
@@ -135,7 +133,6 @@ Resources:
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
-      Timeout: 3
       Events:
         Activities:
           Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
