@@ -32,14 +32,16 @@ const MyNavBar = ({ message }) => {
                 <Navbar.Brand>Finance Calculator</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="me-auto">
-                        {!isAuthenticated && <Nav.Link onClick={loginWithRedirect}>Log in</Nav.Link>}
+                    <Nav className="me-auto" style={{alignItems: "center"}}>
+                        {!isAuthenticated && <Nav.Item><Nav.Link onClick={loginWithRedirect}>Log in</Nav.Link></Nav.Item>}
                         {isAuthenticated && (
                             <>
-                                <Nav.Link><Link to="/">Home</Link></Nav.Link>
-                                <NavDropdown title={user.name} id="basic-nav-dropdown">
-                                    <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>
-                                </NavDropdown>
+                                <Nav.Item><Link to="/">Home</Link></Nav.Item>
+                                <Nav.Item>
+                                    <NavDropdown title={user.name} id="basic-nav-dropdown">
+                                        <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>
+                                    </NavDropdown>
+                                </Nav.Item>
                             </>
                         )}
                     </Nav>

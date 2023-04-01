@@ -3,12 +3,143 @@ import os
 import csv
 import json
 import uuid
+import requests
 import boto3
+from boto3.dynamodb.conditions import Key, Attr
 import botocore
+import jwt
+from jwt.exceptions import InvalidSignatureError
 
 
-# import requests
+# handle auth tokens
 
+def verify_token_with_jwks(token, jwks_url, audiences):
+    # Get the JSON Web Key Set from the provided URL
+    jwks = requests.get(jwks_url).json()
+    
+    # Extract the public key from the JSON Web Key Set
+    key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
+    
+    try:
+        # Verify the token using the extracted public key
+        decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
+        
+        # If the token was successfully verified, return the decoded token
+        return decoded_token
+    except InvalidSignatureError:
+        # If the token could not be verified, raise an exception
+        raise ValueError("Token verification failed.")
+
+def get_user_id(event):
+    try:
+        url_base = os.environ.get("BASE_URL", "")
+        jwks_url = f"{url_base}/.well-known/jwks.json"
+        audiences = [
+            f"{url_base}/api/v2/",
+            f"{url_base}/userinfo"
+        ]
+        token = event.get("headers", {}).get("authorization", "")
+
+        decoded = verify_token_with_jwks(token, jwks_url, audiences)
+        return decoded.get("sub", "")
+    except:
+        return ""
+
+def postActivities(user, file_format, body):
+    # todo: conduct step-by-step checksum to avoid duplicate uploads
+    # how: for each file uploaded, store a checksum in a database table
+    # this way we know when user uploads a duplicate file
+    try:
+        if not file_format or not body:
+            return {
+                "statusCode": 400,
+                "body": "missing body content or input format",
+            }
+    
+        response_body = ""
+        f = StringIO(body)
+        reader = csv.reader(f, delimiter=',')
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        activities_table = dynamodb.Table(table_name)
+        firstRow = True
+        for row in reader:
+            # skips first header row
+            if firstRow:
+                firstRow = False
+                continue
+            # format and store them in dynamodb
+            response_body += '\t'.join(row)
+            item = {}
+            if file_format == "cap1" and len(row) >= 6:
+                item = {
+                    'id': str(uuid.uuid4()),
+                    'user': user,
+                    'date': row[0],
+                    'account': row[2],
+                    'description': row[3],
+                    'category': row[4],
+                    'amount': row[5]
+                }
+            if item:
+                activities_table.put_item(
+                    Item=item
+                )
+        return {
+            "statusCode": 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
+            },
+            "body": json.dumps({
+                "data": response_body
+            }),
+        }
+    except botocore.exceptions.ClientError as error:
+        print(error)
+        return {
+            "statusCode": 500,
+            "body": "client error happened while processing file, see logs"
+        }
+    except KeyError as error:
+        print(error)
+        return {
+            "statusCode": 500,
+            "body": "missing header or request params"
+        }
+
+def getActivities(user: str, size: int, startKey: dict):
+    try:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        activities_table = dynamodb.Table(table_name)
+        query_params = {
+            "Limit": size,
+            "KeyConditionExpression": Key('user').eq(user),
+            "ScanIndexForward": False
+        }
+        if startKey:
+            query_params["ExclusiveStartKey"] = startKey
+        data = activities_table.query(
+            **query_params
+        )
+        print(f"data retrieved {data}")
+        # should also fetch total count for page numbers
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": data.get("Items", []),
+                "count": data.get("Count", 0),
+                "LastEvaluatedKey": data.get("LastEvaluatedKey", {})
+            })
+        }
+    except botocore.exceptions.ClientError as error:
+        print(error)
+        return {
+            "statusCode": 500,
+            "body": "client error happened while fetching data, see logs"
+        }
 
 def lambda_handler(event, context):
     """Sample pure Lambda function
@@ -42,63 +173,30 @@ def lambda_handler(event, context):
         response: body: formatted data with following columns 
         date, account, description, category, amount
     """ 
-    params = event["queryStringParameters"]
-    file_format = "cap1" if not params or "format" not in params else params.get("format")
-    # "queryStringParameters": None
-
-    body = event["body"]
-
-    # print(event)
-
-    if not file_format or not body:
+    user_id = get_user_id(event)
+    
+    if not user_id:
         return {
             "statusCode": 400,
-            "body": "missing body content or input format",
+            "body": "unable to retrive user information",
         }
-    
-    try:
-        response_body = ""
-        f = StringIO(body)
-        reader = csv.reader(f, delimiter=',')
-        dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("ACTIVITIES_TABLE", "")
-        activities_table = dynamodb.Table(table_name)
-        firstRow = True
-        for row in reader:
-            # skips first header row
-            if firstRow:
-                firstRow = False
-                continue
-            # format and store them in dynamodb
-            response_body += '\t'.join(row)
-            item = {}
-            if file_format == "cap1" and len(row) >= 6:
-                item = {
-                    'id': str(uuid.uuid4()),
-                    'date': row[0],
-                    'account': row[2],
-                    'description': row[3],
-                    'category': row[4],
-                    'amount': row[5]
-                }
-            if item:
-                activities_table.put_item(
-                    Item=item
-                )
+    print(f"got user id {user_id}")
+    method = event.get("routeKey", "").split(' ')[0]
+    if method == "POST":
+        params = event["queryStringParameters"]
+        file_format = "cap1" if not params or "format" not in params else params.get("format")
+        body = event["body"]
+        print(f"processing POST request")
+
+        return postActivities(user_id, file_format, body)
+    elif method == "GET":
+        params = event["queryStringParameters"]
+        size = int(params.get("size", 0))
+        startKey = params.get("startKey", {})
+        print(f"processing GET request")
+        return getActivities(user_id, size, startKey)
+    else:
         return {
-            "statusCode": 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
-            },
-            "body": json.dumps({
-                "data": response_body
-            }),
-        }
-    except botocore.exceptions.ClientError as error:
-        print(error)
-        return {
-            "statusCode": 500,
-            "body": "client error happened while processing file, see logs"
+            "statusCode": 400,
+            "body": "invalid method"
         }

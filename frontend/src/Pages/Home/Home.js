@@ -9,9 +9,9 @@ import Tabs from 'react-bootstrap/Tabs';
 import { useAuth0, withAuth0 } from "@auth0/auth0-react";
 
 import styles from './Home.module.css'
-import { processCapitalOneActivities, processRBCActivities, downloadFinanceData } from '../../helpers';
+import { downloadFinanceData } from '../../helpers';
 import Login from '../Login/Login';
-import { postCall } from '../../api';
+import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
 
 /* 
@@ -30,30 +30,13 @@ const COLUMN_FORMAT_CAP1 = "cap1";
 
 const COLUMN_FORMAT_RBC = "rbc";
 
-const funMapping = {
-    [COLUMN_FORMAT_CAP1]: processCapitalOneActivities,
-    [COLUMN_FORMAT_RBC]: processRBCActivities,
-}
-
-function Home(props) {
-    // csv format
-    const [fileContent, setFileContent] = useState(null);
-    const [fileName, setFileName] = useState("");
-    const [financeData, setFinanceData] = useState([]);
-    const [categoryData, setCategoryData] = useState({});
-    const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
+const useAuth0AccessToken = (isAuthenticated, getToken) => {
     const [accessToken, setToken] = useState(null);
-    const {
-        user,
-        isAuthenticated,
-        getAccessTokenSilently
-    } = useAuth0();
-
     useEffect(() => {
         const fetchAuth0Token = async () => {
             const config = getConfig();
             try {
-                const token = await getAccessTokenSilently({
+                const token = await getToken({
                   authorizationParams: {
                     audience: config.audience,
                   },
@@ -63,10 +46,83 @@ function Home(props) {
                 // Handle errors such as `login_required` and `consent_required` by re-prompting for a login
                 console.error(e);
             }
-
         }
-        fetchAuth0Token();
-    }, [getAccessTokenSilently])
+        if (isAuthenticated){
+            fetchAuth0Token();
+        }
+    }, [getToken, isAuthenticated]);
+    
+    return accessToken;
+}
+
+const useFetchActivities = (accessToken, fetchFlag) => {
+    const [financeData, setFinanceData] = useState([]);
+    const [analyticsData, setAnalyticsData] = useState([]);
+    const [nextKey, setNextKey] = useState(null);
+    useEffect(() => {
+        const fetchActivities = async () => {
+            const apiResponse = await getCall(`/activities?size=20`, accessToken);
+            const {data, LastEvaluatedKey} = await apiResponse.json();
+            // great :) now popluate the states with this data
+            setFinanceData(data.map(({
+                date,
+                category,
+                account,
+                amount,
+                description
+            }) => {
+                return {
+                    date,
+                    category,
+                    account,
+                    amount: isNaN(parseFloat(amount))? 0: parseFloat(amount),
+                    desc: description 
+                }
+            }));
+            setAnalyticsData(data.reduce((acc, {
+                category,
+                amount
+            }) => {
+                const oldVal = acc[category] ?? 0;
+                if (isNaN(parseFloat(amount))) {
+                    return acc;
+                }
+                return {
+                    ...acc,
+                    [category]: oldVal + parseFloat(amount)
+                }
+            }, {}))
+            setNextKey(LastEvaluatedKey.date);
+        }
+        if(accessToken !== null) {
+            fetchActivities()
+        }
+    }, [accessToken, fetchFlag])
+    return {
+        financeData,
+        analyticsData,
+        nextKey
+    }
+}
+
+function Home(props) {
+    // csv format
+    const [fileContent, setFileContent] = useState(null);
+    const [fileName, setFileName] = useState("");
+    const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
+    const [fetchFlag, setFetchFlag] = useState(false);
+    const {
+        user,
+        isAuthenticated,
+        getAccessTokenSilently
+    } = useAuth0();
+
+    // custom hooks to fetch and store user activities
+    const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently)
+    const {
+        financeData,
+        analyticsData
+    } = useFetchActivities(accessToken, fetchFlag);
 
     if (!isAuthenticated) {
         return <Login />;
@@ -79,33 +135,8 @@ function Home(props) {
         // processes user file, store in financeData state var
         const texts = await fileContent.text();
         const apiResponse = await postCall(`/activities?format=${columnFormat}`, texts, "text/html", accessToken);
-        console.log(222, apiResponse, user);
-        const rows = texts.split('\n');
-        console.log(111, columnFormat, texts);
-        // TODO: then let user assign input columns to output columns?
-        // for now we can just use hard-coded mapping
-        // example column names: "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
-        const processedData = funMapping[columnFormat](rows.slice(1));
-        setFinanceData(processedData);
-
-        const groupByCategorySpending = processedData.reduce((acc, {
-            category,
-            amount
-        }) => {
-            const value = parseFloat(amount);
-            if(acc[category]) {
-                return {
-                    ...acc,
-                    [category]: acc[category] + value
-                };
-            }
-            return {
-                ...acc,
-                [category] : value
-            }
-        }, {});
-
-        setCategoryData(groupByCategorySpending);
+        console.log(222, apiResponse.text(), user);
+        setFetchFlag(!fetchFlag);
     }
 
     const updateUserFile = event => {
@@ -159,7 +190,7 @@ function Home(props) {
                                         category,
                                         amount
                                     }, index) => (
-                                        <tr id={index}>
+                                        <tr key={index}>
                                             <td>{date}</td>
                                             <td>{account}</td>
                                             <td>{desc}</td>
@@ -180,9 +211,9 @@ function Home(props) {
                 <Tab eventKey="categories" title="Categories" disabled={financeData.length === 0}>
                     {financeData.length > 0 && (
                         <div id="group-by-category">
-                            {Object.keys(categoryData).map(key => (
+                            {Object.keys(analyticsData).map(key => (
                                 <div key={key}>
-                                    {key}: {categoryData[key]}
+                                    {key}: {analyticsData[key]}
                                 </div>
                             ))}
                         </div>

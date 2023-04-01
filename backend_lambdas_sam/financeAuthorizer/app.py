@@ -71,6 +71,9 @@ def lambda_handler(event, context):
                     "Effect": "Allow" if verify_token_with_jwks(token, jwks_url, audiences) else "Deny",
                     "Resource": [resource]
                 }]
+            },
+            "context": {
+                "key": "general kenobi!"
             }
         }
     except:
