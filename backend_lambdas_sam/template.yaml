@@ -59,6 +59,7 @@ Resources:
           - X-Amz-Security-Token
         AllowOrigins:
           - "http://localhost:3000"
+          - "https://fantadrinker.github.io"
         MaxAge: 600
 
   ApiLogs:
@@ -126,11 +127,14 @@ Resources:
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FileCheckTable
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+          FILECHECK_TABLE: !Ref FileCheckTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         PostActivities:
@@ -147,8 +151,51 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: GET
+  FileCheckFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: fileCheck/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FileCheckTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          FILECHECK_TABLE: !Ref FileCheckTable
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+      Events:
+        GetFileChecks:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /chksums
+            Method: GET
+
   # dynamodb tables
   ActivitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - AttributeName: user
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+      KeySchema: 
+        - AttributeName: user
+          KeyType: HASH
+        - AttributeName: date
+          KeyType: RANGE
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  
+  FileCheckTable:
     Type: AWS::DynamoDB::Table
     Properties: 
       AttributeDefinitions: 
