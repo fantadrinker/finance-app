@@ -41,13 +41,11 @@ Resources:
                 - Authorization
               ReauthorizeEvery: 0
           OAuthAuthorizer:
-            AuthorizationScopes:
-              - scope1
             JwtConfiguration:
-              issuer: "https://www.example.com/v1/connect/oauth2"
+              issuer: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/"
               audience:
-                - MyApi
-            IdentitySource: "$request.querystring.param"
+                - https://fbbvgusi51.execute-api.us-east-1.amazonaws.com
+            IdentitySource: "$request.header.Authorization"
       CorsConfiguration:
         AllowMethods: 
           - OPTIONS
@@ -118,7 +116,7 @@ Resources:
             Path: /multiply
             Method: GET
             Auth:
-              Authorizer: MyLambdaTokenAuthorizer
+              Authorizer: OAuthAuthorizer
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -133,26 +131,36 @@ Resources:
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
-        Activities:
+        PostActivities:
           Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /activities
             Method: POST
-            Auth:
-              Authorizer: MyLambdaTokenAuthorizer
+        GetActivities:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /activities
+            Method: GET
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table
     Properties: 
       AttributeDefinitions: 
-        - AttributeName: id
+        - AttributeName: user
+          AttributeType: S
+        - AttributeName: date
           AttributeType: S
       KeySchema: 
-        - AttributeName: id
+        - AttributeName: user
           KeyType: HASH
+        - AttributeName: date
+          KeyType: RANGE
       ProvisionedThroughput: 
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
