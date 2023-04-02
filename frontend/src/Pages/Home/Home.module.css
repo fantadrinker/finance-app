@@ -5,3 +5,7 @@
 .activityTable button {
     margin: 4px;
 }
+
+.warningMessage {
+    color: #ffc107;
+}

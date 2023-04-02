@@ -57,7 +57,8 @@ def lambda_handler(event, context):
         table_name = os.environ.get("FILECHECK_TABLE", "")
         chksum_table = dynamodb.Table(table_name)
         query_params = {
-            "KeyConditionExpression": Key('user').eq(user_id)
+            "KeyConditionExpression": Key('user').eq(user_id),
+            "AttributesToGet": ["chksum"]
         }
         data = chksum_table.query(
             **query_params
