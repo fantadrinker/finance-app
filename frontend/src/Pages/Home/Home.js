@@ -14,6 +14,7 @@ import { downloadFinanceData } from '../../helpers';
 import Login from '../Login/Login';
 import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
+import Insights from '../../Components/Insights';
 
 /* 
     Implements main page, displays 3 sections:
@@ -238,13 +239,7 @@ function Home(props) {
                 </Tab>
                 <Tab eventKey="categories" title="Categories" disabled={financeData.length === 0}>
                     {financeData.length > 0 && (
-                        <div id="group-by-category">
-                            {Object.keys(analyticsData).map(key => (
-                                <div key={key}>
-                                    {key}: {analyticsData[key]}
-                                </div>
-                            ))}
-                        </div>
+                        <Insights data={Object.keys(analyticsData).map(key => ({name: key, value: analyticsData[key]}))} />
                     )}
                 </Tab>
             </Tabs>
