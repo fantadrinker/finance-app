@@ -58,7 +58,7 @@ def lambda_handler(event, context):
         chksum_table = dynamodb.Table(table_name)
         query_params = {
             "KeyConditionExpression": Key('user').eq(user_id),
-            "AttributesToGet": ["chksum"]
+            "ProjectionExpression": "chksum"
         }
         data = chksum_table.query(
             **query_params

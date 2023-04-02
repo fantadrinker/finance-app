@@ -15,6 +15,7 @@ import Login from '../Login/Login';
 import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
 import Insights from '../../Components/Insights';
+import UpdateMappingModal from '../../Components/UpdateMappingModal';
 
 /* 
     Implements main page, displays 3 sections:
@@ -129,8 +130,12 @@ function Home(props) {
     const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
     const [fetchFlag, setFetchFlag] = useState(false);
     const [warningMessage, setWarningMessage] = useState(null);
+
+    const [showModal, setShowModal] = useState(false);
+    const [description, setDescription] = useState(null);
+    const [category, setCategory] = useState(null);
+
     const {
-        user,
         isAuthenticated,
         getAccessTokenSilently
     } = useAuth0();
@@ -152,8 +157,11 @@ function Home(props) {
         event.preventDefault();
         // processes user file, store in financeData state var
         const apiResponse = await postCall(`/activities?format=${columnFormat}`, fileContent, "text/html", accessToken);
-        console.log(222, apiResponse.text(), user);
-        setFetchFlag(!fetchFlag);
+        if (apiResponse.ok) {
+            setFetchFlag(!fetchFlag);
+        } else {
+            console.log("api post call failed");
+        }
     }
 
     const updateUserFile = event => {
@@ -170,6 +178,12 @@ function Home(props) {
                 setWarningMessage("our server indicates this file has already been processed")
             }
         })
+    }
+
+    const openModalWithParams = (desc, cat) => {
+        setDescription(desc);
+        setCategory(cat);
+        setShowModal(true);
     }
 
     return (
@@ -223,11 +237,12 @@ function Home(props) {
                                             <td>{date}</td>
                                             <td>{account}</td>
                                             <td>{desc}</td>
-                                            <td>
+                                            <td style={{display: 'flex'}}>
                                                 <Form.Select onChange={() => {}}>
                                                     {category && <option value={category}>{category}</option>}
                                                     <option value="new category">new category</option>
                                                 </Form.Select>
+                                                <Button onClick={() => openModalWithParams(desc, category)}>Update</Button>
                                             </td>
                                             <td>{amount}</td>
                                         </tr>
@@ -243,6 +258,14 @@ function Home(props) {
                     )}
                 </Tab>
             </Tabs>
+            <UpdateMappingModal 
+                show={showModal}
+                closeModal={() => setShowModal(false)}
+                currentCategory={category}
+                currentDescription={description}
+                allCategories={[category]}
+                submit={(a, b) => console.log(a, b)}
+            />
         </div>
     )
 }

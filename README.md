@@ -2,7 +2,11 @@
 
 This is a webapp to handle tracking my finance, categorizing spending and keep track of how much I spend on what kinds of stuff each month.
 
-# How to build
+# Frontend - How to build
+
+first cd to frontend
+
+    cd frontend
 
 run this command to build
 
@@ -11,6 +15,30 @@ run this command to build
 run this command to run test server on local
 
     npm run start
+
+# Backend - How to build
+
+requirements:
+
+- sam cli [installation guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)
+
+first cd to backend
+
+    cd backend_lambdas_sam
+
+then validate template.yaml
+
+    sam validate
+
+then build local python code
+
+    sam build --use-container
+
+then deploy to cloud
+
+    sam deploy --guided
+
+
 
 # Dev Plans
 

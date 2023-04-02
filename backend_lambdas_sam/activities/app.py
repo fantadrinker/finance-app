@@ -71,14 +71,28 @@ def postActivities(user, file_format, body):
             # format and store them in dynamodb
             item = {}
             if file_format == "cap1" and len(row) >= 6:
+                date_val = datetime.strptime(row[2], "%Y-%m-%d")
+                amount = float(row[5]) if row[5] else 0 - float(row[6])
                 item = {
                     'id': str(uuid.uuid4()),
                     'user': user,
-                    'date': row[0],
+                    'date': date_val.strftime("%Y-%m-%d"),
                     'account': row[2],
                     'description': row[3],
                     'category': row[4],
-                    'amount': row[5]
+                    'amount': amount
+                }
+            elif file_format == "rbc" and len(row) >= 7:
+                date_val = datetime.strptime(row[2], "%m/%d/%Y")
+                amount = 0 - float(row[6])
+                item = {
+                    'id': str(uuid.uuid4()),
+                    'user': user,
+                    'account': f"{row[1]}-{row[0]}",
+                    'date': date_val.strftime("%Y-%m-%d"), # need to focus
+                    'description': row[5],
+                    'category': row[4], # in the future we should get this
+                    'amount' : amount # need to flip sign, rbc uses negative val for expense
                 }
             if item:
                 activities_table.put_item(
