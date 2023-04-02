@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import md5 from 'md5';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
@@ -13,6 +14,7 @@ import { downloadFinanceData } from '../../helpers';
 import Login from '../Login/Login';
 import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
+import Insights from '../../Components/Insights';
 
 /* 
     Implements main page, displays 3 sections:
@@ -105,12 +107,28 @@ const useFetchActivities = (accessToken, fetchFlag) => {
     }
 }
 
+const useFetchPrevCheckSums = (accessToken, fetchFlag) => {
+    const [chksums, setChksums] = useState([]);
+    useEffect(() => {
+        const fetchChkSum = async () => {
+            const apiResponse = await getCall(`/chksums`, accessToken);
+            const {data} = await apiResponse.json();
+            setChksums(data);
+        }
+        if (accessToken) {
+            fetchChkSum();
+        }
+    }, [accessToken, fetchFlag])
+    return chksums
+}
+
 function Home(props) {
     // csv format
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
     const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
     const [fetchFlag, setFetchFlag] = useState(false);
+    const [warningMessage, setWarningMessage] = useState(null);
     const {
         user,
         isAuthenticated,
@@ -123,7 +141,7 @@ function Home(props) {
         financeData,
         analyticsData
     } = useFetchActivities(accessToken, fetchFlag);
-
+    const chksums = useFetchPrevCheckSums(accessToken, fetchFlag);
     if (!isAuthenticated) {
         return <Login />;
     }
@@ -133,15 +151,25 @@ function Home(props) {
     const processUserFile = async (event) => {
         event.preventDefault();
         // processes user file, store in financeData state var
-        const texts = await fileContent.text();
-        const apiResponse = await postCall(`/activities?format=${columnFormat}`, texts, "text/html", accessToken);
+        const apiResponse = await postCall(`/activities?format=${columnFormat}`, fileContent, "text/html", accessToken);
         console.log(222, apiResponse.text(), user);
         setFetchFlag(!fetchFlag);
     }
 
     const updateUserFile = event => {
-        setFileName(event.target.value);
-        setFileContent(event.target.files[0]);
+        const fileName = event.target.value;
+        const fileContent = event.target.files[0];
+        setFileName(fileName);
+        setFileContent(fileContent);
+        
+        fileContent.text().then(text => {
+            const fileChksum = md5(text).toString();
+            if(chksums.map(({
+                chksum
+            }) => chksum).includes(fileChksum)) {
+                setWarningMessage("our server indicates this file has already been processed")
+            }
+        })
     }
 
     return (
@@ -154,6 +182,7 @@ function Home(props) {
                 <Tab eventKey="activities" title="Activities">
                     <Form>
                         <Form.Group as={Row} controlId="file" className="mb-3">
+                            {warningMessage !== null && (<Form.Text className={styles.warningMessage}>{warningMessage}</Form.Text>)}
                             <Form.Label column sm="2">Select File</Form.Label>
                             <Col sm="4">
                                 <Form.Control type="file" value={fileName} onChange={updateUserFile} />
@@ -210,13 +239,7 @@ function Home(props) {
                 </Tab>
                 <Tab eventKey="categories" title="Categories" disabled={financeData.length === 0}>
                     {financeData.length > 0 && (
-                        <div id="group-by-category">
-                            {Object.keys(analyticsData).map(key => (
-                                <div key={key}>
-                                    {key}: {analyticsData[key]}
-                                </div>
-                            ))}
-                        </div>
+                        <Insights data={Object.keys(analyticsData).map(key => ({name: key, value: analyticsData[key]}))} />
                     )}
                 </Tab>
             </Tabs>

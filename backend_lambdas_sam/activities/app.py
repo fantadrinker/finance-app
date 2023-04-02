@@ -4,6 +4,8 @@ import csv
 import json
 import uuid
 import requests
+import hashlib
+from datetime import datetime
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
@@ -46,7 +48,6 @@ def get_user_id(event):
         return ""
 
 def postActivities(user, file_format, body):
-    # todo: conduct step-by-step checksum to avoid duplicate uploads
     # how: for each file uploaded, store a checksum in a database table
     # this way we know when user uploads a duplicate file
     try:
@@ -56,7 +57,6 @@ def postActivities(user, file_format, body):
                 "body": "missing body content or input format",
             }
     
-        response_body = ""
         f = StringIO(body)
         reader = csv.reader(f, delimiter=',')
         dynamodb = boto3.resource("dynamodb")
@@ -69,7 +69,6 @@ def postActivities(user, file_format, body):
                 firstRow = False
                 continue
             # format and store them in dynamodb
-            response_body += '\t'.join(row)
             item = {}
             if file_format == "cap1" and len(row) >= 6:
                 item = {
@@ -85,6 +84,15 @@ def postActivities(user, file_format, body):
                 activities_table.put_item(
                     Item=item
                 )
+        chksum_table_name = os.environ.get("FILECHECK_TABLE", "")
+        chksum_table = dynamodb.Table(chksum_table_name)
+        chksum_table.put_item(
+            Item={
+                'user': user,
+                'chksum': hashlib.md5(body.encode('utf-8')).hexdigest(),
+                'date': datetime.today().strftime('%Y-%m-%d')
+            }
+        )
         return {
             "statusCode": 200,
             'headers': {
@@ -93,7 +101,7 @@ def postActivities(user, file_format, body):
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
             },
             "body": json.dumps({
-                "data": response_body
+                "data": "success"
             }),
         }
     except botocore.exceptions.ClientError as error:
