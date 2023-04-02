@@ -111,7 +111,7 @@ const useFetchPrevCheckSums = (accessToken, fetchFlag) => {
     useEffect(() => {
         const fetchChkSum = async () => {
             const apiResponse = await getCall(`/chksums`, accessToken);
-            const {data, LastEvaluatedKey} = await apiResponse.json();
+            const {data} = await apiResponse.json();
             setChksums(data);
         }
         if (accessToken) {
