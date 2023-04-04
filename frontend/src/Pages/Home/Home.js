@@ -7,10 +7,10 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
+import Spinner from 'react-bootstrap/Spinner';
 import { useAuth0, withAuth0 } from "@auth0/auth0-react";
 
 import styles from './Home.module.css'
-import { downloadFinanceData } from '../../helpers';
 import Login from '../Login/Login';
 import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
@@ -62,8 +62,10 @@ const useFetchActivities = (accessToken, fetchFlag) => {
     const [financeData, setFinanceData] = useState([]);
     const [analyticsData, setAnalyticsData] = useState([]);
     const [nextKey, setNextKey] = useState(null);
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
         const fetchActivities = async () => {
+            setLoading(true);
             const apiResponse = await getCall(`/activities?size=20`, accessToken);
             const {data, LastEvaluatedKey} = await apiResponse.json();
             // great :) now popluate the states with this data
@@ -96,15 +98,17 @@ const useFetchActivities = (accessToken, fetchFlag) => {
                 }
             }, {}))
             setNextKey(LastEvaluatedKey.date);
+            setLoading(false);
         }
         if(accessToken !== null) {
-            fetchActivities()
+            fetchActivities();
         }
     }, [accessToken, fetchFlag])
     return {
         financeData,
         analyticsData,
-        nextKey
+        nextKey,
+        loading
     }
 }
 
@@ -144,7 +148,8 @@ function Home(props) {
     const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently)
     const {
         financeData,
-        analyticsData
+        analyticsData,
+        loading
     } = useFetchActivities(accessToken, fetchFlag);
     const chksums = useFetchPrevCheckSums(accessToken, fetchFlag);
     if (!isAuthenticated) {
@@ -188,6 +193,7 @@ function Home(props) {
 
     return (
         <div className={styles.homeMain}>
+            
             <Tabs 
                 defaultActiveKey="activities"
                 id="uncontrolled-tab-example"
@@ -211,10 +217,8 @@ function Home(props) {
                         </Form.Group>
                         <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
                     </Form>
-                    {financeData.length > 0 && (
+                    {loading? <Spinner animation="border" />: (
                         <div className={styles.activityTable}>
-                            <Button variant="outline-primary" onClick={() => downloadFinanceData(financeData)}>Download</Button>
-                            <Button variant="outline-secondary" disabled>Save to Account</Button>
                             <Table striped bordered hover>
                                 <thead>
                                     <tr>

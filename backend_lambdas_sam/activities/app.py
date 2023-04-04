@@ -63,6 +63,10 @@ def postActivities(user, file_format, body):
         table_name = os.environ.get("ACTIVITIES_TABLE", "")
         activities_table = dynamodb.Table(table_name)
         firstRow = True
+        # construct a category mapping table/object for mappings
+        # category_mapping = {}
+        # fetch all category rules from category table
+        # for each row apply them
         for row in reader:
             # skips first header row
             if firstRow:
