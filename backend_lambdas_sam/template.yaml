@@ -51,6 +51,7 @@ Resources:
           - OPTIONS
           - POST
           - GET
+          - DELETE
         AllowHeaders: 
           - Content-Type
           - X-Amz-Date
@@ -69,7 +70,7 @@ Resources:
   MyAuthFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: financeAuthorizer/
+      CodeUri: lambdas/financeAuthorizer/
       Handler: app.lambda_handler
       Runtime: python3.9
       Environment:
@@ -103,7 +104,7 @@ Resources:
   MultiplyFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: multiply/
+      CodeUri: lambdas/multiply/
       Handler: app.lambda_handler
       Runtime: python3.9
       Architectures:
@@ -121,20 +122,17 @@ Resources:
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: activities/
+      CodeUri: lambdas/activities/
       Handler: app.lambda_handler
       Runtime: python3.9
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-        - DynamoDBCrudPolicy:
-            TableName: !Ref FileCheckTable
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
-          FILECHECK_TABLE: !Ref FileCheckTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         PostActivities:
@@ -151,20 +149,27 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: GET
+        DeleteActivities:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /activities
+            Method: DELETE
   FileCheckFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: fileCheck/
+      CodeUri: lambdas/fileCheck/
       Handler: app.lambda_handler
       Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref FileCheckTable
+            TableName: !Ref ActivitiesTable
       Architectures:
       - x86_64
       Environment:
         Variables:
-          FILECHECK_TABLE: !Ref FileCheckTable
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         GetFileChecks:
@@ -174,46 +179,50 @@ Resources:
               Ref: FinanceAPI
             Path: /chksums
             Method: GET
+  ActivityInsightsFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: lambdas/activityInsights/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+      Events:
+        GetFileChecks:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /insights
+            Method: GET
 
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table
     Properties: 
-      AttributeDefinitions: 
+      AttributeDefinitions:
         - AttributeName: user
           AttributeType: S
-        - AttributeName: date
+        - AttributeName: sk
           AttributeType: S
-      KeySchema: 
+      KeySchema:
         - AttributeName: user
           KeyType: HASH
-        - AttributeName: date
+        - AttributeName: sk
           KeyType: RANGE
-      ProvisionedThroughput: 
+      ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       StreamSpecification:
         StreamViewType: NEW_IMAGE
   
-  FileCheckTable:
-    Type: AWS::DynamoDB::Table
-    Properties: 
-      AttributeDefinitions: 
-        - AttributeName: user
-          AttributeType: S
-        - AttributeName: date
-          AttributeType: S
-      KeySchema: 
-        - AttributeName: user
-          KeyType: HASH
-        - AttributeName: date
-          KeyType: RANGE
-      ProvisionedThroughput: 
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
-
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:

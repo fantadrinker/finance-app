@@ -54,13 +54,13 @@ def lambda_handler(event, context):
 
     try:
         dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("FILECHECK_TABLE", "")
-        chksum_table = dynamodb.Table(table_name)
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        activities_table = dynamodb.Table(table_name)
         query_params = {
-            "KeyConditionExpression": Key('user').eq(user_id),
-            "AttributesToGet": ["chksum"]
+            "KeyConditionExpression": Key('user').eq(user_id) & Key('sk').begins_with('chksum#'),
+            "ProjectionExpression": "chksum"
         }
-        data = chksum_table.query(
+        data = activities_table.query(
             **query_params
         )
         print(f"data retrieved {data}")

@@ -7,14 +7,15 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
+import Spinner from 'react-bootstrap/Spinner';
 import { useAuth0, withAuth0 } from "@auth0/auth0-react";
 
 import styles from './Home.module.css'
-import { downloadFinanceData } from '../../helpers';
 import Login from '../Login/Login';
 import { getCall, postCall } from '../../api';
 import { getConfig } from '../../config';
 import Insights from '../../Components/Insights';
+import UpdateMappingModal from '../../Components/UpdateMappingModal';
 
 /* 
     Implements main page, displays 3 sections:
@@ -57,57 +58,41 @@ const useAuth0AccessToken = (isAuthenticated, getToken) => {
     return accessToken;
 }
 
-const useFetchActivities = (accessToken, fetchFlag) => {
-    const [financeData, setFinanceData] = useState([]);
-    const [analyticsData, setAnalyticsData] = useState([]);
-    const [nextKey, setNextKey] = useState(null);
-    useEffect(() => {
-        const fetchActivities = async () => {
-            const apiResponse = await getCall(`/activities?size=20`, accessToken);
-            const {data, LastEvaluatedKey} = await apiResponse.json();
-            // great :) now popluate the states with this data
-            setFinanceData(data.map(({
-                date,
-                category,
-                account,
-                amount,
-                description
-            }) => {
-                return {
-                    date,
-                    category,
-                    account,
-                    amount: isNaN(parseFloat(amount))? 0: parseFloat(amount),
-                    desc: description 
-                }
-            }));
-            setAnalyticsData(data.reduce((acc, {
-                category,
-                amount
-            }) => {
-                const oldVal = acc[category] ?? 0;
-                if (isNaN(parseFloat(amount))) {
-                    return acc;
-                }
-                return {
-                    ...acc,
-                    [category]: oldVal + parseFloat(amount)
-                }
-            }, {}))
-            setNextKey(LastEvaluatedKey.date);
+const fetchActivities = async (
+    nextKey,
+    accessToken,
+) => {
+    const apiResponse = await getCall(`/activities?size=20${nextKey? `&nextDate=${nextKey}`: ""}`, accessToken);
+    const {data, LastEvaluatedKey} = await apiResponse.json();
+    // great :) now popluate the states with this data
+    const financeDataRows = data.map(({
+        date,
+        category,
+        account,
+        amount,
+        description
+    }) => {
+        return {
+            date,
+            category,
+            account,
+            amount: isNaN(parseFloat(amount))? 0: parseFloat(amount),
+            desc: description 
         }
-        if(accessToken !== null) {
-            fetchActivities()
-        }
-    }, [accessToken, fetchFlag])
+    });
     return {
-        financeData,
-        analyticsData,
-        nextKey
+        financeDataRows,
+        lastKey: LastEvaluatedKey.date,
     }
 }
 
-const useFetchPrevCheckSums = (accessToken, fetchFlag) => {
+const fetchInsights = async (accessToken) => {
+    const apiResponse = await getCall(`/insights`, accessToken);
+    const {data} = await apiResponse.json();
+    return data;
+}
+
+const useFetchPrevCheckSums = (accessToken) => {
     const [chksums, setChksums] = useState([]);
     useEffect(() => {
         const fetchChkSum = async () => {
@@ -118,7 +103,7 @@ const useFetchPrevCheckSums = (accessToken, fetchFlag) => {
         if (accessToken) {
             fetchChkSum();
         }
-    }, [accessToken, fetchFlag])
+    }, [accessToken])
     return chksums
 }
 
@@ -127,24 +112,68 @@ function Home(props) {
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
     const [columnFormat, setColumnFormat] = useState(COLUMN_FORMAT_CAP1);
-    const [fetchFlag, setFetchFlag] = useState(false);
     const [warningMessage, setWarningMessage] = useState(null);
+
+    const [showModal, setShowModal] = useState(false);
+    const [description, setDescription] = useState(null);
+    const [category, setCategory] = useState(null);
+
     const {
-        user,
         isAuthenticated,
         getAccessTokenSilently
     } = useAuth0();
 
     // custom hooks to fetch and store user activities
-    const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently)
-    const {
-        financeData,
-        analyticsData
-    } = useFetchActivities(accessToken, fetchFlag);
-    const chksums = useFetchPrevCheckSums(accessToken, fetchFlag);
+    const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);
+    const chksums = useFetchPrevCheckSums(accessToken);
+
+
+    const [financeData, setFinanceData] = useState([]);
+    const [analyticsData, setAnalyticsData] = useState([]);
+    const [nextKey, setNextKey] = useState(null);
+    const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        if(accessToken !== null) {
+            setLoading(true);
+            fetchActivities(
+                null,
+                accessToken
+            ).then(({
+                financeDataRows,
+                lastKey,
+            }) => {
+                if (financeDataRows.length > 0) {
+                    setFinanceData(financeDataRows);
+                    setNextKey(lastKey);
+                    setLoading(false);
+                }
+            })
+            fetchInsights(accessToken).then((data) => {
+                setAnalyticsData(data);
+            })
+        }
+    }, [accessToken]);
+
     if (!isAuthenticated) {
         return <Login />;
     }
+    const fetchMoreActivities = () => {
+        setLoading(true);
+        fetchActivities(nextKey, accessToken).then(({financeDataRows, lastKey}) => {
+            setFinanceData([...financeData, ...financeDataRows]);
+            setNextKey(lastKey);
+            console.log("next key: ", lastKey);
+            setLoading(false);
+        });
+    }
+
+    window.onscroll = () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            if (nextKey !== null && nextKey !== undefined) {
+                fetchMoreActivities();
+            }
+        }
+    };
 
     // todo: useeffect hook to retrieve categories
     // update category mapping?
@@ -152,8 +181,25 @@ function Home(props) {
         event.preventDefault();
         // processes user file, store in financeData state var
         const apiResponse = await postCall(`/activities?format=${columnFormat}`, fileContent, "text/html", accessToken);
-        console.log(222, apiResponse.text(), user);
-        setFetchFlag(!fetchFlag);
+        if (apiResponse.ok) {
+            setFinanceData([]);
+            setLoading(true);
+            fetchActivities(
+                null,
+                accessToken
+            ).then(({
+                financeDataRows,
+                lastKey,
+            }) => {
+                if (financeDataRows.length > 0) {
+                    setFinanceData(financeDataRows);
+                    setNextKey(lastKey);
+                    setLoading(false);
+                }
+            })
+        } else {
+            console.log("api post call failed");
+        }
     }
 
     const updateUserFile = event => {
@@ -172,8 +218,15 @@ function Home(props) {
         })
     }
 
+    const openModalWithParams = (desc, cat) => {
+        setDescription(desc);
+        setCategory(cat);
+        setShowModal(true);
+    }
+
     return (
         <div className={styles.homeMain}>
+            
             <Tabs 
                 defaultActiveKey="activities"
                 id="uncontrolled-tab-example"
@@ -197,10 +250,10 @@ function Home(props) {
                         </Form.Group>
                         <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
                     </Form>
+                    {(financeData.length === 0 && !loading) && <div className={styles.noData}>No data to display</div>}
+                    {(financeData.length === 0 && loading) && <Spinner animation="border" />}
                     {financeData.length > 0 && (
                         <div className={styles.activityTable}>
-                            <Button variant="outline-primary" onClick={() => downloadFinanceData(financeData)}>Download</Button>
-                            <Button variant="outline-secondary" disabled>Save to Account</Button>
                             <Table striped bordered hover>
                                 <thead>
                                     <tr>
@@ -223,15 +276,23 @@ function Home(props) {
                                             <td>{date}</td>
                                             <td>{account}</td>
                                             <td>{desc}</td>
-                                            <td>
+                                            <td style={{display: 'flex'}}>
                                                 <Form.Select onChange={() => {}}>
                                                     {category && <option value={category}>{category}</option>}
                                                     <option value="new category">new category</option>
                                                 </Form.Select>
+                                                <Button onClick={() => openModalWithParams(desc, category)}>Update</Button>
                                             </td>
                                             <td>{amount}</td>
                                         </tr>
                                     ))}
+                                    {nextKey !== null && nextKey !== undefined && (
+                                        <tr>
+                                            <td colSpan="5">
+                                                {loading? <Spinner animation="border" />: null}
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </Table>
                         </div>
@@ -239,10 +300,18 @@ function Home(props) {
                 </Tab>
                 <Tab eventKey="categories" title="Categories" disabled={financeData.length === 0}>
                     {financeData.length > 0 && (
-                        <Insights data={Object.keys(analyticsData).map(key => ({name: key, value: analyticsData[key]}))} />
+                        <Insights data={analyticsData} />
                     )}
                 </Tab>
             </Tabs>
+            <UpdateMappingModal 
+                show={showModal}
+                closeModal={() => setShowModal(false)}
+                currentCategory={category}
+                currentDescription={description}
+                allCategories={[category]}
+                submit={(a, b) => console.log(a, b)}
+            />
         </div>
     )
 }

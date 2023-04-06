@@ -6,6 +6,15 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const Insights = ({
     data
 }) => {
+    // what's the data look like?
+    // data is array of monthly summaries
+    // each monthly summary has a month and a array of 
+    // spendings with category
+
+    // first calculate total spending for each category
+    // display in one graph
+
+    // then display spending over each month in another graph
     return (
         <div style={{width: '400px', height: '400px'}}>
             <ResponsiveContainer width="100%" height="100%">
