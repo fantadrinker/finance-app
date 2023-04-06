@@ -147,10 +147,10 @@ function Home(props) {
                     setNextKey(lastKey);
                     setLoading(false);
                 }
-            })
+            });
             fetchInsights(accessToken).then((data) => {
                 setAnalyticsData(data);
-            })
+            });
         }
     }, [accessToken]);
 
