@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer, BarChart, YAxis, XAxis, Bar, CartesianGrid } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
