@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from hello_world import app
+from multiply import app
 
 
 @pytest.fixture()
@@ -34,7 +34,7 @@ def apigw_event():
             },
             "stage": "prod",
         },
-        "queryStringParameters": {"foo": "bar"},
+        "queryStringParameters": {"a": "9", "b": "10"},
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
             "Accept-Language": "en-US,en;q=0.8",
@@ -68,5 +68,5 @@ def test_lambda_handler(apigw_event):
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200
-    assert "message" in ret["body"]
-    assert data["message"] == "hello world"
+    assert "product" in ret["body"]
+    assert data["product"] == 90
