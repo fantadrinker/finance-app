@@ -37,8 +37,10 @@ def verify_token_with_jwks(token, jwks_url, audiences):
 def get_user_id(event):
     if os.environ.get("SKIP_AUTH", "") == "1":
         # for local testing
+        print("local testing")
         return event.get("headers", {}).get("authorization", "")
     try:
+        print("prod")
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
