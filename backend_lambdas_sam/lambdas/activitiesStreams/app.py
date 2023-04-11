@@ -5,8 +5,7 @@ import boto3
 from boto3.dynamodb.conditions import Key, Attr
 
 # first set up activity table
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
+table = None
 
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 
@@ -138,6 +137,9 @@ def process_deleted_mappings(records):
         update_activity_category(user_id, "others", description)
 
 def lambda_handler(event, context):
+    if not table:
+        dynamodb = boto3.resource("dynamodb")
+        table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
     # handle stream update events
     if event.get("Records", None):
         # first group records by use cases
