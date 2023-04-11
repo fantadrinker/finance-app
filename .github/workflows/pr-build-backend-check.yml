@@ -11,6 +11,11 @@ permissions:
     contents: read
     id-token: write
 
+defaults:
+    run:
+        shell: bash
+        working-directory: ./backend_lambdas_sam
+
 jobs:
     build-and-test-backend:
         runs-on: ubuntu-latest
@@ -28,12 +33,9 @@ jobs:
               run: pwd
             - name: Install dependencies
               run: |
-                  cd backend
                   python -m pip install --upgrade pip
                   pip install ruff pytest
                   if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
             - name: run tests
-              run: |
-                cd backend
-                pytest tests/unit -v -rP
+              run: pytest tests/unit -v -rP
       
