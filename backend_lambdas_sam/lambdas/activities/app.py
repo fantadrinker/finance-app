@@ -14,6 +14,7 @@ import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
 
+activities_table = None
 
 # handle auth tokens
 
@@ -26,21 +27,17 @@ def verify_token_with_jwks(token, jwks_url, audiences):
     try:
         # Verify the token using the extracted public key
         decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
-        print("222", decoded_token)
         # If the token was successfully verified, return the decoded token
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
-        print("333")
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
     if os.environ.get("SKIP_AUTH", "") == "1":
         # for local testing
-        print("local testing")
         return event.get("headers", {}).get("authorization", "")
     try:
-        print("prod")
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
@@ -56,6 +53,7 @@ def get_user_id(event):
 def postActivities(user, file_format, body):
     # how: for each file uploaded, store a checksum in a database table
     # this way we know when user uploads a duplicate file
+    global activities_table
     try:
         if not file_format or not body:
             return {
@@ -65,9 +63,6 @@ def postActivities(user, file_format, body):
     
         f = StringIO(body)
         reader = csv.reader(f, delimiter=',')
-        dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("ACTIVITIES_TABLE", "")
-        activities_table = dynamodb.Table(table_name)
         insights_dict = {} # key: year-month, value: expenses per category
         firstRow = True
         with activities_table.batch_writer() as batch:
@@ -149,10 +144,8 @@ def postActivities(user, file_format, body):
         }
 
 def getActivities(user: str, size: int, startKey: str):
+    global activities_table
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("ACTIVITIES_TABLE", "")
-        activities_table = dynamodb.Table(table_name)
         query_params = {
             "Limit": size,
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
@@ -166,7 +159,6 @@ def getActivities(user: str, size: int, startKey: str):
         data = activities_table.query(
             **query_params
         )
-        # print(f"data retrieved {data}")
         # should also fetch total count for page numbers
         items = data.get("Items", [])
         # filter items to only include sk that starts with date
@@ -192,10 +184,8 @@ def getActivities(user: str, size: int, startKey: str):
 
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
+    global activities_table
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("ACTIVITIES_TABLE", "")
-        activities_table = dynamodb.Table(table_name)
         if sk:
             activities_table.delete_item(
                 Key={
@@ -239,7 +229,11 @@ def delete_activities(user: str, sk: str):
 def lambda_handler(event, context):
     # processes user activities data, store in db
     # right now just pings and returns body
-
+    global activities_table
+    if not activities_table:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        activities_table = dynamodb.Table(table_name)
     user_id = get_user_id(event)
     if not user_id:
         return {
