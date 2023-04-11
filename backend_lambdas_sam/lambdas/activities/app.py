@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from decimal import Decimal
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
@@ -20,21 +20,24 @@ from jwt.exceptions import InvalidSignatureError
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
-    
     # Extract the public key from the JSON Web Key Set
     key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
-    
+
     try:
         # Verify the token using the extracted public key
         decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
-        
+        print("222", decoded_token)
         # If the token was successfully verified, return the decoded token
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
+        print("333")
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
+    if os.environ.get("SKIP_AUTH", "") == "1":
+        # for local testing
+        return event.get("headers", {}).get("authorization", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -43,7 +46,6 @@ def get_user_id(event):
             f"{url_base}/userinfo"
         ]
         token = event.get("headers", {}).get("authorization", "")
-
         decoded = verify_token_with_jwks(token, jwks_url, audiences)
         return decoded.get("sub", "")
     except:
@@ -120,39 +122,6 @@ def postActivities(user, file_format, body):
                     'date': datetime.today().strftime('%Y-%m-%d')
                 }
             )
-            print(insights_dict)
-            # update aggregated insights table
-            for yr_mth in insights_dict:
-                for category in insights_dict[yr_mth]:
-                    # check if item exists
-                    response = activities_table.query(
-                        KeyConditionExpression=Key('user').eq(user) & Key('sk').begins_with(f"insights_{yr_mth}")
-                    )
-                    print("debug", response)
-                    # handle case where not all results are fetched
-                    category_match = [item for item in response["Items"] if item["category"] == category] 
-                    # filter(lambda x: x["category"] == category ,response["Items"])
-                    if not category_match:
-                        batch.put_item(
-                            Item={
-                                'user': user,
-                                'sk': f'insights#{yr_mth}#{uuid.uuid4()}',
-                                'month': yr_mth,
-                                'category': category,
-                                'amount': insights_dict[yr_mth][category]
-                            }
-                        )
-                    else:
-                        activities_table.update_item(
-                            Key={
-                                'user': user,
-                                'sk': category_match[0]["sk"],
-                            },
-                            UpdateExpression="set amount = :a",
-                            ExpressionAttributeValues={
-                                ':a': insights_dict[yr_mth][category] + category_match["amount"]
-                            }
-                        )
         return {
             "statusCode": 200,
             'headers': {
@@ -190,16 +159,17 @@ def getActivities(user: str, size: int, startKey: str):
         if startKey:
             query_params["ExclusiveStartKey"] = {
                 "user": user,
-                "date": startKey
+                "sk": startKey
             }
         data = activities_table.query(
             **query_params
         )
-        print(f"data retrieved {data}")
+        # print(f"data retrieved {data}")
         # should also fetch total count for page numbers
         items = data.get("Items", [])
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
+        # TODO: redo lastevaluatedkey to be date instead of sk
         return {
             "statusCode": 200,
             "body": json.dumps({
@@ -265,39 +235,10 @@ def delete_activities(user: str, sk: str):
         }
 
 def lambda_handler(event, context):
-    """Sample pure Lambda function
-
-    Parameters
-    ----------
-    event: dict, required
-        API Gateway Lambda Proxy Input Format
-
-        Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
-
-    context: object, required
-        Lambda Context runtime methods and attributes
-
-        Context doc: https://docs.aws.amazon.com/lambda/latest/dg/python-context-object.html
-
-    Returns
-    ------
-    API Gateway Lambda Proxy Output Format: dict
-
-        Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
-    """
-
     # processes user activities data, store in db
     # right now just pings and returns body
-    """
-    POST /activities?format=<format>
-        param:
-        - format: cap1 or rbc
-        body: csv file exported from either cap1 or RBC
-        response: body: formatted data with following columns 
-        date, account, description, category, amount
-    """ 
+
     user_id = get_user_id(event)
-    
     if not user_id:
         return {
             "statusCode": 400,

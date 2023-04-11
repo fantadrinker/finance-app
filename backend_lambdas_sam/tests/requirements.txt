@@ -1,3 +1,7 @@
 pytest
 boto3
 requests
+pyjwt
+cryptography
+moto[all]
+requests-mock
