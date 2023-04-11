@@ -29,8 +29,8 @@ jobs:
               uses: actions/setup-python@v4
               with:
                 python-version: ${{ matrix.python-version }}
-            - name: Echo Python version
-              run: python -c "import sys; print(sys.version)"
+            - name: Echo current directory
+              run: pwd
             - name: Install dependencies
               run: |
                   python -m pip install --upgrade pip
