@@ -1,0 +1,47 @@
+# workflow for testing builds for PRs
+name: Check if PR can be built successfully in backend
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["*"]
+
+
+permissions:
+    contents: read
+    id-token: write
+
+defaults:
+    run:
+        shell: bash
+        working-directory: ./backend_lambdas_sam
+
+jobs:
+    build-and-test-backend:
+        runs-on: ubuntu-latest
+        environment: aws-prod
+        strategy:
+            matrix:
+              python-version: ["3.9"]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+            - uses: aws-actions/configure-aws-credentials@v1
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: us-east-1
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v4
+              with:
+                python-version: ${{ matrix.python-version }}
+            - name: Echo environemnts
+              run: env
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install ruff pytest
+                  if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+            - name: run tests
+              run: pytest tests/unit -v -rP
+      

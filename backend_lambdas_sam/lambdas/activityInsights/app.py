@@ -101,12 +101,6 @@ def get(user_id, starting_date=None, ending_date=None, categories=None):
             "statusCode": 500,
             "body": "client error happened while processing file, see logs"
         }
-
-def post(event, context, user_id):
-    # create or update description to category mapping 
-    # in category table
-    # for now just update everything in description table.
-    pass
     
 def lambda_handler(event, context):
     user_id = get_user_id(event)
@@ -124,8 +118,6 @@ def lambda_handler(event, context):
             query_params.get("starting_date", None),
             query_params.get("ending_date", None), 
             query_params.get("categories", None))
-    elif method == "POST":
-        return post(event, context, user_id)
     else:
         return {
             "statusCode": 400,

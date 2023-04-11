@@ -111,7 +111,7 @@ Resources:
       - x86_64
       Events:
         Multiply:
-          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi 
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -136,7 +136,7 @@ Resources:
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         PostActivities:
-          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi 
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -156,6 +156,15 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: DELETE
+        UpdateMappingsStream:
+          Type: DynamoDB
+          Properties:
+            Stream: 
+              !GetAtt ActivitiesTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "mapping#"}}}}'
   FileCheckFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -173,7 +182,7 @@ Resources:
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         GetFileChecks:
-          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi 
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -195,14 +204,88 @@ Resources:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
-        GetFileChecks:
-          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        GetInsights:
+          Type: HttpApi 
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /insights
             Method: GET
+        
+  MappingsFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: lambdas/mappings/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+      Events:
+        GetMappings:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /mappings
+            Method: GET
+        PostMappings:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /mappings
+            Method: POST
+        DeleteMappings:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /mappings
+            Method: DELETE
 
+  ActivitiesTableStreamProcessor:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: lambdas/activitiesStreams/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+        - DynamoDBStreamReadPolicy:
+            TableName: !Ref ActivitiesTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+      Events:
+        ProcessNewActivities:
+          Type: DynamoDB
+          Properties:
+            Stream: 
+              !GetAtt ActivitiesTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "20"}}}}'
+        ProcessNewMappings:
+          Type: DynamoDB
+          Properties:
+            Stream: 
+              !GetAtt ActivitiesTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "mapping#"}}}}'
+        
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table
@@ -221,7 +304,7 @@ Resources:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
       StreamSpecification:
-        StreamViewType: NEW_IMAGE
+        StreamViewType: NEW_AND_OLD_IMAGES
   
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
