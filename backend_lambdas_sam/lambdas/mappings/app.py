@@ -30,6 +30,9 @@ def verify_token_with_jwks(token, jwks_url, audiences):
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
+    if os.environ.get("SKIP_AUTH", "") == "1":
+        # for local testing
+        return event.get("headers", {}).get("authorization", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -105,10 +108,10 @@ def delete(user, ids):
     global table
     try:
         for id in ids:
-            table.delete_item(
+            response = table.delete_item(
                 Key={
                     "user": user,
-                    "sk": f'mapping#{id}'
+                    "sk": id
                 }
             )
         return {
