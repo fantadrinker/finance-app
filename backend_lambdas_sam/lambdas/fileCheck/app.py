@@ -7,7 +7,7 @@ import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
 
-
+activities_table = None
 # handle auth tokens
 
 def verify_token_with_jwks(token, jwks_url, audiences):
@@ -28,6 +28,9 @@ def verify_token_with_jwks(token, jwks_url, audiences):
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
+    if os.environ.get("SKIP_AUTH", "") == "1":
+        # for local testing
+        return event.get("headers", {}).get("authorization", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -44,6 +47,7 @@ def get_user_id(event):
     
 
 def lambda_handler(event, context):
+    global activities_table
     user_id = get_user_id(event)
     
     if not user_id:
@@ -51,11 +55,11 @@ def lambda_handler(event, context):
             "statusCode": 400,
             "body": "unable to retrive user information",
         }
-
-    try:
+    if not activities_table:
         dynamodb = boto3.resource("dynamodb")
         table_name = os.environ.get("ACTIVITIES_TABLE", "")
         activities_table = dynamodb.Table(table_name)
+    try:
         query_params = {
             "KeyConditionExpression": Key('user').eq(user_id) & Key('sk').begins_with('chksum#'),
             "ProjectionExpression": "chksum"

@@ -1,6 +1,5 @@
 import pytest
 import json
-import uuid
 from lambdas.activities import app
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
@@ -10,7 +9,6 @@ from moto import mock_dynamodb
 @pytest.fixture()
 def activities_table():
     """ Creates a dynamodb table for testing purposes"""
-
     with mock_dynamodb():
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         table = dynamodb.create_table(

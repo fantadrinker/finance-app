@@ -9,6 +9,7 @@ from jwt.exceptions import InvalidSignatureError
 from boto3.dynamodb.conditions import Key
 import botocore
 
+table = None
 # handle auth tokens
 
 def verify_token_with_jwks(token, jwks_url, audiences):
@@ -29,6 +30,9 @@ def verify_token_with_jwks(token, jwks_url, audiences):
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
+    if os.environ.get("SKIP_AUTH", "") == "1":
+        # for local testing
+        return event.get("headers", {}).get("authorization", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -45,10 +49,9 @@ def get_user_id(event):
 
 
 def post(user, description, category, priority):
+    global table
     # creates "user: user, sk: mapping#uuid, description: description, category: category, priority: priority"
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
         table.put_item(
             Item={
                 "user": user,
@@ -79,9 +82,8 @@ def post(user, description, category, priority):
 
 
 def get(user):
+    global table
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
         response = table.query(
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
         )
@@ -103,14 +105,13 @@ def get(user):
         }
 
 def delete(user, ids):
+    global table
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
         for id in ids:
-            table.delete_item(
+            response = table.delete_item(
                 Key={
                     "user": user,
-                    "sk": f'mapping#{id}'
+                    "sk": id
                 }
             )
         return {
@@ -130,6 +131,7 @@ def delete(user, ids):
         }
 
 def lambda_handler(event, context):
+    global table
     user_id = get_user_id(event)
     
     if not user_id:
@@ -137,6 +139,9 @@ def lambda_handler(event, context):
             "statusCode": 400,
             "body": "unable to retrive user information",
         }
+    if not table:
+        dynamodb = boto3.resource("dynamodb")
+        table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
     method = event.get("routeKey", "").split(' ')[0]
     # should support 3 functionalities
     # post: create or update description to category mapping

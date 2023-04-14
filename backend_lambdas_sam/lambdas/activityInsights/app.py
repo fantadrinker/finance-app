@@ -7,6 +7,8 @@ import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
 
+activities_table = None
+
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
@@ -25,6 +27,9 @@ def verify_token_with_jwks(token, jwks_url, audiences):
         raise ValueError("Token verification failed.")
 
 def get_user_id(event):
+    if os.environ.get("SKIP_AUTH", "") == "1":
+        # for local testing
+        return event.get("headers", {}).get("authorization", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -40,13 +45,11 @@ def get_user_id(event):
         return ""
     
 def get(user_id, starting_date=None, ending_date=None, categories=None):
+    global activities_table
     # for user, get summary for each category in each month
     # and return the list of categories
     # or for now just get from existing activities table instead
     try:
-        dynamodb = boto3.resource("dynamodb")
-        table_name = os.environ.get("ACTIVITIES_TABLE", "")
-        activities_table = dynamodb.Table(table_name)
         params = {
             "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").begins_with("insights#"),
         }
@@ -103,6 +106,11 @@ def get(user_id, starting_date=None, ending_date=None, categories=None):
         }
     
 def lambda_handler(event, context):
+    global activities_table
+    if not activities_table:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        activities_table = dynamodb.Table(table_name)
     user_id = get_user_id(event)
     
     if not user_id:
