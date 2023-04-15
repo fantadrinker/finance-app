@@ -72,30 +72,10 @@ def get(user_id, starting_date=None, ending_date=None, categories=None):
                 ExclusiveStartKey=response["LastEvaluatedKey"]
             )
             items.extend(more_response.get("Items", []))
-        # then group by month
-        group_by_month_dict = {}
-        for item in items:
-            month = item.get("month", "")
-            category = item.get("category", "")
-            amount = item.get("amount", 0)
-            if not month or not category or not amount:
-                continue
-            item = {
-                "category": item.get("category", ""),
-                "amount": str(item.get("amount", 0))
-            }
-            if month in group_by_month_dict:
-                group_by_month_dict[month].append(item)
-            else:
-                group_by_month_dict[month] = [item]
-        # then convert to array
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": [{
-                    "month": key,
-                    "categories": group_by_month_dict[key]
-                } for key in group_by_month_dict.keys()]
+                "data": items
             })
         }
     except botocore.exceptions.ClientError as error:
@@ -126,7 +106,7 @@ def lambda_handler(event, context):
             user_id, 
             query_params.get("starting_date", None),
             query_params.get("ending_date", None), 
-            query_params.get("categories", None))
+            query_params.get("categories", None)) # need to get from multivalue query params
     else:
         return {
             "statusCode": 400,

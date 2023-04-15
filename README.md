@@ -44,8 +44,9 @@ then deploy to cloud
 
 today added auth0 integration, next steps:
 1. Set up auto deployment to github pages (done 03/08/2023)
-2. Rewrite django backend with lambda and dynamoDB
+2. Rewrite django backend with lambda and dynamoDB (done)
 3. Prettify UI
+4. add dynamodb integrity check function
 
 
 ### API draft
