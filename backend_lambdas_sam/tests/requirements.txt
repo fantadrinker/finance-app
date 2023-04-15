@@ -6,3 +6,4 @@ cryptography
 moto[all]
 requests-mock
 pytest-env
+simplejson
