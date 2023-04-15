@@ -1,44 +1,14 @@
-
-
 import os
 import boto3
+import simplejson as json
 from boto3.dynamodb.conditions import Key, Attr
+from decimal import Decimal
+from datetime import datetime
 
 # first set up activity table
 table = None
 
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
-
-def update_insight(user_id, new_category, amount):
-    # first get all activities that contains the description
-    response = table.query(
-        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("insights#"),
-        FilterExpression=Attr("category").eq(new_category)
-    )
-    items = response.get("Items", [])
-    if items:
-        # then update the category of each activity
-        for item in response.get("Items", []):
-            table.update_item(
-                Key={
-                    "user": user_id,
-                    "sk": item["sk"]
-                },
-                UpdateExpression=f"set amount = amount {'+' if amount > 0 else '-'} :a",
-                ExpressionAttributeValues={
-                    ":a": amount
-                }
-            )
-    else:
-        # insert new insight item
-        table.put_item(
-            Item={
-                "user": user_id,
-                "sk": f"insights#{new_category}",
-                "category": new_category,
-                "amount": amount
-            }
-        )
 
 def update_activity_category(user_id, category, description):
     print(111, user_id, category, description)
@@ -65,76 +35,71 @@ def update_activity_category(user_id, category, description):
 def check_record_type(record, event_type, sk_prefix):
     return record["eventName"] == event_type and record["dynamodb"]["Keys"]["sk"]["S"].startswith(sk_prefix)
 
-def process_new_mappings(records):
-    for record in records:
-        user_id = record["dynamodb"]["Keys"]["user"]["S"]
-        category = record["dynamodb"]["NewImage"]["category"]["S"]
-        description = record["dynamodb"]["NewImage"]["description"]["S"]
-        update_activity_category(user_id, category, description)
+def process_new_mapping(record):
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    category = record["dynamodb"]["NewImage"]["category"]["S"]
+    description = record["dynamodb"]["NewImage"]["description"]["S"]
+    update_activity_category(user_id, category, description)
 
-def process_new_activities(records):
+def process_new_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
-    category_to_amount = {}
-    for record in records:
-        user_id = record["dynamodb"]["Keys"]["user"]["S"]
-        category = record["dynamodb"]["NewImage"]["category"]["S"]
-        amount = record["dynamodb"]["NewImage"]["amount"]["N"]
-        if user_id not in category_to_amount:
-            category_to_amount[user_id] = {}
-        per_user_mapping = category_to_amount[user_id]
-        if category in per_user_mapping:
-            per_user_mapping[category] += amount
-        else:
-            per_user_mapping[category] = amount
-    for user, mappings in category_to_amount.items():
-        for category, amount in mappings.items():
-            update_insight(user, category, amount)
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    category = record["dynamodb"]["NewImage"]["category"]["S"]
+    amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
+    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    if user_id not in existing_mapping:
+        existing_mapping[user_id] = {}
+    per_user_mapping = existing_mapping[user_id]
+    if month not in per_user_mapping:
+        per_user_mapping[month] = {}
+    per_month_mapping = per_user_mapping[month]
+    if category not in per_month_mapping:
+        per_month_mapping[category] = Decimal(0)
+    per_month_mapping[category] += amount
 
-def process_modified_activities(records):
+def process_modified_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
-    category_to_amount = {}
-    for record in records:
-        user_id = record["dynamodb"]["Keys"]["user"]["S"]
-        old_category = record["dynamodb"]["OldImage"]["category"]["S"]
-        new_category = record["dynamodb"]["NewImage"]["category"]["S"]
-        amount = record["dynamodb"]["NewImage"]["amount"]["N"]
-        if user_id not in category_to_amount:
-            category_to_amount[user_id] = {}
-        per_user_mapping = category_to_amount[user_id]
-        if old_category in per_user_mapping:
-            per_user_mapping[old_category] -= amount
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    old_category = record["dynamodb"]["OldImage"]["category"]["S"]
+    new_category = record["dynamodb"]["NewImage"]["category"]["S"]
+    amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
+    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    if old_category != new_category:
+        if user_id not in existing_mapping:
+            existing_mapping[user_id] = {}
+        per_user_mapping = existing_mapping[user_id]
+        if month not in per_user_mapping:
+            per_user_mapping[month] = {}
+        per_month_mapping = per_user_mapping[month]
+        if old_category in per_month_mapping:
+            per_month_mapping[old_category] -= amount
         else:
-            per_user_mapping[old_category] = -amount
-        if new_category in per_user_mapping:
-            per_user_mapping[new_category] += amount
+            per_month_mapping[old_category] = -amount
+        if new_category in per_month_mapping:
+            per_month_mapping[new_category] += amount
         else:
-            per_user_mapping[new_category] = amount
-    for user, mappings in category_to_amount.items():
-        for category, amount in mappings.items():
-            update_insight(user, category, amount)
+            per_month_mapping[new_category] = amount
 
-def process_deleted_activities(records):
-    category_to_amount = {}
-    for record in records:
-        user_id = record["dynamodb"]["Keys"]["user"]["S"]
-        category = record["dynamodb"]["OldImage"]["category"]["S"]
-        amount = record["dynamodb"]["OldImage"]["amount"]["N"]
-        if user_id not in category_to_amount:
-            category_to_amount[user_id] = {}
-        per_user_mapping = category_to_amount[user_id]
-        if category in per_user_mapping:
-            per_user_mapping[category] -= amount
-        else:
-            per_user_mapping[category] = -amount
-    for user, mappings in category_to_amount.items():
-        for category, amount in mappings.items():
-            update_insight(user, category, amount)
+def process_deleted_activity(record, existing_mapping):
+    # try to sum changes up by category and then update insights
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    category = record["dynamodb"]["NewImage"]["category"]["S"]
+    amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
+    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    if user_id not in existing_mapping:
+        existing_mapping[user_id] = {}
+    per_user_mapping = existing_mapping[user_id]
+    if month not in per_user_mapping:
+        per_user_mapping[month] = {}
+    per_month_mapping = per_user_mapping[month]
+    if category not in per_month_mapping:
+        per_month_mapping[category] = Decimal(0)
+    per_month_mapping[category] -= amount
 
-def process_deleted_mappings(records):
-    for record in records:
-        user_id = record["dynamodb"]["Keys"]["user"]["S"]
-        description = record["dynamodb"]["OldImage"]["description"]["S"]
-        update_activity_category(user_id, "others", description)
+def process_deleted_mapping(record):
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    description = record["dynamodb"]["OldImage"]["description"]["S"]
+    update_activity_category(user_id, "others", description)
 
 def lambda_handler(event, context):
     global table
@@ -143,32 +108,50 @@ def lambda_handler(event, context):
         table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
     # handle stream update events
     if event.get("Records", None):
-        # first group records by use cases
-        # 1. new mapping
-        # 2. new activity
-        new_mappings = [record for record in event["Records"] if check_record_type(record, "INSERT", "mapping#")]
-        new_activities = [record for record in event["Records"] if check_record_type(record, "INSERT", "20")]
-        
-        # 3. modify mapping
-        # 4. modify activity
-        modified_mappings = [record for record in event["Records"] if check_record_type(record, "MODIFY", "mapping#")]
-        modified_activities = [record for record in event["Records"] if check_record_type(record, "MODIFY", "20")]
-
-        # 5. delete mapping
-        # 6. delete activity
-        deleted_mappings = [record for record in event["Records"] if check_record_type(record, "REMOVE", "mapping#")]
-        deleted_activities = [record for record in event["Records"] if check_record_type(record, "REMOVE", "20")]
         try:
-            # first process new or updated mappings
-            process_new_mappings(new_mappings + modified_mappings)
-            process_new_activities(new_activities)
-
-            # then process modified activities
-            process_modified_activities(modified_activities)
-
-            # finally process deleted activities and mappings
-            process_deleted_activities(deleted_activities)
-            process_deleted_mappings(deleted_mappings)
+            # initialize mapping: user -> month -> category -> amount
+            insights_activity_mapping = {}
+            for record in event.get("Records", []):
+                if check_record_type(record, "INSERT", "mapping#"):
+                    process_new_mapping(record)
+                elif check_record_type(record, "REMOVE", "mapping#"):
+                    process_deleted_mapping(record)
+                elif check_record_type(record, "INSERT", "20"):
+                    process_new_activity(record, insights_activity_mapping)
+                elif check_record_type(record, "MODIFY", "20"):
+                    process_modified_activity(record, insights_activity_mapping)
+                elif check_record_type(record, "REMOVE", "20"):
+                    process_deleted_activity([record], insights_activity_mapping)
+            if insights_activity_mapping:
+                for user_id, per_user_mapping in insights_activity_mapping.items():
+                    for month, per_month_mapping in per_user_mapping.items():
+                        # first get existing mappings
+                        response = table.get_item(
+                            Key={
+                                "user": user_id,
+                                "sk": f"insights#{month}"
+                            }
+                        )
+                        # merge existing mappings with new mappings
+                        if "Item" in response:
+                            existing_mapping = json.loads(response["Item"]["categories"])
+                            for category, amount in per_month_mapping.items():
+                                if category in existing_mapping:
+                                    existing_mapping[category] += amount
+                                else:
+                                    existing_mapping[category] = amount
+                            per_month_mapping = existing_mapping
+                        # update insights
+                        table.update_item(
+                            Key={
+                                "user": user_id,
+                                "sk": f"insights#{month}"
+                            },
+                            UpdateExpression="set categories = :a",
+                            ExpressionAttributeValues={
+                                ":a": json.dumps(per_month_mapping) 
+                            }
+                        )
         except Exception as e:
             print(e)
             return {

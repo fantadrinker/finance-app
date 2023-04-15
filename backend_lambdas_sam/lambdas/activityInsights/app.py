@@ -121,6 +121,7 @@ def lambda_handler(event, context):
     method = event.get("routeKey", "").split(' ')[0]
     if method == "GET":
         query_params = event.get("queryStringParameters", {})
+        # need to do some request validation here
         return get(
             user_id, 
             query_params.get("starting_date", None),
