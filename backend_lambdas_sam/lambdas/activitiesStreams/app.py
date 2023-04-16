@@ -113,16 +113,22 @@ def lambda_handler(event, context):
             insights_activity_mapping = {}
             for record in event.get("Records", []):
                 if check_record_type(record, "INSERT", "mapping#"):
+                    print("processing new mapping", record)
                     process_new_mapping(record)
                 elif check_record_type(record, "REMOVE", "mapping#"):
+                    print("processing deleted mapping", record)
                     process_deleted_mapping(record)
                 elif check_record_type(record, "INSERT", "20"):
+                    print("processing new activity", record)
                     process_new_activity(record, insights_activity_mapping)
                 elif check_record_type(record, "MODIFY", "20"):
+                    print("processing modified activity", record)
                     process_modified_activity(record, insights_activity_mapping)
                 elif check_record_type(record, "REMOVE", "20"):
+                    print("processing deleted activity", record)
                     process_deleted_activity([record], insights_activity_mapping)
             if insights_activity_mapping:
+                print("updating insights", insights_activity_mapping)
                 for user_id, per_user_mapping in insights_activity_mapping.items():
                     for month, per_month_mapping in per_user_mapping.items():
                         # first get existing mappings

@@ -156,15 +156,6 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: DELETE
-        UpdateMappingsStream:
-          Type: DynamoDB
-          Properties:
-            Stream: 
-              !GetAtt ActivitiesTable.StreamArn
-            StartingPosition: TRIM_HORIZON
-            FilterCriteria:
-              Filters:
-                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "mapping#"}}}}'
   FileCheckFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -261,13 +252,14 @@ Resources:
             TableName: !Ref ActivitiesTable
         - DynamoDBStreamReadPolicy:
             TableName: !Ref ActivitiesTable
+            StreamName: !GetAtt ActivitiesTable.StreamArn
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
       Events:
-        ProcessNewActivities:
+        ProcessNewActivitiesOrMappings:
           Type: DynamoDB
           Properties:
             Stream: 
@@ -275,17 +267,7 @@ Resources:
             StartingPosition: TRIM_HORIZON
             FilterCriteria:
               Filters:
-                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "20"}}}}'
-        ProcessNewMappings:
-          Type: DynamoDB
-          Properties:
-            Stream: 
-              !GetAtt ActivitiesTable.StreamArn
-            StartingPosition: TRIM_HORIZON
-            FilterCriteria:
-              Filters:
-                - Pattern: '{"dynamodb": {"Keys": {"sk": {"prefix": "mapping#"}}}}'
-        
+                - Pattern: '{"dynamodb": {"Keys": {"sk": {"S": [{"prefix": "20"}, {"prefix": "mapping#"}]}}}}'
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table
