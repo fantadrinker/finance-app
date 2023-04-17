@@ -140,24 +140,34 @@ def lambda_handler(event, context):
                         )
                         # merge existing mappings with new mappings
                         if "Item" in response:
-                            existing_mapping = json.loads(response["Item"]["categories"])
+                            existing_mapping = json.loads(response["Item"]["categories"], parse_float=Decimal)
                             for category, amount in per_month_mapping.items():
                                 if category in existing_mapping:
                                     existing_mapping[category] += amount
                                 else:
                                     existing_mapping[category] = amount
                             per_month_mapping = existing_mapping
-                        # update insights
-                        table.update_item(
-                            Key={
-                                "user": user_id,
-                                "sk": f"insights#{month}"
-                            },
-                            UpdateExpression="set categories = :a",
-                            ExpressionAttributeValues={
-                                ":a": json.dumps(per_month_mapping) 
-                            }
-                        )
+                            # update insights
+                            table.update_item(
+                                Key={
+                                    "user": user_id,
+                                    "sk": f"insights#{month}"
+                                },
+                                UpdateExpression="set categories = :a",
+                                ExpressionAttributeValues={
+                                    ":a": json.dumps(per_month_mapping) 
+                                }
+                            )
+                        else:
+                            # create insights
+                            table.put_item(
+                                Item={
+                                    "user": user_id,
+                                    "sk": f"insights#{month}",
+                                    "categories": json.dumps(per_month_mapping),
+                                    "date": month
+                                }
+                            )
         except Exception as e:
             print(e)
             return {

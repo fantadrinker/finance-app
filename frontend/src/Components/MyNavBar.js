@@ -37,6 +37,8 @@ const MyNavBar = ({ message }) => {
                         {isAuthenticated && (
                             <>
                                 <Nav.Item><Link to="/">Home</Link></Nav.Item>
+                                <Nav.Item><Link to="/preferences">Preferences</Link></Nav.Item>
+                                <Nav.Item><Link to="/insights">Insights</Link></Nav.Item>
                                 <Nav.Item>
                                     <NavDropdown title={user.name} id="basic-nav-dropdown">
                                         <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>

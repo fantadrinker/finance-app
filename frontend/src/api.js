@@ -1,5 +1,5 @@
 
-const awsLambdaAddr = "https://h0edmu7lp5.execute-api.us-east-1.amazonaws.com/Test";
+const awsLambdaAddr = "https://ot8kxben4m.execute-api.us-east-1.amazonaws.com/Test";
 
 export const postCall = async (url, body={}, contentType = "application/json", auth = "") => {
     try {
@@ -36,12 +36,13 @@ export const getCall = async (url, auth) => {
     return null;
 }
 
-export const deleteCall = async (url) => {
+export const deleteCall = async (url, auth) => {
     try {
         const result = await fetch(awsLambdaAddr + url, {
             method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': auth
             },
             mode: 'cors'
         })

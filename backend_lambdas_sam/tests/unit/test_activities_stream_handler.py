@@ -219,6 +219,7 @@ def mock_insights(user_id):
             "categories": json.dumps({
                 "some_existing_category": 5,
             }),
+            "date": "2022-11"
         },
         {
             "user": user_id,
@@ -226,6 +227,7 @@ def mock_insights(user_id):
             "categories": json.dumps({
                 "delete_categories": 5,
             }),
+            "date": "2022-10"
         },
     ]
 
@@ -261,6 +263,7 @@ def test_new_update_delete_activities(activities_table, apigw_event_new_activiti
         "categories": json.dumps({
             "delete_categories": 5
         }),
+        "date": "2022-10",
     }
     assert all_insights[1] == {
         "user": user_id,
@@ -269,6 +272,7 @@ def test_new_update_delete_activities(activities_table, apigw_event_new_activiti
             "some_existing_category": 15,
             "some_new_category": 10,
         }),
+        "date": "2022-11",
     }
     assert all_insights[2] == {
         "user": user_id,
@@ -276,4 +280,5 @@ def test_new_update_delete_activities(activities_table, apigw_event_new_activiti
         "categories": json.dumps({
             "some_existing_category": 10
         }),
+        "date": "2022-12",
     }

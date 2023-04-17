@@ -185,7 +185,7 @@ def apigw_event_delete(user_id):
         "routeKey": "DELETE /mappings",
         "queryStringParameters": {},
         "multiValueQueryStringParameters": {
-            "ids": ["mapping#1", "mapping#2", "mapping#3"]
+            "ids": ["mapping#testDescription1", "mapping#testDescription2", "mapping#testDescription3"]
         },
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
@@ -219,7 +219,7 @@ def mock_mappings_items(user_id):
     return [
         {
             "user": user_id,
-            "sk": f"mapping#{i}",
+            "sk": f"mapping#testDescription{i}",
             "category": f"testCategory{i}",
             "description": f"testDescription{i}",
         }
@@ -228,10 +228,26 @@ def mock_mappings_items(user_id):
 
 def test_post_mapping(apigw_event_post, activities_table):
     """ Test post mapping """
-
     # Call our lambda function and compare the result
     response = app.lambda_handler(apigw_event_post, "")
-    assert response["statusCode"] == 200
+    assert response["statusCode"] == 201
+
+    mappings = activities_table.scan()["Items"]
+
+    assert len(mappings) == 1
+    assert mappings[0]["category"] == "testCategory"
+
+def test_post_update_mapping(user_id, apigw_event_post, activities_table):
+    activities_table.put_item(
+        Item={
+            "user": user_id,
+            "sk": "mapping#testDescription",
+            "category": "oldCategory",
+            "description": "testDescription",
+        }
+    )
+    response = app.lambda_handler(apigw_event_post, "")
+    assert response["statusCode"] == 201
 
     mappings = activities_table.scan()["Items"]
 
@@ -249,10 +265,10 @@ def test_get_mapping(apigw_event_get, activities_table, mock_mappings_items):
     response = app.lambda_handler(apigw_event_get, "")
     assert response["statusCode"] == 200
 
-    mappings = json.loads(response["body"])
+    body = json.loads(response["body"])
 
-    assert len(mappings) == 10
-    assert mappings[0]["category"] == "testCategory0"
+    assert len(body["data"]) == 10
+    assert body["data"][0]["category"] == "testCategory0"
 
 def test_delete_mapping(apigw_event_delete, activities_table, mock_mappings_items):
     """ Test delete mapping """

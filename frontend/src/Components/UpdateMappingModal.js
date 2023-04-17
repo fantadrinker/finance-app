@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
@@ -13,8 +13,15 @@ const UpdateMappingModal = ({
     submit
 }) => {
     const [newCategory, setNewCategory] = useState(currentCategory);
-    const [selectedCategory, setSelectedCategory] = useState(currentCategory);
+    const [selectedCategory, setSelectedCategory] = useState(allCategories.length > 0? currentCategory: "");
     const [newDescription, setNewDescription] = useState(currentDescription);
+    // updates state when props change
+    useEffect(() => {
+        setNewCategory("");
+        setSelectedCategory(currentCategory);
+        setNewDescription(currentDescription);
+    }, [currentCategory, currentDescription, allCategories]);
+    const selectCategories = allCategories.includes(currentCategory)? allCategories: allCategories.concat([currentCategory]);
     return (
         <Modal show={show} onHide={closeModal}>
             <Modal.Header closeButton>
@@ -25,7 +32,7 @@ const UpdateMappingModal = ({
                 <Form.Control type="text" placeholder={currentDescription} value={newDescription ?? ""} onChange={e => setNewDescription(e.target.value)} />
                 <Form.Label>Existing Categories</Form.Label>
                 <Form.Select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
-                    {allCategories.map((cat, index) => (
+                    {selectCategories.map((cat, index) => (
                         <option value={cat} key={index} >{cat}</option>
                     ))}
                     <option value="" >new category</option>

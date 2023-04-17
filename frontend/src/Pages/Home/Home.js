@@ -5,17 +5,12 @@ import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import Tab from 'react-bootstrap/Tab';
-import Tabs from 'react-bootstrap/Tabs';
 import Spinner from 'react-bootstrap/Spinner';
-import { useAuth0, withAuth0 } from "@auth0/auth0-react";
 
 import styles from './Home.module.css'
-import Login from '../Login/Login';
-import { getCall, postCall } from '../../api';
-import { getConfig } from '../../config';
-import Insights from '../../Components/Insights';
+import { getCall, postCall, deleteCall } from '../../api';
 import UpdateMappingModal from '../../Components/UpdateMappingModal';
+import { Link } from 'react-router-dom';
 
 /* 
     Implements main page, displays 3 sections:
@@ -33,31 +28,6 @@ const COLUMN_FORMAT_CAP1 = "cap1";
 
 const COLUMN_FORMAT_RBC = "rbc";
 
-const useAuth0AccessToken = (isAuthenticated, getToken) => {
-    const [accessToken, setToken] = useState(null);
-    useEffect(() => {
-        const fetchAuth0Token = async () => {
-            const config = getConfig();
-            try {
-                const token = await getToken({
-                  authorizationParams: {
-                    audience: config.audience,
-                  },
-                });
-                setToken(token);
-            } catch (e) {
-                // Handle errors such as `login_required` and `consent_required` by re-prompting for a login
-                console.error(e);
-            }
-        }
-        if (isAuthenticated){
-            fetchAuth0Token();
-        }
-    }, [getToken, isAuthenticated]);
-    
-    return accessToken;
-}
-
 const fetchActivities = async (
     nextKey,
     accessToken,
@@ -66,6 +36,7 @@ const fetchActivities = async (
     const {data, LastEvaluatedKey} = await apiResponse.json();
     // great :) now popluate the states with this data
     const financeDataRows = data.map(({
+        sk,
         date,
         category,
         account,
@@ -73,6 +44,7 @@ const fetchActivities = async (
         description
     }) => {
         return {
+            id: sk,
             date,
             category,
             account,
@@ -82,12 +54,12 @@ const fetchActivities = async (
     });
     return {
         financeDataRows,
-        lastKey: LastEvaluatedKey.date,
+        lastKey: LastEvaluatedKey.sk,
     }
 }
 
-const fetchInsights = async (accessToken) => {
-    const apiResponse = await getCall(`/insights`, accessToken);
+const fetchMappings = async (accessToken) => {
+    const apiResponse = await getCall(`/mappings`, accessToken);
     const {data} = await apiResponse.json();
     return data;
 }
@@ -107,7 +79,10 @@ const useFetchPrevCheckSums = (accessToken) => {
     return chksums
 }
 
-function Home(props) {
+export function Home({
+    isAuthenticated,
+    accessToken
+}) {
     // csv format
     const [fileContent, setFileContent] = useState(null);
     const [fileName, setFileName] = useState("");
@@ -118,18 +93,12 @@ function Home(props) {
     const [description, setDescription] = useState(null);
     const [category, setCategory] = useState(null);
 
-    const {
-        isAuthenticated,
-        getAccessTokenSilently
-    } = useAuth0();
-
     // custom hooks to fetch and store user activities
-    const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);
     const chksums = useFetchPrevCheckSums(accessToken);
 
 
     const [financeData, setFinanceData] = useState([]);
-    const [analyticsData, setAnalyticsData] = useState([]);
+    const [categoryMappings, setCategoryMappings] = useState([]);
     const [nextKey, setNextKey] = useState(null);
     const [loading, setLoading] = useState(false);
     useEffect(() => {
@@ -148,14 +117,30 @@ function Home(props) {
                     setLoading(false);
                 }
             });
-            fetchInsights(accessToken).then((data) => {
-                setAnalyticsData(data);
+            fetchMappings(accessToken).then((data) => {
+                setCategoryMappings(data);
             });
         }
     }, [accessToken]);
 
+    // set up scroll listener
+    useEffect(() => {
+        window.onscroll = () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                if (accessToken && nextKey !== null && nextKey !== undefined) {
+                    fetchMoreActivities();
+                }
+            }
+        };
+        return () => {
+            window.onscroll = null;
+        }
+    });
+
     if (!isAuthenticated) {
-        return <Login />;
+        return (
+            <div>Not authenticated, please <Link to="/login">Log in </Link></div>
+        )
     }
     const fetchMoreActivities = () => {
         setLoading(true);
@@ -167,16 +152,25 @@ function Home(props) {
         });
     }
 
-    window.onscroll = () => {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-            if (nextKey !== null && nextKey !== undefined) {
-                fetchMoreActivities();
-            }
+    const deleteActivity = async (id) => {
+        const apiResponse = await deleteCall(`/activities?sk=${id}`, accessToken);
+        if(apiResponse.ok) {
+            fetchActivities(
+                null,
+                accessToken
+            ).then(({
+                financeDataRows,
+                lastKey,
+            }) => {
+                if (financeDataRows.length > 0) {
+                    setFinanceData(financeDataRows);
+                    setNextKey(lastKey);
+                    setLoading(false);
+                }
+            });
         }
-    };
+    }
 
-    // todo: useeffect hook to retrieve categories
-    // update category mapping?
     const processUserFile = async (event) => {
         event.preventDefault();
         // processes user file, store in financeData state var
@@ -224,96 +218,100 @@ function Home(props) {
         setShowModal(true);
     }
 
+    const updateNewCategory = async (desc, newCategory) => {
+        // calls post /mappings endpoint to update category mapping
+        const apiResponse = await postCall(`/mappings`, {
+            description: desc,
+            category: newCategory
+        }, "application/json", accessToken);
+        if (apiResponse.ok) {
+            // return the updated activities, then we can update state locally?
+            // Should show a pop up indicate the result
+            console.log("mapping updated, updated informations should come later");
+            setShowModal(false);
+        }
+    }
+
     return (
         <div className={styles.homeMain}>
-            
-            <Tabs 
-                defaultActiveKey="activities"
-                id="uncontrolled-tab-example"
-                className="mb-3"
-            >
-                <Tab eventKey="activities" title="Activities">
-                    <Form>
-                        <Form.Group as={Row} controlId="file" className="mb-3">
-                            {warningMessage !== null && (<Form.Text className={styles.warningMessage}>{warningMessage}</Form.Text>)}
-                            <Form.Label column sm="2">Select File</Form.Label>
-                            <Col sm="4">
-                                <Form.Control type="file" value={fileName} onChange={updateUserFile} />
-                            </Col>
-                            <Form.Label column sm="2">Choose Format</Form.Label>
-                            <Col sm="4">
-                                <Form.Select aria-label="select input type" value={columnFormat} onChange={e => setColumnFormat(e.target.value)}>
-                                    <option value={COLUMN_FORMAT_CAP1}>CapitalOne</option>
-                                    <option value={COLUMN_FORMAT_RBC}>RBC</option>
-                                </Form.Select>
-                            </Col>
-                        </Form.Group>
-                        <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
-                    </Form>
-                    {(financeData.length === 0 && !loading) && <div className={styles.noData}>No data to display</div>}
-                    {(financeData.length === 0 && loading) && <Spinner animation="border" />}
-                    {financeData.length > 0 && (
-                        <div className={styles.activityTable}>
-                            <Table striped bordered hover>
-                                <thead>
-                                    <tr>
-                                        <td>date</td>
-                                        <td>account</td>
-                                        <td>description</td>
-                                        <td>category</td>
-                                        <td>amount</td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {financeData.map(({
-                                        date, 
-                                        account,
-                                        desc,
-                                        category,
-                                        amount
-                                    }, index) => (
-                                        <tr key={index}>
-                                            <td>{date}</td>
-                                            <td>{account}</td>
-                                            <td>{desc}</td>
-                                            <td style={{display: 'flex'}}>
-                                                <Form.Select onChange={() => {}}>
-                                                    {category && <option value={category}>{category}</option>}
-                                                    <option value="new category">new category</option>
-                                                </Form.Select>
-                                                <Button onClick={() => openModalWithParams(desc, category)}>Update</Button>
-                                            </td>
-                                            <td>{amount}</td>
-                                        </tr>
-                                    ))}
-                                    {nextKey !== null && nextKey !== undefined && (
-                                        <tr>
-                                            <td colSpan="5">
-                                                {loading? <Spinner animation="border" />: null}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </Table>
-                        </div>
-                    )}
-                </Tab>
-                <Tab eventKey="categories" title="Categories" disabled={financeData.length === 0}>
-                    {financeData.length > 0 && (
-                        <Insights data={analyticsData} />
-                    )}
-                </Tab>
-            </Tabs>
+            <Form>
+                <Form.Group as={Row} controlId="file" className="mb-3">
+                    {warningMessage !== null && (<Form.Text className={styles.warningMessage}>{warningMessage}</Form.Text>)}
+                    <Form.Label column sm="2">Select File</Form.Label>
+                    <Col sm="4">
+                        <Form.Control type="file" value={fileName} onChange={updateUserFile} />
+                    </Col>
+                    <Form.Label column sm="2">Choose Format</Form.Label>
+                    <Col sm="4">
+                        <Form.Select aria-label="select input type" value={columnFormat} onChange={e => setColumnFormat(e.target.value)}>
+                            <option value={COLUMN_FORMAT_CAP1}>CapitalOne</option>
+                            <option value={COLUMN_FORMAT_RBC}>RBC</option>
+                        </Form.Select>
+                    </Col>
+                </Form.Group>
+                <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
+            </Form>
+            {(financeData.length === 0 && !loading) && <div className={styles.noData}>No data to display</div>}
+            {(financeData.length === 0 && loading) && <Spinner animation="border" />}
+            {financeData.length > 0 && (
+                <div className={styles.activityTable}>
+                    <Table striped bordered hover>
+                        <thead>
+                            <tr>
+                                <td>date</td>
+                                <td>account</td>
+                                <td>description</td>
+                                <td>category</td>
+                                <td>amount</td>
+                                <td>actions</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {financeData.map(({
+                                id,
+                                date, 
+                                account,
+                                desc,
+                                category,
+                                amount
+                            }, index) => (
+                                <tr key={index}>
+                                    <td>{date}</td>
+                                    <td>{account}</td>
+                                    <td>{desc}</td>
+                                    <td style={{display: 'flex'}}>
+                                        <Form.Select onChange={() => {}}>
+                                            {category && <option value={category}>{category}</option>}
+                                            <option value="new category">new category</option>
+                                        </Form.Select>
+                                        <Button onClick={() => openModalWithParams(desc, category)}>Update</Button>
+                                    </td>
+                                    <td>{amount}</td>
+                                    <td>
+                                        <Button variant="danger" onClick={() => deleteActivity(id)}>Delete</Button>
+                                        
+                                    </td>
+                                </tr>
+                            ))}
+                            {nextKey !== null && nextKey !== undefined && (
+                                <tr>
+                                    <td colSpan="5">
+                                        {loading? <Spinner animation="border" />: null}
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </div>
+            )}
             <UpdateMappingModal 
                 show={showModal}
                 closeModal={() => setShowModal(false)}
                 currentCategory={category}
                 currentDescription={description}
-                allCategories={[category]}
-                submit={(a, b) => console.log(a, b)}
+                allCategories={categoryMappings.map(({category}) => category)}
+                submit={updateNewCategory}
             />
         </div>
     )
 }
-
-export default withAuth0(Home);

@@ -60,7 +60,17 @@ def postActivities(user, file_format, body):
                 "statusCode": 400,
                 "body": "missing body content or input format",
             }
-    
+
+        # first get all the mappings from the database
+        mappings = {}
+        mappings_response = activities_table.query(
+            KeyConditionExpression=Key('user').eq(user) & Key('sk').begins_with('mapping#')
+        )
+        for item in mappings_response['Items']:
+            if item['description'] not in mappings:
+                mappings[item['description']] = item['category']
+
+        
         f = StringIO(body)
         reader = csv.reader(f, delimiter=',')
         insights_dict = {} # key: year-month, value: expenses per category
@@ -99,6 +109,12 @@ def postActivities(user, file_format, body):
                         'amount' : amount # need to flip sign, rbc uses negative val for expense
                     }
                 if item:
+                    # iterate through mappings and override category if there is a match
+                    for key in mappings:
+                        if re.search(key, item["description"]):
+                            print(f"found mapping, overriding {item['category']} with {mappings[key]}")
+                            item["category"] = mappings[key]
+                            break
                     batch.put_item(
                         Item=item
                     )

@@ -50,22 +50,43 @@ def get_user_id(event):
 
 def post(user, description, category, priority):
     global table
-    # creates "user: user, sk: mapping#uuid, description: description, category: category, priority: priority"
+    # creates "user: user, sk: mapping#desc, description: description, category: category, priority: priority"
     try:
-        table.put_item(
-            Item={
+        # first see if the mapping already exists
+        response = table.get_item(
+            Key={
                 "user": user,
-                "sk": f'mapping#{str(uuid.uuid4())}',
-                "description": description,
-                "category": category,
-                "priority": priority,
-                "created_at": str(datetime.datetime.now())
+                "sk": f'mapping#{description}',
             }
         )
-        # TODO: then, try to update user activities' category to the new rule
-        # or do that in the stream processor
+        if response.get("Item"):
+            # if already exist, then update the mapping
+            table.update_item(
+                Key={
+                    "user": user,
+                    "sk": f'mapping#{description}',
+                },
+                UpdateExpression="set category = :c, priority = :p",
+                ExpressionAttributeValues={
+                    ":c": category,
+                    ":p": priority,
+                },
+                ReturnValues="UPDATED_NEW"
+            )
+        else:
+            table.put_item(
+                Item={
+                    "user": user,
+                    "sk": f'mapping#{description}',
+                    "description": description,
+                    "category": category,
+                    "priority": priority,
+                    "created_at": str(datetime.datetime.now())
+                }
+            )
+        # TODO: update the activities rows here
         return {
-            "statusCode": 200,
+            "statusCode": 201,
             "body": "success",
         }
     except botocore.exceptions.ClientError as error:
@@ -92,10 +113,12 @@ def get(user):
             print("pagination not supported yet")
         return {
             "statusCode": 200,
-            "body": json.dumps([{
-                **item,
-                "priority": int(item.get("priority", 0)),
-            } for item in response.get("Items", [])])
+            "body": json.dumps({
+                "data": [{
+                    **item,
+                    "priority": int(item.get("priority", 0)),
+                } for item in response.get("Items", [])]
+            })
         }
     except botocore.exceptions.ClientError as error:
         print(error)
@@ -104,16 +127,17 @@ def get(user):
             "body": "client error happened while getting mapping, see logs"
         }
 
-def delete(user, ids):
+def delete(user, id):
     global table
     try:
-        for id in ids:
-            response = table.delete_item(
-                Key={
-                    "user": user,
-                    "sk": id
-                }
-            )
+        response = table.delete_item(
+            Key={
+                "user": user,
+                "sk": id
+            }
+        )
+        print(response)
+        # TODO: update the activities rows here
         return {
             "statusCode": 200,
             "body": "success",
@@ -162,7 +186,7 @@ def lambda_handler(event, context):
     elif method == "GET":
         return get(user_id)
     elif method == "DELETE":
-        ids = event.get("multiValueQueryStringParameters", {}).get("ids", "")
+        ids = event.get("queryStringParameters", {}).get("id", "")
         return delete(user_id, ids)
     else:
         return {

@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -5,15 +6,53 @@ import {
   Navigate
 } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-import { Upload } from './Pages/upload';
-import { Activities } from './Pages/activities';
-import Home from './Pages/Home/Home';
+import Home from './Pages/Home';
+import Insights from './Pages/Insights';
+import Preferences from './Pages/Preferences';
 import './App.css';
-import { Categories } from './Components/categories';
 import MyNavBar from './Components/MyNavBar';
+import { getConfig } from "./config";
+import Login from "./Pages/Login/Login";
+
+const useAuth0AccessToken = (isAuthenticated, getToken) => {
+  const [accessToken, setToken] = useState(null);
+  useEffect(() => {
+      const fetchAuth0Token = async () => {
+          const config = getConfig();
+          try {
+              const token = await getToken({
+                authorizationParams: {
+                  audience: config.audience,
+                },
+              });
+              setToken(token);
+          } catch (e) {
+              // Handle errors such as `login_required` and `consent_required` by re-prompting for a login
+              console.error(e);
+          }
+      }
+      if (isAuthenticated){
+          fetchAuth0Token();
+      }
+  }, [getToken, isAuthenticated]);
+  
+  return accessToken;
+}
 
 function App() {
-  const { isLoading, error } = useAuth0();
+  const { 
+    isLoading, 
+    error,
+    isAuthenticated,
+    getAccessTokenSilently  
+  } = useAuth0();
+
+  const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);
+
+  const authProps = {
+    isAuthenticated,
+    accessToken
+  }
 
   if (error) {
     return <div>Oops... {error.message}</div>;
@@ -30,10 +69,10 @@ function App() {
           <MyNavBar />
         </nav>
         <Routes>
-          <Route path="/categories/:userId" element={<Categories />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/activities/:userId" element={<Activities />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/insights" element={<Insights {...authProps} />} />
+          <Route path="/preferences" element={<Preferences {...authProps} />} />
+          <Route path="/" element={<Home {...authProps} />} />
+          <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

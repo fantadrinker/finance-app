@@ -219,9 +219,18 @@ def mock_activities(user_id):
     ]
 
 def test_post_activities(activities_table, user_id, apigw_event_post):
+    # add some existing mappings
+    activities_table.put_item(
+        Item={
+            "user": user_id,
+            "sk": "mapping#SAFEWAY",
+            "description": "SAFEWAY",
+            "category": "Grocery",
+        }
+    )
+
     ret = app.lambda_handler(apigw_event_post, "")
     # data = json.loads(ret["body"])
-    print(ret["body"])
     assert ret["statusCode"] == 200
     # first check if the correct # of activities data is inserted
 
@@ -229,6 +238,8 @@ def test_post_activities(activities_table, user_id, apigw_event_post):
         KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("20"),
     )
     assert activities_results["Count"] == 2
+    grocery_result = [item for item in activities_results["Items"] if item["category"] == "Grocery"]
+    assert len(grocery_result) == 1
 
     # then check if checksums is inserted
 
