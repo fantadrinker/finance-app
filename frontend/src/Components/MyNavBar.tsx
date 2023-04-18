@@ -7,7 +7,7 @@ import Container from 'react-bootstrap/Container';
 
 import { useAuth0 } from "@auth0/auth0-react";
 
-const MyNavBar = ({ message }) => {
+const MyNavBar = () => {
     const {
         user,
         isAuthenticated,
@@ -24,16 +24,18 @@ const MyNavBar = ({ message }) => {
 
     return (
         <Navbar bg="light" expand="lg">
-            {
-                message &&  
-                <li>{message}</li>
-            }
             <Container>
                 <Navbar.Brand>Finance Calculator</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto" style={{alignItems: "center"}}>
-                        {!isAuthenticated && <Nav.Item><Nav.Link onClick={loginWithRedirect}>Log in</Nav.Link></Nav.Item>}
+                        {!isAuthenticated && (
+                        <Nav.Item>
+                            <Nav.Link onClick={() => loginWithRedirect()}>
+                                Log in
+                            </Nav.Link>
+                        </Nav.Item>
+                        )}
                         {isAuthenticated && (
                             <>
                                 <Nav.Item><Link to="/">Home</Link></Nav.Item>

@@ -1,15 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Auth0Provider } from "@auth0/auth0-react";
-import { createBrowserHistory } from "history";
+import { AppState, Auth0Provider } from "@auth0/auth0-react";
+import { BrowserHistory, createBrowserHistory } from "history";
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { getConfig } from "./config";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const onRedirectCallback = (appState) => {
-  let history = createBrowserHistory()
+const onRedirectCallback = (appState: AppState) => {
+  let history: BrowserHistory = createBrowserHistory()
   history.push(
     appState && appState.returnTo ? appState.returnTo : window.location.pathname
   );

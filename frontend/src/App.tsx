@@ -5,7 +5,7 @@ import {
   Route,
   Navigate
 } from "react-router-dom";
-import { useAuth0 } from "@auth0/auth0-react";
+import { GetTokenSilentlyOptions, useAuth0 } from "@auth0/auth0-react";
 import Home from './Pages/Home';
 import Insights from './Pages/Insights';
 import Preferences from './Pages/Preferences';
@@ -14,7 +14,9 @@ import MyNavBar from './Components/MyNavBar';
 import { getConfig } from "./config";
 import Login from "./Pages/Login/Login";
 
-const useAuth0AccessToken = (isAuthenticated, getToken) => {
+const useAuth0AccessToken = (
+  isAuthenticated: boolean, 
+  getToken: (option: GetTokenSilentlyOptions) => Promise<string>) => {
   const [accessToken, setToken] = useState(null);
   useEffect(() => {
       const fetchAuth0Token = async () => {
@@ -44,7 +46,7 @@ function App() {
     isLoading, 
     error,
     isAuthenticated,
-    getAccessTokenSilently  
+    getAccessTokenSilently
   } = useAuth0();
 
   const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);

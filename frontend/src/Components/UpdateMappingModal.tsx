@@ -3,6 +3,14 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 
+interface UpdateMappingModalProps {
+    show: boolean;
+    closeModal: () => void;
+    currentCategory: string;
+    currentDescription: string;
+    allCategories: string[];
+    submit: (newCategory: string, newDescription: string) => void;
+}
 
 const UpdateMappingModal = ({
     show,
@@ -11,7 +19,7 @@ const UpdateMappingModal = ({
     currentDescription,
     allCategories,
     submit
-}) => {
+}: UpdateMappingModalProps) => {
     const [newCategory, setNewCategory] = useState(currentCategory);
     const [selectedCategory, setSelectedCategory] = useState(allCategories.length > 0? currentCategory: "");
     const [newDescription, setNewDescription] = useState(currentDescription);

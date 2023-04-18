@@ -1,9 +1,14 @@
 
 const awsLambdaAddr = "https://ot8kxben4m.execute-api.us-east-1.amazonaws.com/Test";
 
-export const postCall = async (url, body={}, contentType = "application/json", auth = "") => {
+export function postCall(
+    url: string, 
+    body: string = "", 
+    contentType: string = "application/json", 
+    auth: string = ""
+): Promise<Response> | null {
     try {
-        const result = await fetch(awsLambdaAddr + url, {
+        return fetch(awsLambdaAddr + url, {
             method: 'POST',
             headers: {
                 'Content-Type': contentType,
@@ -12,16 +17,18 @@ export const postCall = async (url, body={}, contentType = "application/json", a
             mode: 'cors',
             body: contentType === "application/json"? JSON.stringify(body): body
         });
-        return result;
     } catch(err) {
         console.log("post error", err);
     }
     return null;
 }
 
-export const getCall = async (url, auth) => {
+export function getCall(
+    url: string, 
+    auth: string
+): Promise<Response> | null {
     try {
-        const result = await fetch(awsLambdaAddr + url, {
+        return fetch(awsLambdaAddr + url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -29,24 +36,25 @@ export const getCall = async (url, auth) => {
             },
             mode: 'cors'
         });
-        return result;
     } catch(err) {
         console.log("get error", err);
     }
     return null;
 }
 
-export const deleteCall = async (url, auth) => {
+export function deleteCall(
+    url: string, 
+    auth: string,
+): Promise<Response> | null {
     try {
-        const result = await fetch(awsLambdaAddr + url, {
+        return fetch(awsLambdaAddr + url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': auth
             },
             mode: 'cors'
-        })
-        return result;
+        });
     } catch(err) {
         console.log("get error", err);
     }
