@@ -1,7 +1,6 @@
 import json
 import os
 import boto3
-import uuid
 import datetime
 import requests
 import jwt

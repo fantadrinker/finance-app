@@ -265,7 +265,7 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
     activities_table.put_item(
         Item={
             "user": user_id,
-            "sk": "insight#2020-01-02",
+            "sk": "insights#2020-01-02",
             "category": "test insight",
             "amount": 10,
             "date": "2020-01",

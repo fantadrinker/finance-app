@@ -1,7 +1,6 @@
 import pytest
 import json
 from lambdas.mappings import app
-from boto3.dynamodb.conditions import Key
 import boto3
 from moto import mock_dynamodb
 
@@ -183,9 +182,8 @@ def apigw_event_delete(user_id):
             "stage": "prod",
         },
         "routeKey": "DELETE /mappings",
-        "queryStringParameters": {},
-        "multiValueQueryStringParameters": {
-            "ids": ["mapping#testDescription1", "mapping#testDescription2", "mapping#testDescription3"]
+        "queryStringParameters": {
+            "id": "mapping#testDescription1"
         },
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
@@ -283,4 +281,4 @@ def test_delete_mapping(apigw_event_delete, activities_table, mock_mappings_item
 
     mappings = activities_table.scan()["Items"]
 
-    assert len(mappings) == 7
+    assert len(mappings) == 9
