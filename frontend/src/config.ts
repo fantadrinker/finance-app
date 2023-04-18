@@ -13,7 +13,7 @@ export function getConfig(): AuthConfig {
   // don't have an API).
   // If this resolves to `null`, the API page changes to show some helpful info about what to do
   // with the audience.
-  const audience =
+  const audience: string =
     configJson.audience && configJson.audience !== "YOUR_API_IDENTIFIER"
       ? configJson.audience
       : null;
