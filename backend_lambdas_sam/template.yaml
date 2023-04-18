@@ -268,6 +268,22 @@ Resources:
             FilterCriteria:
               Filters:
                 - Pattern: '{"dynamodb": {"Keys": {"sk": {"S": [{"prefix": "20"}, {"prefix": "mapping#"}]}}}}'
+  
+  MonthlyCheckFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: lambdas/monthlyCheck/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table

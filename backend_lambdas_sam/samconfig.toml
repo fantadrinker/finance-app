@@ -22,7 +22,6 @@ capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
 stack_name = "backendLambdasSam"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-lukh9szczw58"
 s3_prefix = "backendLambdasSam"
 region = "us-east-1"
 disable_rollback = true

@@ -11,7 +11,6 @@ table = None
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 
 def update_activity_category(user_id, category, description):
-    print(111, user_id, category, description)
     # first get all activities that contains the description
     response = table.query(
         KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("20"),
@@ -83,9 +82,9 @@ def process_modified_activity(record, existing_mapping):
 def process_deleted_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
-    category = record["dynamodb"]["NewImage"]["category"]["S"]
-    amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
-    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    category = record["dynamodb"]["OldImage"]["category"]["S"]
+    amount = Decimal(record["dynamodb"]["OldImage"]["amount"]["N"])
+    month = datetime.strptime(record["dynamodb"]["OldImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
     if user_id not in existing_mapping:
         existing_mapping[user_id] = {}
     per_user_mapping = existing_mapping[user_id]
@@ -126,7 +125,7 @@ def lambda_handler(event, context):
                     process_modified_activity(record, insights_activity_mapping)
                 elif check_record_type(record, "REMOVE", "20"):
                     print("processing deleted activity", record)
-                    process_deleted_activity([record], insights_activity_mapping)
+                    process_deleted_activity(record, insights_activity_mapping)
             if insights_activity_mapping:
                 print("updating insights", insights_activity_mapping)
                 for user_id, per_user_mapping in insights_activity_mapping.items():
