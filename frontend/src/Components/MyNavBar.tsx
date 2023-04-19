@@ -27,7 +27,10 @@ const MyNavBar = () => {
                 <Navbar.Brand>Finance Calculator</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="me-auto" style={{alignItems: "center"}}>
+                    <Nav 
+                        className="me-auto" 
+                        style={{alignItems: "center"}}
+                    >
                         {!isAuthenticated && (
                         <Nav.Item>
                             <Nav.Link onClick={() => loginWithRedirect()}>
@@ -37,9 +40,21 @@ const MyNavBar = () => {
                         )}
                         {isAuthenticated && (
                             <>
-                                <Nav.Item><Link to="/">Home</Link></Nav.Item>
-                                <Nav.Item><Link to="/preferences">Preferences</Link></Nav.Item>
-                                <Nav.Item><Link to="/insights">Insights</Link></Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link as="span">
+                                        <Link to="/">Home</Link>
+                                    </Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link as="span">
+                                        <Link to="/preferences">Preferences</Link>
+                                    </Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link as="span">
+                                        <Link to="/insights">Insights</Link>
+                                    </Nav.Link>
+                                </Nav.Item>
                                 <Nav.Item>
                                     <NavDropdown title={user?.name ?? "No user name"} id="basic-nav-dropdown">
                                         <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>

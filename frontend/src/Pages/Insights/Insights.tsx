@@ -29,11 +29,82 @@ interface InsightsProps {
     accessToken: string|null;
 }
 
+interface CategoryBreakdown {
+    category: string;
+    amount: number;
+}
+
+interface MonthlyBreakdown {
+    month: string;
+    amount: number;
+}
+
+function calculateCategoryBreakdown(insights: Array<Insight>, displayTop: number | null): Array<CategoryBreakdown> {
+    const allCategories = insights.reduce((
+        acc: Array<CategoryBreakdown>, 
+        cur: Insight
+    ) => {
+        Object.keys(cur.categories).forEach((category) => {
+            const amount = cur.categories[category];
+            if (amount > 0) {
+                const existing = acc.find((cur) => cur.category === category);
+                if (existing) {
+                    existing.amount += amount;
+                } else {
+                    acc.push({
+                        category,
+                        amount,
+                    });
+                }
+            }
+        }
+        );
+        return acc;
+    }, []).map((cur) => {
+        return {
+            ...cur,
+            amount: Math.round(cur.amount * 100) / 100,
+        }
+    }).filter((cur) => cur.amount > 0);
+    allCategories.sort((a, b) => b.amount - a.amount);
+    if (!displayTop) {
+        return allCategories;
+    }
+    const others: CategoryBreakdown = {
+        category: "Others",
+        amount: allCategories.slice(displayTop).reduce((acc, cur) => acc + cur.amount, 0)
+    }
+    return [...allCategories.slice(0, displayTop), others];
+}
+
+function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number | null): Array<MonthlyBreakdown> {
+    const allMonths = insights.map(({
+        date,
+        categories
+    }) => {
+        return {
+            month: date,
+            amount: Object.keys(categories).reduce((acc, cur) => {
+                const amount = categories[cur];
+                return acc + (amount > 0 ? amount : 0);
+            }, 0)
+        };
+    }).sort((a, b) => {
+        return new Date(a.month).getTime() - new Date(b.month).getTime();
+    });
+    if (!numMonths) {
+        return allMonths;
+    }
+    return allMonths.slice(0, numMonths);
+}
+
+
 export const Insights = ({
     isAuthenticated,
     accessToken,
 }: InsightsProps) => {
-    const [insights, setInsights] = useState<Array<Insight>>([]);
+    const [categoryBreakdown, setCategoryBreakdown] = useState<Array<CategoryBreakdown>>([]);
+    const [monthlyBreakdown, setMonthlyBreakdown] = useState<Array<MonthlyBreakdown>>([]);
     const [loading, setLoading] = useState<boolean>(false);
     useEffect(() => {
         if (!isAuthenticated || !accessToken) {
@@ -42,8 +113,12 @@ export const Insights = ({
         setLoading(true);
         // fetch data from /insights endpoint
         getInsights(accessToken).then(result => {
-            setInsights(result);
-            console.log(111, result);
+            setCategoryBreakdown(
+                calculateCategoryBreakdown(result, 5)
+            );
+            setMonthlyBreakdown(
+                calculateMonthlyBreakdown(result, 6)
+            );
         }).catch(err => {
             console.log(err);
         }).finally(() => {
@@ -57,52 +132,7 @@ export const Insights = ({
         )
     }
 
-    const monthlySpendings = insights.map(({
-        date,
-        categories
-    }) => {
-        return {
-            name: date,
-            value: Object.keys(categories).reduce((acc, cur) => {
-                const amount = categories[cur];
-                return acc + (amount > 0 ? amount : 0);
-            }, 0)
-        };
-    });
-
-    const categorySpendingsMappings = insights.reduce((
-        acc: {
-            [key: string]: number;
-        }, 
-        monthly: Insight
-    ) => {
-        Object.keys(monthly.categories).forEach((cur) => {
-            const category = cur;
-            const amount = monthly.categories[cur];
-            if (acc[category]) {
-                acc[category] += amount;
-            } else {
-                acc[category] = amount;
-            }
-        });
-        return acc;
-    }, {});
-    const serializedData = Object.keys(categorySpendingsMappings).map((key) => {
-        return {
-            name: key,
-            value: categorySpendingsMappings[key]
-        }
-    }).sort((a, b) => b.value - a.value)
-    .filter((cur) => cur.value > 0);
-    
-    const groupedData = serializedData.slice(0, 5).concat([{
-        name: "Others",
-        value: serializedData.slice(5).reduce((acc, cur) => {
-            return acc + cur.value;
-        }, 0)
-    }]);
-
-    return (insights.length === 0 || loading)? (
+    return (categoryBreakdown.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
     ) : (
     <div style={{
@@ -116,14 +146,14 @@ export const Insights = ({
                     <Pie
                         dataKey="value"
                         isAnimationActive={false}
-                        data={groupedData}
+                        data={categoryBreakdown.map(({category, amount}) => ({name: category, value: amount}))}
                         cx="50%"
                         cy="50%"
                         outerRadius={80}
                         fill="#8884d8"
                         label
                     >
-                        {groupedData.map((entry, index) => (
+                        {categoryBreakdown.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                     </Pie>
@@ -135,13 +165,13 @@ export const Insights = ({
         <Card style={{ width: '400px', margin: '10px' }}>
             <Card.Body>
                 <Card.Title>Monthly Trends</Card.Title>
-                <BarChart width={360} height={360} data={monthlySpendings}>
+                <BarChart width={360} height={360} data={monthlyBreakdown}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="value" fill="#8884d8" />
+                    <Bar dataKey="amount" fill="#8884d8" />
                 </BarChart>
                 <Button variant="primary">See Details</Button>
             </Card.Body>

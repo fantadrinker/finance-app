@@ -176,7 +176,7 @@ export function postActivities(auth: string, columnFormat: string, fileContent: 
     return fileContent
         .text()
         .then(file => postCall(
-            "/activities", 
+            `/activities?format=${columnFormat}`,
             file, 
             "text/html",
             auth
