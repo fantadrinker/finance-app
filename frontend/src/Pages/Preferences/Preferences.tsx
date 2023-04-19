@@ -69,10 +69,6 @@ export const Preferences = ({
 
     const updateNewCategory = async (desc: string, newCategory: string) => {
         // calls post /mappings endpoint to update category mapping
-        const body = {
-            description: desc,
-            category: newCategory
-        };
         postMappings(
             accessToken, 
             {

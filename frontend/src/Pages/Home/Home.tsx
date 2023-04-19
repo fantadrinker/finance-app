@@ -12,16 +12,6 @@ import { getActivities, getMappings, getChecksums, postActivities, postMappings,
 import UpdateMappingModal from '../../Components/UpdateMappingModal';
 import { Link } from 'react-router-dom';
 
-/* 
-    Implements main page, displays 3 sections:
-    1. upload file
-    2. display data row by row
-    3. display chart grouped by category
-
-    TODO:
-    2. implement download/export
-    3. implement save to account
-*/
 enum ColumnFormat {
     cap1 = "cap1",
     rbc = "rbc",
@@ -177,7 +167,7 @@ export function Home({
         });
     }
 
-    const processUserFile = async (event: React.MouseEvent) => {
+    const processUserFile = async (event: React.FormEvent) => {
         event.preventDefault();
         // processes user file, store in financeData state var
         postActivities(
@@ -245,10 +235,6 @@ export function Home({
         newCategory: string
     ): void {
         // calls post /mappings endpoint to update category mapping
-        const body = {
-            description: desc,
-            category: newCategory
-        };
         postMappings(
             accessToken, 
             {
@@ -280,7 +266,7 @@ export function Home({
                     </Col>
                     <Form.Label column sm="2">Choose Format</Form.Label>
                     <Col sm="4">
-                        <Form.Select aria-label="select input type" value={columnFormat} onChange={e => console.log(e.target.value)}>
+                        <Form.Select aria-label="select input type" value={columnFormat} onChange={(e) => setColumnFormat(e.target.value as ColumnFormat)}>
                             {COLUMN_FORMATS.map((key) => {
                                 return (
                                     <option key={key} value={key}>{COLUMN_FORMAT_NAMES[key]}</option>
