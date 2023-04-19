@@ -31,4 +31,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build static html
-        run: PUBLIC_URL=https://fantadrinker.github.io/finance-app/ npx --no-install react-scripts build
+        run: PUBLIC_URL=https://fantadrinker.github.io/finance-app/ node scripts/build.js
