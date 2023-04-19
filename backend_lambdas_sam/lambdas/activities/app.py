@@ -210,8 +210,9 @@ def delete_activities(user: str, sk: str):
                 }
             )
         else:
+            print("deleting all activities")
             all_activities = activities_table.query(
-                KeyConditionExpression=Key('user').eq(user)
+                KeyConditionExpression=Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99")
             )
             while True:
                 with activities_table.batch_writer() as batch:
@@ -224,7 +225,7 @@ def delete_activities(user: str, sk: str):
                         )
                 if 'LastEvaluatedKey' in all_activities:
                     all_activities = activities_table.query(
-                        KeyConditionExpression=Key('user').eq(user),
+                        KeyConditionExpression=Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
                         ExclusiveStartKey=all_activities['LastEvaluatedKey']
                     )
                 else:
