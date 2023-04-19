@@ -15,32 +15,41 @@ import {
     Bar, 
     CartesianGrid,
 } from 'recharts';
-import { getCall } from "../../api";
+import { getInsights } from "../../api";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+interface Insight {
+    date: string;
+    categories: Record<string, number>;
+}
+
+interface InsightsProps {
+    isAuthenticated: boolean;
+    accessToken: string|null;
+}
 
 export const Insights = ({
     isAuthenticated,
     accessToken,
-}) => {
-    const [insights, setInsights] = useState([]);
-    const [loading, setLoading] = useState(false);
+}: InsightsProps) => {
+    const [insights, setInsights] = useState<Array<Insight>>([]);
+    const [loading, setLoading] = useState<boolean>(false);
     useEffect(() => {
+        if (!isAuthenticated || !accessToken) {
+            return;
+        }
         setLoading(true);
         // fetch data from /insights endpoint
-        getCall("/insights", accessToken).then(result => {
-            if(!result.ok) {
-                return [];
-            }
-            return result.json();
-        }).then(resultJson => {
-            if(!resultJson) {
-                console.log("error fetching insights");
-            }
-            setInsights(resultJson.data);
+        getInsights(accessToken).then(result => {
+            setInsights(result);
+            console.log(111, result);
+        }).catch(err => {
+            console.log(err);
+        }).finally(() => {
             setLoading(false);
-        })
-    }, [accessToken]);
+        });
+    }, [accessToken, isAuthenticated]);
 
     if (!isAuthenticated) {
         return (
@@ -52,21 +61,24 @@ export const Insights = ({
         date,
         categories
     }) => {
-        const dataObj = JSON.parse(categories);
         return {
             name: date,
-            value: Object.keys(dataObj).reduce((acc, cur) => {
-                const amount = parseFloat(dataObj[cur]);
+            value: Object.keys(categories).reduce((acc, cur) => {
+                const amount = categories[cur];
                 return acc + (amount > 0 ? amount : 0);
             }, 0)
         };
     });
 
-    const categorySpendingsMappings = insights.reduce((acc, monthly) => {
-        const dataObj = JSON.parse(monthly.categories);
-        Object.keys(dataObj).forEach((cur) => {
+    const categorySpendingsMappings = insights.reduce((
+        acc: {
+            [key: string]: number;
+        }, 
+        monthly: Insight
+    ) => {
+        Object.keys(monthly.categories).forEach((cur) => {
             const category = cur;
-            const amount = parseFloat(dataObj[cur]);
+            const amount = monthly.categories[cur];
             if (acc[category]) {
                 acc[category] += amount;
             } else {
@@ -80,7 +92,7 @@ export const Insights = ({
             name: key,
             value: categorySpendingsMappings[key]
         }
-    }).sort((a, b) => a.value < b.value)
+    }).sort((a, b) => b.value - a.value)
     .filter((cur) => cur.value > 0);
     
     const groupedData = serializedData.slice(0, 5).concat([{
@@ -92,7 +104,8 @@ export const Insights = ({
 
     return (insights.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
-    ) : (<div style={{
+    ) : (
+    <div style={{
         display: 'flex',
         padding: '20px',
     }}>
@@ -101,6 +114,7 @@ export const Insights = ({
                 <Card.Title>Category Breakdown</Card.Title>
                 <PieChart width={360} height={360}>
                     <Pie
+                        dataKey="value"
                         isAnimationActive={false}
                         data={groupedData}
                         cx="50%"
@@ -132,5 +146,5 @@ export const Insights = ({
                 <Button variant="primary">See Details</Button>
             </Card.Body>
         </Card>
-        </div>);
+    </div>);
 }

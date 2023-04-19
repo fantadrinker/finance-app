@@ -17,7 +17,7 @@ import Login from "./Pages/Login/Login";
 const useAuth0AccessToken = (
   isAuthenticated: boolean, 
   getToken: (option: GetTokenSilentlyOptions) => Promise<string>) => {
-  const [accessToken, setToken] = useState(null);
+  const [accessToken, setToken] = useState<string>("");
   useEffect(() => {
       const fetchAuth0Token = async () => {
           const config = getConfig();

@@ -2,32 +2,41 @@ import React, { useState, useEffect } from "react";
 import Button from "react-bootstrap/esm/Button";
 import Table from "react-bootstrap/esm/Table";
 import { Link } from "react-router-dom";
-import { getCall, postCall, deleteCall } from "../../api";
+import { deleteMapping, getMappings, postMappings } from "../../api";
 import UpdateMappingModal from "../../Components/UpdateMappingModal";
 
+interface PreferencesProps {
+    isAuthenticated: boolean;
+    accessToken: string|null;
+};
+
+interface Mapping {
+    sk: string;
+    description: string;
+    category: string;
+};
+
+// TODO: set up error handling
 export const Preferences = ({
     isAuthenticated,
     accessToken,
-}) => {
+}: PreferencesProps) => {
     // supports display, update and delete description to category mappings
-    const [mappings, setMappings] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-    const [description, setDescription] = useState("");
-    const [category, setCategory] = useState("");
+    const [mappings, setMappings] = useState<Array<Mapping>>([]);
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [description, setDescription] = useState<string>("");
+    const [category, setCategory] = useState<string>("");
     useEffect(() => {
+        if (!isAuthenticated || !accessToken) {
+            return;
+        }
         // fetch data from /preferences endpoint
-        getCall("/mappings", accessToken).then(result => {
-            if(!result.ok) {
-                return [];
-            }
-            return result.json();
-        }).then(resultJson => {
-            if(!resultJson) {
-                console.log("error fetching preferences");
-            }
-            setMappings(resultJson.data);
-        })
-    }, [accessToken]);
+        getMappings(accessToken).then(result => {
+            setMappings(result);
+        }).catch(err => {
+            console.log(err);
+        });
+    }, [isAuthenticated, accessToken]);
 
 
     if (!isAuthenticated) {
@@ -36,44 +45,49 @@ export const Preferences = ({
         )
     }
 
-    const openModalWithParams = (desc, cat) => {
+    const openModalWithParams = (desc: string, cat: string) => {
         setDescription(desc);
         setCategory(cat);
         setShowModal(true);
     }
-    const deleteMapping = (sk) => {
+    const deleteMappingAndFetch = (sk: string) => {
         // calls delete /mappings endpoint
-        deleteCall(`/mappings?id=${sk}`, accessToken)
+        deleteMapping(accessToken, sk)
         .then(result => {
             if(!result.ok) {
                 return [];
             }
-            getCall("/mappings", accessToken).then(result => {
-                if(!result.ok) {
-                    return [];
-                }
-                return result.json();
-            }).then(resultJson => {
-                if(!resultJson) {
-                    console.log("error fetching preferences");
-                }
-                setMappings(resultJson.data);
-            })
-        })
+            getMappings(accessToken ?? "").then(data => {
+                setMappings(data);
+            }).catch(err => {
+                console.log(err);
+            });
+        }).catch(err => {
+            console.log(err);
+        });
     }
 
-    const updateNewCategory = async (desc, newCategory) => {
+    const updateNewCategory = async (desc: string, newCategory: string) => {
         // calls post /mappings endpoint to update category mapping
-        const apiResponse = await postCall(`/mappings`, {
+        const body = {
             description: desc,
             category: newCategory
-        }, "application/json", accessToken);
-        if (apiResponse.ok) {
-            // return the updated activities, then we can update state locally?
-            // Should show a pop up indicate the result
+        };
+        postMappings(
+            accessToken, 
+            {
+                description: desc,
+                category: newCategory
+            }
+        ).then(result => {
+            if(!result.ok) {
+                return;
+            }
             console.log("mapping updated, updated informations should come later");
             setShowModal(false);
-        }
+        }).catch(err => {
+            console.log(err);
+        });
     }
     return (
         <div>
@@ -102,7 +116,7 @@ export const Preferences = ({
                                 </td>
                                 <td>
                                     <Button onClick={() => openModalWithParams(description, category)}>Update</Button>
-                                    <Button onClick={() => deleteMapping(sk)}>Delete</Button>
+                                    <Button onClick={() => deleteMappingAndFetch(sk)}>Delete</Button>
                                 </td>
                             </tr>
                         ))
