@@ -20,9 +20,9 @@ const UpdateMappingModal = ({
     allCategories,
     submit
 }: UpdateMappingModalProps) => {
-    const [newCategory, setNewCategory] = useState(currentCategory);
-    const [selectedCategory, setSelectedCategory] = useState(allCategories.length > 0? currentCategory: "");
-    const [newDescription, setNewDescription] = useState(currentDescription);
+    const [newCategory, setNewCategory] = useState<string>(currentCategory);
+    const [selectedCategory, setSelectedCategory] = useState<string>(allCategories.length > 0? currentCategory: "");
+    const [newDescription, setNewDescription] = useState<string>(currentDescription);
     // updates state when props change
     useEffect(() => {
         setNewCategory("");

@@ -21,7 +21,6 @@ const MyNavBar = () => {
             returnTo: window.location.origin,
             }
         });
-
     return (
         <Navbar bg="light" expand="lg">
             <Container>
@@ -42,7 +41,7 @@ const MyNavBar = () => {
                                 <Nav.Item><Link to="/preferences">Preferences</Link></Nav.Item>
                                 <Nav.Item><Link to="/insights">Insights</Link></Nav.Item>
                                 <Nav.Item>
-                                    <NavDropdown title={user.name} id="basic-nav-dropdown">
+                                    <NavDropdown title={user?.name ?? "No user name"} id="basic-nav-dropdown">
                                         <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>
                                     </NavDropdown>
                                 </Nav.Item>

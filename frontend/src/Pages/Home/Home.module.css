@@ -9,3 +9,7 @@
 .warningMessage {
     color: #ffc107;
 }
+
+.errorMessage {
+    color: #ff1707;
+}
