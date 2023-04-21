@@ -16,6 +16,7 @@ import {
     CartesianGrid,
 } from 'recharts';
 import { getInsights } from "../../api";
+import { Modal } from "react-bootstrap";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -98,6 +99,13 @@ function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number |
     return allMonths.slice(0, numMonths);
 }
 
+/**
+ * TODO: 1. add a stacked bar chart to show the breakdown of each category https://recharts.org/en-US/examples/StackedBarChart
+ * 2. onClick event handler for each category to open a pop up and show the top 5 transactions for that category
+ * 3. custom shape when hovering on the chart https://recharts.org/en-US/examples/CustomActiveShapePieChart
+ * @param param0 
+ * @returns 
+ */
 
 export const Insights = ({
     isAuthenticated,
@@ -106,6 +114,8 @@ export const Insights = ({
     const [categoryBreakdown, setCategoryBreakdown] = useState<Array<CategoryBreakdown>>([]);
     const [monthlyBreakdown, setMonthlyBreakdown] = useState<Array<MonthlyBreakdown>>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [showModal, setShowModal] = useState<boolean>(false);
+
     useEffect(() => {
         if (!isAuthenticated || !accessToken) {
             return;
@@ -132,6 +142,11 @@ export const Insights = ({
         )
     }
 
+    const handlePieChartClick = (data: any, index: number, event: React.MouseEvent) => {
+        console.log(111, data.name, data.value, index, event);
+        setShowModal(true);
+    }
+
     return (categoryBreakdown.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
     ) : (
@@ -152,6 +167,7 @@ export const Insights = ({
                         outerRadius={80}
                         fill="#8884d8"
                         label
+                        onClick={handlePieChartClick}
                     >
                         {categoryBreakdown.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -176,5 +192,19 @@ export const Insights = ({
                 <Button variant="primary">See Details</Button>
             </Card.Body>
         </Card>
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Modal heading</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    Close
+                </Button>
+                <Button variant="primary">
+                    Save Changes
+                </Button>
+            </Modal.Footer>
+        </Modal>
     </div>);
 }
