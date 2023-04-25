@@ -4,9 +4,6 @@ import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { Link } from "react-router-dom";
 import { 
-    PieChart, 
-    Pie, 
-    Cell, 
     Legend, 
     Tooltip, 
     BarChart, 
@@ -15,10 +12,9 @@ import {
     Bar, 
     CartesianGrid,
 } from 'recharts';
-import { getInsights } from "../../api";
+import { getInsights, getActivitiesByCategory } from "../../api";
 import { Modal } from "react-bootstrap";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+import { CategoryBreakdown, CategoryCard } from "../../Components/CategoryCard";
 
 interface Insight {
     date: string;
@@ -28,11 +24,6 @@ interface Insight {
 interface InsightsProps {
     isAuthenticated: boolean;
     accessToken: string|null;
-}
-
-interface CategoryBreakdown {
-    category: string;
-    amount: number;
 }
 
 interface MonthlyBreakdown {
@@ -142,11 +133,6 @@ export const Insights = ({
         )
     }
 
-    const handlePieChartClick = (data: any, index: number, event: React.MouseEvent) => {
-        console.log(111, data.name, data.value, index, event);
-        setShowModal(true);
-    }
-
     return (categoryBreakdown.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
     ) : (
@@ -154,30 +140,10 @@ export const Insights = ({
         display: 'flex',
         padding: '20px',
     }}>
-        <Card style={{ width: '400px', margin: '10px' }}>
-            <Card.Body>
-                <Card.Title>Category Breakdown</Card.Title>
-                <PieChart width={360} height={360}>
-                    <Pie
-                        dataKey="value"
-                        isAnimationActive={false}
-                        data={categoryBreakdown.map(({category, amount}) => ({name: category, value: amount}))}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        label
-                        onClick={handlePieChartClick}
-                    >
-                        {categoryBreakdown.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip />
-                </PieChart>
-                <Button variant="primary">See Details</Button>
-            </Card.Body>
-        </Card>
+        <CategoryCard 
+            cardWidth={400}
+            categoryBreakdown={categoryBreakdown}
+        />
         <Card style={{ width: '400px', margin: '10px' }}>
             <Card.Body>
                 <Card.Title>Monthly Trends</Card.Title>

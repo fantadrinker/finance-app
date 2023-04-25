@@ -1,6 +1,51 @@
 
 const awsLambdaAddr = "https://ot8kxben4m.execute-api.us-east-1.amazonaws.com/Test";
 
+interface CategoryMapping {
+    sk: string;
+    category: string;
+    description: string;
+}
+
+interface ActivityResponse {
+    sk: string;
+    date: string;
+    category: string;
+    account: string;
+    amount: string;
+    description: string;
+}
+
+interface ActivitiesAPIResponse {
+    data: Array<ActivityResponse>;
+    LastEvaluatedKey: {
+        sk: string;
+    };
+}
+
+interface ActivityRow {
+    id: string;
+    date: string;
+    category: string;
+    account: string;
+    amount: number;
+    desc: string;
+}
+
+interface GetActivitiesResponse {
+    data: Array<ActivityRow>;
+    nextKey: string;
+}
+
+interface ChksumItem {
+    chksum: string;
+}
+
+interface Insight {
+    date: string;
+    categories: Record<string, number>;
+}
+
 function postCall(
     url: string, 
     body: string = "", 
@@ -63,11 +108,6 @@ function deleteCall(
 
 // need another api layer to handle different api responses
 
-interface CategoryMapping {
-    sk: string;
-    category: string;
-    description: string;
-}
 
 export function getMappings(auth: string | null): Promise<Array<CategoryMapping>> {
     if (!auth) {
@@ -96,36 +136,6 @@ export function deleteMapping(auth: string | null, id: string): Promise<Response
         throw new Error("no auth");
     }
     return deleteCall(`/mappings?id=${id}`, auth);
-}
-
-interface ActivityResponse {
-    sk: string;
-    date: string;
-    category: string;
-    account: string;
-    amount: string;
-    description: string;
-}
-
-interface ActivitiesAPIResponse {
-    data: Array<ActivityResponse>;
-    LastEvaluatedKey: {
-        sk: string;
-    };
-}
-
-interface ActivityRow {
-    id: string;
-    date: string;
-    category: string;
-    account: string;
-    amount: number;
-    desc: string;
-}
-
-interface GetActivitiesResponse {
-    data: Array<ActivityRow>;
-    nextKey: string;
 }
 
 export function getActivities(auth: string, nextKey: string | null): Promise<GetActivitiesResponse> {
@@ -196,10 +206,6 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
     return deleteCall(`/activities?sk=${id}`, auth);
 }
 
-interface ChksumItem {
-    chksum: string;
-}
-
 export function getChecksums(auth: string | null): Promise<Array<string>> {
     if (!auth) {
         throw new Error("no auth");
@@ -213,11 +219,6 @@ export function getChecksums(auth: string | null): Promise<Array<string>> {
     }).then(jsonResult => {
         return jsonResult.data.map((item: ChksumItem) => item.chksum) as Array<string>;
     });
-}
-
-interface Insight {
-    date: string;
-    categories: Record<string, number>;
 }
 
 export function getInsights(auth: string | null): Promise<Array<Insight>> {
@@ -251,4 +252,40 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
             };
         }) as Array<Insight>;
     });
+}
+
+export function getActivitiesByCategory(auth: string, category: string): Promise<GetActivitiesResponse> {
+    if (!auth) {
+        throw new Error("no auth");
+    }
+    return Promise.resolve({
+        data: [{
+        id: "1",
+        date: "2020-01-01",
+        category: "test",
+        account: "1234",
+        amount: 100,
+        desc: "test"
+    }, {
+        id: "2",
+        date: "2020-01-02",
+        category: "test",
+        account: "1234",
+        amount: 30,
+        desc: "test2"
+    }, {
+        id: "3",
+        date: "2020-01-03",
+        category: "test",
+        account: "1234",
+        amount: 3,
+        desc: "test3"
+    }, {
+        id: "4",
+        date: "2020-01-04",
+        category: "test",
+        account: "1234",
+        amount: 2,
+        desc: "test4"
+    }]} as GetActivitiesResponse);
 }
