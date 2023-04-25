@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "react-bootstrap/esm/Button";
 import Table from "react-bootstrap/esm/Table";
 import { Link } from "react-router-dom";
 import { deleteMapping, getMappings, postMappings } from "../../api";
 import UpdateMappingModal from "../../Components/UpdateMappingModal";
-
-interface PreferencesProps {
-    isAuthenticated: boolean;
-    accessToken: string|null;
-};
+import { AuthContext } from "../../AuthContext";
 
 interface Mapping {
     sk: string;
@@ -17,11 +13,12 @@ interface Mapping {
 };
 
 // TODO: set up error handling
-export const Preferences = ({
-    isAuthenticated,
-    accessToken,
-}: PreferencesProps) => {
+export const Preferences = () => {
     // supports display, update and delete description to category mappings
+    const {
+        isAuthenticated,
+        accessToken
+    } = useContext(AuthContext);
     const [mappings, setMappings] = useState<Array<Mapping>>([]);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [description, setDescription] = useState<string>("");

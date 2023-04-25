@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Spinner from "react-bootstrap/esm/Spinner";
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
@@ -15,15 +15,11 @@ import {
 import { getInsights, getActivitiesByCategory } from "../../api";
 import { Modal } from "react-bootstrap";
 import { CategoryBreakdown, CategoryCard } from "../../Components/CategoryCard";
+import { AuthContext } from "../../AuthContext";
 
 interface Insight {
     date: string;
     categories: Record<string, number>;
-}
-
-interface InsightsProps {
-    isAuthenticated: boolean;
-    accessToken: string|null;
 }
 
 interface MonthlyBreakdown {
@@ -98,10 +94,11 @@ function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number |
  * @returns 
  */
 
-export const Insights = ({
-    isAuthenticated,
-    accessToken,
-}: InsightsProps) => {
+export const Insights = () => {
+    const {
+        accessToken,
+        isAuthenticated
+    } = useContext(AuthContext)
     const [categoryBreakdown, setCategoryBreakdown] = useState<Array<CategoryBreakdown>>([]);
     const [monthlyBreakdown, setMonthlyBreakdown] = useState<Array<MonthlyBreakdown>>([]);
     const [loading, setLoading] = useState<boolean>(false);

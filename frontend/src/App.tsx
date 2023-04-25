@@ -76,8 +76,8 @@ function App() {
             <MyNavBar />
           </nav>
           <Routes>
-            <Route path="/insights" element={<Insights {...authProps} />} />
-            <Route path="/preferences" element={<Preferences {...authProps} />} />
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/preferences" element={<Preferences />} />
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="*" element={<Navigate to="/" />} />
