@@ -41,7 +41,7 @@ interface ChksumItem {
     chksum: string;
 }
 
-interface Insight {
+export interface Insight {
     date: string;
     categories: Record<string, number>;
 }

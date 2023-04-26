@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Card from 'react-bootstrap/Card';
 import { 
     PieChart, 
@@ -7,8 +7,9 @@ import {
     Tooltip, 
 } from 'recharts';
 import Button from 'react-bootstrap/Button';
-import { getActivitiesByCategory } from "../api";
+import { Insight, getActivitiesByCategory } from "../api";
 import { AuthContext } from "../AuthContext";
+import { Table } from "react-bootstrap";
 
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -16,35 +17,87 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 interface Activity {
     id: string;
     date: string;
+    account: string;
     amount: number;
     category: string;
-    description: string;
+    desc: string;
 }
 
 interface CategoryCardProps {
     cardWidth: number;
-    categoryBreakdown: Array<CategoryBreakdown>;
+    insights: Array<Insight>;
 }
 
-export interface CategoryBreakdown {
+
+function calculateCategoryBreakdown(insights: Array<Insight>, displayTop: number | null): Array<CategoryBreakdown> {
+    const allCategories = insights.reduce((
+        acc: Array<CategoryBreakdown>,
+        cur: Insight
+    ) => {
+        Object.keys(cur.categories).forEach((category) => {
+            const amount = cur.categories[category];
+            if (amount > 0) {
+                const existing = acc.find((cur) => cur.category === category);
+                if (existing) {
+                    existing.amount += amount;
+                } else {
+                    acc.push({
+                        category,
+                        amount,
+                    });
+                }
+            }
+        }
+        );
+        return acc;
+    }, []).map((cur) => {
+        return {
+            ...cur,
+            amount: Math.round(cur.amount * 100) / 100,
+        }
+    }).filter((cur) => cur.amount > 0);
+    allCategories.sort((a, b) => b.amount - a.amount);
+    if (!displayTop) {
+        return allCategories;
+    }
+    const others: CategoryBreakdown = {
+        category: "Others",
+        amount: allCategories.slice(displayTop).reduce((acc, cur) => acc + cur.amount, 0)
+    }
+    return [...allCategories.slice(0, displayTop), others];
+}
+
+interface CategoryBreakdown {
     category: string;
     amount: number;
 }
 
 export const CategoryCard = ({
     cardWidth, 
-    categoryBreakdown,
+    insights
 }: CategoryCardProps) => {
     const {
         accessToken
     } = useContext(AuthContext);
+
+    const [categoryBreakdown, setCategoryBreakdown ] = useState<Array<CategoryBreakdown>>([]);
+    const [activities, setActivities] = useState<Array<Activity>>([]);
+    const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        setCategoryBreakdown(
+            calculateCategoryBreakdown(insights, 5)
+        );
+    }, [insights]);
+
     const handleClick = () => {
+        setLoading(true);
         getActivitiesByCategory(
             accessToken, 
             categoryBreakdown[0].category
         ).then((activities) => {
-            console.log(activities);
-        });
+            setActivities(activities.data);
+        }).finally(() => setLoading(false));
     }
 
     return <Card style={{ width: `${cardWidth}px`, margin: '10px'}}>
@@ -68,7 +121,31 @@ export const CategoryCard = ({
                 </Pie>
                 <Tooltip />
             </PieChart>
-            <Button variant="primary">See Details</Button>
+            <div>
+                {activities.length > 0? <h5>Activities</h5> : null}
+                <Table>
+                    <thead>
+                        <tr>
+                            <td>date</td>
+                            <td>account</td>
+                            <td>description</td>
+                            <td>category</td>
+                            <td>amount</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {activities.map((activity) => (
+                            <tr key={activity.id}>
+                                <td>{activity.date}</td>
+                                <td>{activity.account}</td>
+                                <td>{activity.desc}</td>
+                                <td>{activity.category}</td>
+                                <td>{activity.amount}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            </div>
         </Card.Body>
     </Card>
 } 

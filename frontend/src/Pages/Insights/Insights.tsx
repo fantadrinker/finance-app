@@ -12,58 +12,16 @@ import {
     Bar, 
     CartesianGrid,
 } from 'recharts';
-import { getInsights, getActivitiesByCategory } from "../../api";
+import { getInsights, Insight } from "../../api";
 import { Modal } from "react-bootstrap";
-import { CategoryBreakdown, CategoryCard } from "../../Components/CategoryCard";
+import { CategoryCard } from "../../Components/CategoryCard";
 import { AuthContext } from "../../AuthContext";
-
-interface Insight {
-    date: string;
-    categories: Record<string, number>;
-}
 
 interface MonthlyBreakdown {
     month: string;
     amount: number;
 }
 
-function calculateCategoryBreakdown(insights: Array<Insight>, displayTop: number | null): Array<CategoryBreakdown> {
-    const allCategories = insights.reduce((
-        acc: Array<CategoryBreakdown>, 
-        cur: Insight
-    ) => {
-        Object.keys(cur.categories).forEach((category) => {
-            const amount = cur.categories[category];
-            if (amount > 0) {
-                const existing = acc.find((cur) => cur.category === category);
-                if (existing) {
-                    existing.amount += amount;
-                } else {
-                    acc.push({
-                        category,
-                        amount,
-                    });
-                }
-            }
-        }
-        );
-        return acc;
-    }, []).map((cur) => {
-        return {
-            ...cur,
-            amount: Math.round(cur.amount * 100) / 100,
-        }
-    }).filter((cur) => cur.amount > 0);
-    allCategories.sort((a, b) => b.amount - a.amount);
-    if (!displayTop) {
-        return allCategories;
-    }
-    const others: CategoryBreakdown = {
-        category: "Others",
-        amount: allCategories.slice(displayTop).reduce((acc, cur) => acc + cur.amount, 0)
-    }
-    return [...allCategories.slice(0, displayTop), others];
-}
 
 function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number | null): Array<MonthlyBreakdown> {
     const allMonths = insights.map(({
@@ -99,7 +57,7 @@ export const Insights = () => {
         accessToken,
         isAuthenticated
     } = useContext(AuthContext)
-    const [categoryBreakdown, setCategoryBreakdown] = useState<Array<CategoryBreakdown>>([]);
+    const [insights, setInsights] = useState<Array<Insight>>([]);
     const [monthlyBreakdown, setMonthlyBreakdown] = useState<Array<MonthlyBreakdown>>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
@@ -111,9 +69,7 @@ export const Insights = () => {
         setLoading(true);
         // fetch data from /insights endpoint
         getInsights(accessToken).then(result => {
-            setCategoryBreakdown(
-                calculateCategoryBreakdown(result, 5)
-            );
+            setInsights(result);
             setMonthlyBreakdown(
                 calculateMonthlyBreakdown(result, 6)
             );
@@ -130,7 +86,7 @@ export const Insights = () => {
         )
     }
 
-    return (categoryBreakdown.length === 0 || loading)? (
+    return (insights.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
     ) : (
     <div style={{
@@ -139,7 +95,7 @@ export const Insights = () => {
     }}>
         <CategoryCard 
             cardWidth={400}
-            categoryBreakdown={categoryBreakdown}
+            insights={insights}
         />
         <Card style={{ width: '400px', margin: '10px' }}>
             <Card.Body>
