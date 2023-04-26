@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { Insight, getActivitiesByCategory } from "../api";
 import { AuthContext } from "../AuthContext";
-import { Table } from "react-bootstrap";
+import { Spinner, Table } from "react-bootstrap";
 
 /**
  * TODO: animations
@@ -178,10 +178,11 @@ export const CategoryCard = ({
                     <Tooltip />
                     <Legend />
                 </PieChart>
+                {loading && <Spinner animation="border" />}
                 {isExpanded && (
                 <div onClick={() => setSelectedCategory("")}>
-                    {isExpanded? <h5>Activities for {selectedCategory}</h5> : null}
-                    <Table>
+                    <h5>Activities for {selectedCategory}</h5>
+                    {loading ? ( <Spinner animation="border" />): (<Table>
                         <thead>
                             <tr>
                                 <td>date</td>
@@ -200,7 +201,7 @@ export const CategoryCard = ({
                                 </tr>
                             ))}
                         </tbody>
-                    </Table>
+                    </Table>)}
                 </div>)}
             </div>
             
