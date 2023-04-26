@@ -28,7 +28,6 @@ interface Activity {
 }
 
 interface CategoryCardProps {
-    cardWidth: number;
     insights: Array<Insight>;
 }
 
@@ -101,7 +100,6 @@ interface CategoryBreakdown {
 }
 
 export const CategoryCard = ({
-    cardWidth, 
     insights
 }: CategoryCardProps) => {
     const {
@@ -141,7 +139,15 @@ export const CategoryCard = ({
 
     const selectedIndex = categoryBreakdown.findIndex((cur) => cur.category === selectedCategory)
 
-    return <Card style={isExpanded ? {width: '100%'}: {}}>
+    const cardStyles = isExpanded? {
+        flexGrow: 2,
+        maxWidth: '800px'
+    }: {
+        flexGrow: 1,
+        maxWidth: '400px'
+    };
+
+    return <Card style={cardStyles}>
         <Card.Body>
             <Card.Title>Category Breakdown</Card.Title>
             <div 

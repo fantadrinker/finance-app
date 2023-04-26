@@ -98,14 +98,9 @@ export const Insights = () => {
         gap: '10px'
     }}>
         <CategoryCard 
-            cardWidth={400}
             insights={insights}
         />
-        <CategoryCard 
-            cardWidth={400}
-            insights={insights}
-        />
-        <Card style={{ width: '400px' }}>
+        <Card style={{ flexGrow: 1, maxWidth: "400px" }}>
             <Card.Body>
                 <Card.Title>Monthly Trends</Card.Title>
                 <BarChart width={360} height={360} data={monthlyBreakdown}>
