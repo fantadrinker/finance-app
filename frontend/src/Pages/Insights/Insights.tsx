@@ -91,13 +91,21 @@ export const Insights = () => {
     ) : (
     <div style={{
         display: 'flex',
+        flexFlow: 'row wrap',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
         padding: '20px',
+        gap: '10px'
     }}>
         <CategoryCard 
             cardWidth={400}
             insights={insights}
         />
-        <Card style={{ width: '400px', margin: '10px' }}>
+        <CategoryCard 
+            cardWidth={400}
+            insights={insights}
+        />
+        <Card style={{ width: '400px' }}>
             <Card.Body>
                 <Card.Title>Monthly Trends</Card.Title>
                 <BarChart width={360} height={360} data={monthlyBreakdown}>

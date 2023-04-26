@@ -1,18 +1,22 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import Card from 'react-bootstrap/Card';
 import { 
     PieChart, 
     Pie, 
     Cell,
-    Tooltip, 
+    Sector,
+    Tooltip,
+    Legend, 
 } from 'recharts';
-import Button from 'react-bootstrap/Button';
 import { Insight, getActivitiesByCategory } from "../api";
 import { AuthContext } from "../AuthContext";
 import { Table } from "react-bootstrap";
 
+/**
+ * TODO: animations
+ */
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const COLORS_GPT = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
 
 interface Activity {
     id: string;
@@ -67,6 +71,30 @@ function calculateCategoryBreakdown(insights: Array<Insight>, displayTop: number
     return [...allCategories.slice(0, displayTop), others];
 }
 
+interface SectorProps {
+    cx: number;
+    cy: number;
+    midAngle: number;
+    innerRadius: number;
+    outerRadius: number;
+    startAngle: number;
+    endAngle: number;
+    fill: string;
+    payload: any;
+    percent: number;
+    value: number;
+}
+
+const activeSlice = (props: SectorProps) => {
+    // expand radius by 20%, keep fill color
+    return (
+        <Sector 
+            {...props}
+            outerRadius={props.outerRadius * 1.2}
+        />
+    )
+}
+
 interface CategoryBreakdown {
     category: string;
     amount: number;
@@ -83,6 +111,13 @@ export const CategoryCard = ({
     const [categoryBreakdown, setCategoryBreakdown ] = useState<Array<CategoryBreakdown>>([]);
     const [activities, setActivities] = useState<Array<Activity>>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [selectedCategory, setSelectedCategory] = useState<string>("");
+    const [hoveredIndex, setHoveredIndex] = useState<number>(-1);
+
+    const handleMouseEnter = useCallback((_: any, index: number) => {
+        setHoveredIndex(index);
+    }, []);
+
 
     useEffect(() => {
         setCategoryBreakdown(
@@ -90,62 +125,86 @@ export const CategoryCard = ({
         );
     }, [insights]);
 
-    const handleClick = () => {
+    const handleClick = (event: any) => {
+        // todo: type event
+        setSelectedCategory(event.name);
         setLoading(true);
         getActivitiesByCategory(
             accessToken, 
-            categoryBreakdown[0].category
+            event.name
         ).then((activities) => {
             setActivities(activities.data);
         }).finally(() => setLoading(false));
     }
 
-    return <Card style={{ width: `${cardWidth}px`, margin: '10px'}}>
+    const isExpanded = selectedCategory.length > 0;
+
+    const selectedIndex = categoryBreakdown.findIndex((cur) => cur.category === selectedCategory)
+
+    return <Card style={isExpanded ? {width: '100%'}: {}}>
         <Card.Body>
             <Card.Title>Category Breakdown</Card.Title>
-            <PieChart width={360} height={360}>
-                <Pie
-                    dataKey="value"
-                    isAnimationActive={false}
-                    data={categoryBreakdown.map(({category, amount}) => ({name: category, value: amount}))}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    fill="#8884d8"
-                    label
-                    onClick={handleClick}
-                >
-                    {categoryBreakdown.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                </Pie>
-                <Tooltip />
-            </PieChart>
-            <div>
-                {activities.length > 0? <h5>Activities</h5> : null}
-                <Table>
-                    <thead>
-                        <tr>
-                            <td>date</td>
-                            <td>account</td>
-                            <td>description</td>
-                            <td>category</td>
-                            <td>amount</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {activities.map((activity) => (
-                            <tr key={activity.id}>
-                                <td>{activity.date}</td>
-                                <td>{activity.account}</td>
-                                <td>{activity.desc}</td>
-                                <td>{activity.category}</td>
-                                <td>{activity.amount}</td>
-                            </tr>
+            <div 
+                style={{
+                    display: 'flex', 
+                    flexDirection: 'row', 
+                    justifyContent: 'space-evenly',
+                    cursor: isExpanded? 'pointer': 'default'
+                }}
+            >
+                <PieChart width={360} height={360}>
+                    <Pie
+                        dataKey="value"
+                        isAnimationActive={false}
+                        data={categoryBreakdown.map(({category, amount}) => ({name: category, value: amount}))}
+                        activeShape={activeSlice}
+                        activeIndex={selectedIndex === -1? hoveredIndex: selectedIndex}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        fill="#8884d8"
+                        label
+                        onClick={handleClick}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={() => setHoveredIndex(-1)}
+                        style={{cursor: 'pointer'}}
+                    >
+                        {categoryBreakdown.map(({
+                            category
+                        }, index) => (
+                            <Cell key={`cell-${index}`} fill={(isExpanded && category !== selectedCategory && index !== hoveredIndex)? "grey": COLORS_GPT[index % COLORS_GPT.length]} />
                         ))}
-                    </tbody>
-                </Table>
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                </PieChart>
+                {isExpanded && (
+                <div onClick={() => setSelectedCategory("")}>
+                    {isExpanded? <h5>Activities for {selectedCategory}</h5> : null}
+                    <Table>
+                        <thead>
+                            <tr>
+                                <td>date</td>
+                                <td>account</td>
+                                <td>description</td>
+                                <td>amount</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {activities.map((activity) => (
+                                <tr key={activity.id}>
+                                    <td>{activity.date}</td>
+                                    <td>{activity.account}</td>
+                                    <td>{activity.desc}</td>
+                                    <td>{activity.amount}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>)}
             </div>
+            
+            
         </Card.Body>
     </Card>
 } 
