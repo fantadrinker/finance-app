@@ -52,11 +52,6 @@ function App() {
 
   const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);
 
-  const authProps = {
-    isAuthenticated,
-    accessToken
-  }
-
   if (error) {
     return <div>Oops... {error.message}</div>;
   }
