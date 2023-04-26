@@ -1,5 +1,6 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState, useContext } from 'react';
 import md5 from 'md5';
+import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
@@ -10,7 +11,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import styles from './Home.module.css'
 import { getActivities, getMappings, getChecksums, postActivities, postMappings, deleteActivity } from '../../api';
 import UpdateMappingModal from '../../Components/UpdateMappingModal';
-import { Link } from 'react-router-dom';
+import { AuthContext } from '../../AuthContext';
 
 enum ColumnFormat {
     cap1 = "cap1",
@@ -49,15 +50,12 @@ function useFetchPrevCheckSums(accessToken: string | null): Array<any> {
     return chksums;
 }
 
-interface HomeProps {
-    isAuthenticated: boolean;
-    accessToken: string|null;
-}
+export function Home() {
 
-export function Home({
-    isAuthenticated,
-    accessToken
-}: HomeProps) {
+    const {
+        isAuthenticated,
+        accessToken,
+    } = useContext(AuthContext);
     // csv format
     const [fileContent, setFileContent] = useState<File | null>(null);
     const [fileName, setFileName] = useState<string>("");

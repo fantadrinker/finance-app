@@ -13,6 +13,7 @@ import './App.css';
 import MyNavBar from './Components/MyNavBar';
 import { getConfig } from "./config";
 import Login from "./Pages/Login/Login";
+import { AuthContext } from "./AuthContext";
 
 const useAuth0AccessToken = (
   isAuthenticated: boolean, 
@@ -51,11 +52,6 @@ function App() {
 
   const accessToken = useAuth0AccessToken(isAuthenticated, getAccessTokenSilently);
 
-  const authProps = {
-    isAuthenticated,
-    accessToken
-  }
-
   if (error) {
     return <div>Oops... {error.message}</div>;
   }
@@ -65,20 +61,25 @@ function App() {
   }
 
   return (
-    <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
-      <div>
-        <nav>
-          <MyNavBar />
-        </nav>
-        <Routes>
-          <Route path="/insights" element={<Insights {...authProps} />} />
-          <Route path="/preferences" element={<Preferences {...authProps} />} />
-          <Route path="/" element={<Home {...authProps} />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
-    </Router>
+    <AuthContext.Provider value={{
+      isAuthenticated,
+      accessToken
+    }}>
+      <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
+        <div>
+          <nav>
+            <MyNavBar />
+          </nav>
+          <Routes>
+            <Route path="/insights" element={<Insights />} />
+            <Route path="/preferences" element={<Preferences />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthContext.Provider>
   );
 }
 

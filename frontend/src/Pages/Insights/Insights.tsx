@@ -1,12 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Spinner from "react-bootstrap/esm/Spinner";
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { Link } from "react-router-dom";
 import { 
-    PieChart, 
-    Pie, 
-    Cell, 
     Legend, 
     Tooltip, 
     BarChart, 
@@ -15,67 +12,16 @@ import {
     Bar, 
     CartesianGrid,
 } from 'recharts';
-import { getInsights } from "../../api";
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
-interface Insight {
-    date: string;
-    categories: Record<string, number>;
-}
-
-interface InsightsProps {
-    isAuthenticated: boolean;
-    accessToken: string|null;
-}
-
-interface CategoryBreakdown {
-    category: string;
-    amount: number;
-}
+import { getInsights, Insight } from "../../api";
+import { Modal } from "react-bootstrap";
+import { CategoryCard } from "../../Components/CategoryCard";
+import { AuthContext } from "../../AuthContext";
 
 interface MonthlyBreakdown {
     month: string;
     amount: number;
 }
 
-function calculateCategoryBreakdown(insights: Array<Insight>, displayTop: number | null): Array<CategoryBreakdown> {
-    const allCategories = insights.reduce((
-        acc: Array<CategoryBreakdown>, 
-        cur: Insight
-    ) => {
-        Object.keys(cur.categories).forEach((category) => {
-            const amount = cur.categories[category];
-            if (amount > 0) {
-                const existing = acc.find((cur) => cur.category === category);
-                if (existing) {
-                    existing.amount += amount;
-                } else {
-                    acc.push({
-                        category,
-                        amount,
-                    });
-                }
-            }
-        }
-        );
-        return acc;
-    }, []).map((cur) => {
-        return {
-            ...cur,
-            amount: Math.round(cur.amount * 100) / 100,
-        }
-    }).filter((cur) => cur.amount > 0);
-    allCategories.sort((a, b) => b.amount - a.amount);
-    if (!displayTop) {
-        return allCategories;
-    }
-    const others: CategoryBreakdown = {
-        category: "Others",
-        amount: allCategories.slice(displayTop).reduce((acc, cur) => acc + cur.amount, 0)
-    }
-    return [...allCategories.slice(0, displayTop), others];
-}
 
 function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number | null): Array<MonthlyBreakdown> {
     const allMonths = insights.map(({
@@ -98,14 +44,24 @@ function calculateMonthlyBreakdown(insights: Array<Insight>, numMonths: number |
     return allMonths.slice(0, numMonths);
 }
 
+/**
+ * TODO: 1. add a stacked bar chart to show the breakdown of each category https://recharts.org/en-US/examples/StackedBarChart
+ * 2. onClick event handler for each category to open a pop up and show the top 5 transactions for that category
+ * 3. custom shape when hovering on the chart https://recharts.org/en-US/examples/CustomActiveShapePieChart
+ * @param param0 
+ * @returns 
+ */
 
-export const Insights = ({
-    isAuthenticated,
-    accessToken,
-}: InsightsProps) => {
-    const [categoryBreakdown, setCategoryBreakdown] = useState<Array<CategoryBreakdown>>([]);
+export const Insights = () => {
+    const {
+        accessToken,
+        isAuthenticated
+    } = useContext(AuthContext)
+    const [insights, setInsights] = useState<Array<Insight>>([]);
     const [monthlyBreakdown, setMonthlyBreakdown] = useState<Array<MonthlyBreakdown>>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [showModal, setShowModal] = useState<boolean>(false);
+
     useEffect(() => {
         if (!isAuthenticated || !accessToken) {
             return;
@@ -113,9 +69,7 @@ export const Insights = ({
         setLoading(true);
         // fetch data from /insights endpoint
         getInsights(accessToken).then(result => {
-            setCategoryBreakdown(
-                calculateCategoryBreakdown(result, 5)
-            );
+            setInsights(result);
             setMonthlyBreakdown(
                 calculateMonthlyBreakdown(result, 6)
             );
@@ -132,37 +86,21 @@ export const Insights = ({
         )
     }
 
-    return (categoryBreakdown.length === 0 || loading)? (
+    return (insights.length === 0 || loading)? (
         <Spinner animation="border" role="status" />
     ) : (
     <div style={{
         display: 'flex',
+        flexFlow: 'row wrap',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
         padding: '20px',
+        gap: '10px'
     }}>
-        <Card style={{ width: '400px', margin: '10px' }}>
-            <Card.Body>
-                <Card.Title>Category Breakdown</Card.Title>
-                <PieChart width={360} height={360}>
-                    <Pie
-                        dataKey="value"
-                        isAnimationActive={false}
-                        data={categoryBreakdown.map(({category, amount}) => ({name: category, value: amount}))}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        label
-                    >
-                        {categoryBreakdown.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                    </Pie>
-                    <Tooltip />
-                </PieChart>
-                <Button variant="primary">See Details</Button>
-            </Card.Body>
-        </Card>
-        <Card style={{ width: '400px', margin: '10px' }}>
+        <CategoryCard 
+            insights={insights}
+        />
+        <Card style={{ flexGrow: 1, maxWidth: "400px" }}>
             <Card.Body>
                 <Card.Title>Monthly Trends</Card.Title>
                 <BarChart width={360} height={360} data={monthlyBreakdown}>
@@ -176,5 +114,19 @@ export const Insights = ({
                 <Button variant="primary">See Details</Button>
             </Card.Body>
         </Card>
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Modal heading</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>Woohoo, you're reading this text in a modal!</Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={() => setShowModal(false)}>
+                    Close
+                </Button>
+                <Button variant="primary">
+                    Save Changes
+                </Button>
+            </Modal.Footer>
+        </Modal>
     </div>);
 }
