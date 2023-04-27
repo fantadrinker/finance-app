@@ -45,31 +45,14 @@ then deploy to cloud
 today added auth0 integration, next steps:
 1. Set up auto deployment to github pages (done 03/08/2023)
 2. Rewrite django backend with lambda and dynamoDB (done)
-3. Prettify UI
-4. add dynamodb integrity check function
+3. Prettify UI (done)
+4. add dynamodb integrity check function (done)
 
-
-### API draft
-
-    POST /activities?format=<format>
-    param:
-      - format: cap1 or rbc
-    body: csv file exported from either cap1 or RBC
-    response: body: formatted data with following columns 
-    date, account, description, category, amount
-
-
-Processes and stores user data in activities database table. Returns formatted data.
-
-    GET /activities
-    returns all user activities in standard format
-
-no side effects
-
-    POST /category?desc={key}&newcat={value}
-    updates category mapping from key to value
-
-store in database
+The above are pretty much all done, here's the next set of features I'm gonna work on:
+1. Right now the API connects to remote server. It's probably better or more user attractive to move some work to client-side. Explore using localStorage instead of backend to persist data.
+2. On insights page, transitions need to be animated.
+3. Insights page, I would like to see monthly trend for a specific set of categories.
+4. Explore more on user custom mappings.
 
 
 
