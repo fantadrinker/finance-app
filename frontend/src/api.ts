@@ -271,37 +271,4 @@ export function getActivitiesByCategory(auth: string, category: string): Promise
             return res.json();
         }
     }).then(obj => serializeActivitiesAPIResponse(obj, {start: 0, end: 5}));
-    /**
-     return Promise.resolve({
-        data: [{
-        id: "1",
-        date: "2020-01-01",
-        category: "test",
-        account: "1234",
-        amount: 100,
-        desc: "test"
-    }, {
-        id: "2",
-        date: "2020-01-02",
-        category: "test",
-        account: "1234",
-        amount: 30,
-        desc: "test2"
-    }, {
-        id: "3",
-        date: "2020-01-03",
-        category: "test",
-        account: "1234",
-        amount: 3,
-        desc: "test3"
-    }, {
-        id: "4",
-        date: "2020-01-04",
-        category: "test",
-        account: "1234",
-        amount: 2,
-        desc: "test4"
-    }]} as GetActivitiesResponse);
-     */
-    
 }
