@@ -184,10 +184,9 @@ export const CategoryCard = ({
                     <Tooltip />
                     <Legend />
                 </PieChart>
-                {loading && <Spinner animation="border" />}
                 {isExpanded && (
-                <div onClick={() => setSelectedCategory("")}>
-                    <h5>Activities for {selectedCategory}</h5>
+                <div style={{maxWidth: '360px', maxHeight: '360px'}} onClick={() => setSelectedCategory("")}>
+                    <h5>Top Activities for {selectedCategory}</h5>
                     {loading ? ( <Spinner animation="border" />): (<Table>
                         <thead>
                             <tr>
