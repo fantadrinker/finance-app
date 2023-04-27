@@ -106,6 +106,36 @@ function deleteCall(
     }
 }
 
+function serializeActivitiesAPIResponse(
+    res: ActivitiesAPIResponse, 
+    sliceResult?: {
+        start: number;
+        end: number;
+    }
+): GetActivitiesResponse {
+    const allData = sliceResult? res.data.slice(sliceResult.start, sliceResult.end): res.data;
+    return {
+        data: allData.map(({
+            sk,
+            date,
+            category,
+            account,
+            amount,
+            description
+        }: ActivityResponse) => {
+            return {
+                id: sk,
+                date,
+                category,
+                account,
+                amount: isNaN(parseFloat(amount))? 0: parseFloat(amount),
+                desc: description
+            };
+        }),
+        nextKey: res.LastEvaluatedKey.sk
+    }
+}
+
 // need another api layer to handle different api responses
 
 
@@ -149,31 +179,7 @@ export function getActivities(auth: string, nextKey: string | null): Promise<Get
         } else {
             return res.json();
         }
-    }).then(({
-        data,
-        LastEvaluatedKey
-    }: ActivitiesAPIResponse) => {
-        return {
-            data: data.map(({
-                sk,
-                date,
-                category,
-                account,
-                amount,
-                description
-            }: ActivityResponse) => {
-                return {
-                    id: sk,
-                    date,
-                    category,
-                    account,
-                    amount: isNaN(parseFloat(amount))? 0: parseFloat(amount),
-                    desc: description
-                };
-            }),
-            nextKey: LastEvaluatedKey.sk
-        }
-    });
+    }).then(serializeActivitiesAPIResponse);
 }
 
 export function postActivities(auth: string, columnFormat: string, fileContent: File): Promise<Response> {
@@ -258,7 +264,15 @@ export function getActivitiesByCategory(auth: string, category: string): Promise
     if (!auth) {
         throw new Error("no auth");
     }
-    return Promise.resolve({
+    return getCall(`/activities?category=${category}&size=5`, auth).then((res) => {
+        if (!res.ok) {
+            throw new Error("get activities failed");
+        } else {
+            return res.json();
+        }
+    }).then(obj => serializeActivitiesAPIResponse(obj, {start: 0, end: 5}));
+    /**
+     return Promise.resolve({
         data: [{
         id: "1",
         date: "2020-01-01",
@@ -288,4 +302,6 @@ export function getActivitiesByCategory(auth: string, category: string): Promise
         amount: 2,
         desc: "test4"
     }]} as GetActivitiesResponse);
+     */
+    
 }

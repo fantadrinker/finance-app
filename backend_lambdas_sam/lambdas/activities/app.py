@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from decimal import Decimal
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Key, Attr
 import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
@@ -159,7 +159,12 @@ def postActivities(user, file_format, body):
             "body": "missing header or request params"
         }
 
-def getActivities(user: str, size: int, startKey: str):
+def getActivities(
+        user: str, 
+        size: int, 
+        startKey : str = None, 
+        category: str = None,
+        orderByAmount: bool = False):
     global activities_table
     try:
         query_params = {
@@ -167,11 +172,20 @@ def getActivities(user: str, size: int, startKey: str):
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
             "ScanIndexForward": False
         }
+        if startKey and category:
+            return {
+                "statusCode": 400,
+                "body": "cannot have both startKey and category"
+            }
         if startKey:
             query_params["ExclusiveStartKey"] = {
                 "user": user,
                 "sk": startKey
             }
+        if category:
+            # TODO: implement sort by amount DESC. this needs an LSI
+            query_params["FilterExpression"] = Attr('category').eq(category)
+            del query_params["Limit"]
         data = activities_table.query(
             **query_params
         )
@@ -270,8 +284,10 @@ def lambda_handler(event, context):
         params = event.get("queryStringParameters", {})
         size = int(params.get("size", 0))
         nextDate = params.get("nextDate", "")
+        category = params.get("category", "")
+        orderByAmount = params.get("orderByAmount", False)
         print(f"processing GET request")
-        return getActivities(user_id, size, nextDate)
+        return getActivities(user_id, size, nextDate, category, orderByAmount)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")
