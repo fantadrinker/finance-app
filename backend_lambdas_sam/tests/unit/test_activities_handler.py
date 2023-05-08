@@ -4,7 +4,7 @@ from lambdas.activities import app
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
 import boto3
-from moto import mock_dynamodb
+from moto import mock_dynamodb, mock_s3
 
 @pytest.fixture()
 def activities_table():
@@ -25,6 +25,13 @@ def activities_table():
         )
         table.meta.client.get_waiter("table_exists").wait(TableName="activities")
         yield table
+
+@pytest.fixture()
+def s3():
+    with mock_s3():
+        s3 = boto3.resource('s3', region_name="us-east-1")
+        s3.create_bucket(Bucket="test-bucket")
+        yield s3
 
 @pytest.fixture()
 def user_id():
@@ -276,36 +283,18 @@ def mock_activities(user_id):
         for i in range(10)
     ]
 
-def test_post_activities(activities_table, user_id, apigw_event_post):
-    # add some existing mappings
-    activities_table.put_item(
-        Item={
-            "user": user_id,
-            "sk": "mapping#SAFEWAY",
-            "description": "SAFEWAY",
-            "category": "Grocery",
-        }
-    )
-
+def test_post_activities(s3, user_id, apigw_event_post):
+    
+    app.s3 = s3
     ret = app.lambda_handler(apigw_event_post, "")
-    # data = json.loads(ret["body"])
     assert ret["statusCode"] == 200
-    # first check if the correct # of activities data is inserted
 
-    activities_results = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("20"),
-    )
-    assert activities_results["Count"] == 2
-    grocery_result = [item for item in activities_results["Items"] if item["category"] == "Grocery"]
-    assert len(grocery_result) == 1
-
-    # then check if checksums is inserted
-
-    chksums_results = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("chksum#"),
-    )
-    assert chksums_results["Count"] == 1
-    assert chksums_results["Items"][0]["chksum"] == "6e2771e4bc4ec7dec643ebcf627419af"
+    bucket = s3.Bucket('test-bucket')
+    all_objs = list(bucket.objects.filter(
+        Prefix=f"{user_id}/cap1/"
+    ))
+    assert len(all_objs) == 1
+    
 
 def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_activities):
     # setup table and insert some activities data in there

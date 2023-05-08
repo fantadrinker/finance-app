@@ -128,11 +128,14 @@ Resources:
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
+        - S3WritePolicy:
+            BucketName: !Ref ActivitiesFiles
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+          ACTIVITIES_BUCKET: !Ref ActivitiesFiles
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         PostActivities:
@@ -269,6 +272,35 @@ Resources:
               Filters:
                 - Pattern: '{"dynamodb": {"Keys": {"sk": {"S": [{"prefix": "20"}, {"prefix": "mapping#"}]}}}}'
   
+  ActivitiesFilesProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/activitiesFilesProcessor/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+        - S3ReadPolicy:
+            BucketName: !Sub "${AWS::AccountId}-activities-files"
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+          ACTIVITIES_BUCKET: !Sub "${AWS::AccountId}-activities-files"
+      Events:
+        ProcessNewActivitiesFiles:
+          Type: S3
+          Properties:
+            Bucket: !Ref ActivitiesFiles
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .csv
+
   MonthlyCheckFunction:
     Type: AWS::Serverless::Function 
     Properties:
@@ -283,6 +315,15 @@ Resources:
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+
+
+  # s3 bucket to store user-uploaded activities files
+  ActivitiesFiles:
+    Type: 'AWS::S3::Bucket'
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-activities-files"
 
   # dynamodb tables
   ActivitiesTable:

@@ -26,6 +26,7 @@ s3_prefix = "backendLambdasSam"
 region = "us-east-1"
 disable_rollback = true
 image_repositories = []
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-lukh9szczw58"
 
 [default.package]
 [default.package.parameters]

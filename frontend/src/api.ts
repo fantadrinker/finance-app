@@ -1,5 +1,5 @@
 
-const awsLambdaAddr = "https://ot8kxben4m.execute-api.us-east-1.amazonaws.com/Test";
+const awsLambdaAddr = "https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test";
 
 interface CategoryMapping {
     sk: string;

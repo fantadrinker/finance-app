@@ -1,13 +1,9 @@
-from io import StringIO
 import os
-import csv
 import json
 import uuid
 import requests
-import hashlib
 import re
 from datetime import datetime
-from decimal import Decimal
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
@@ -15,6 +11,8 @@ import jwt
 from jwt.exceptions import InvalidSignatureError
 
 activities_table = None
+
+s3 = None
 
 # handle auth tokens
 
@@ -51,90 +49,20 @@ def get_user_id(event):
         return ""
 
 def postActivities(user, file_format, body):
-    # how: for each file uploaded, store a checksum in a database table
-    # this way we know when user uploads a duplicate file
-    global activities_table
+    global s3
     try:
         if not file_format or not body:
             return {
                 "statusCode": 400,
                 "body": "missing body content or input format",
             }
-
-        # first get all the mappings from the database
-        mappings = {}
-        mappings_response = activities_table.query(
-            KeyConditionExpression=Key('user').eq(user) & Key('sk').begins_with('mapping#')
-        )
-        for item in mappings_response['Items']:
-            if item['description'] not in mappings:
-                mappings[item['description']] = item['category']
-
-        
-        f = StringIO(body)
-        reader = csv.reader(f, delimiter=',')
-        insights_dict = {} # key: year-month, value: expenses per category
-        firstRow = True
-        with activities_table.batch_writer() as batch:
-            for row in reader:
-                # skips first header row
-                if firstRow:
-                    firstRow = False
-                    continue
-                # format and store them in dynamodb
-                item = {}
-                if file_format == "cap1" and len(row) >= 6:
-                    date_str = datetime.strptime(row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
-                    amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
-                    item = {
-                        'sk': date_str + str(uuid.uuid4()), 
-                        # concat uuid with date to make unique keys but also keep date ordering
-                        'user': user,
-                        'date': date_str,
-                        'account': row[2],
-                        'description': row[3],
-                        'category': row[4],
-                        'amount': amount
-                    }
-                elif file_format == "rbc" and len(row) >= 7:
-                    date_str = datetime.strptime(row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
-                    amount = 0 - Decimal(row[6])
-                    item = {
-                        'sk': date_str + str(uuid.uuid4()),
-                        'user': user,
-                        'account': f"{row[1]}-{row[0]}",
-                        'date': date_str,
-                        'description': row[5],
-                        'category': row[4], # in the future we should get this
-                        'amount' : amount # need to flip sign, rbc uses negative val for expense
-                    }
-                if item:
-                    # iterate through mappings and override category if there is a match
-                    for key in mappings:
-                        if re.search(key, item["description"]):
-                            print(f"found mapping, overriding {item['category']} with {mappings[key]}")
-                            item["category"] = mappings[key]
-                            break
-                    batch.put_item(
-                        Item=item
-                    )
-                    date_val = datetime.strptime(item["date"], "%Y-%m-%d")
-                    yr_mth = date_val.strftime("%Y-%m")
-                    if yr_mth not in insights_dict:
-                        insights_dict[yr_mth] = {}
-                    if item["category"] not in insights_dict[yr_mth]:
-                        insights_dict[yr_mth][item["category"]] = item["amount"]
-                    else:
-                        insights_dict[yr_mth][item["category"]] += item["amount"]
-            # update checksum table
-            batch.put_item(
-                Item={
-                    'user': user,
-                    'sk': f'chksum#{uuid.uuid4()}',
-                    'chksum': hashlib.md5(body.encode('utf-8')).hexdigest(),
-                    'date': datetime.today().strftime('%Y-%m-%d')
-                }
-            )
+        # upload to s3
+        s3_key = f"{user}/{file_format}/{datetime.today().strftime('%Y-%m-%d')}{uuid.uuid4()}.csv"
+        print(f"uploading to s3 bucket, key={s3_key}")
+        s3.Object(
+            os.environ.get("ACTIVITIES_BUCKET", ""),
+            s3_key
+        ).put(Body=body)
         return {
             "statusCode": 200,
             'headers': {
@@ -143,7 +71,9 @@ def postActivities(user, file_format, body):
                 'Access-Control-Allow-Methods': 'OPTIONS,GET,POST'
             },
             "body": json.dumps({
-                "data": "success"
+                "data": {
+                    "s3_key": s3_key
+                }
             }),
         }
     except botocore.exceptions.ClientError as error:
@@ -261,10 +191,15 @@ def lambda_handler(event, context):
     # processes user activities data, store in db
     # right now just pings and returns body
     global activities_table
+    global s3
     if not activities_table:
         dynamodb = boto3.resource("dynamodb")
         table_name = os.environ.get("ACTIVITIES_TABLE", "")
         activities_table = dynamodb.Table(table_name)
+
+    if not s3:
+        s3 = boto3.resource('s3')
+        
     user_id = get_user_id(event)
     if not user_id:
         return {
@@ -273,6 +208,9 @@ def lambda_handler(event, context):
         }
     print(f"got user id {user_id}")
     method = event.get("routeKey", "").split(' ')[0]
+    if not method:
+        print("debug: no method found in request")
+        print(event)
     if method == "POST":
         params = event.get("queryStringParameters", {})
         file_format = "cap1" if not params or "format" not in params else params.get("format")
