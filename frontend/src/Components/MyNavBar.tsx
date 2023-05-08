@@ -1,11 +1,11 @@
-import React, { useContext } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import Nav from 'react-bootstrap/Nav';
 import Navbar from "react-bootstrap/Navbar"
 import NavDropdown from 'react-bootstrap/NavDropdown';
 import Container from 'react-bootstrap/Container';
 
-import { AuthContext } from "../AuthContext";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const MyNavBar = () => {
     const {
@@ -13,7 +13,7 @@ const MyNavBar = () => {
         isAuthenticated,
         loginWithRedirect,
         logout,
-    } = useContext(AuthContext);
+    } = useAuth0();
 
     const logoutWithRedirect = () =>
         logout({
