@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Card from 'react-bootstrap/Card';
 import { 
     PieChart, 
@@ -9,8 +9,8 @@ import {
     Legend, 
 } from 'recharts';
 import { Insight, getActivitiesByCategory } from "../api";
-import { AuthContext } from "../AuthContext";
 import { Spinner, Table } from "react-bootstrap";
+import { useAuth0 } from "@auth0/auth0-react";
 
 /**
  * TODO: animations
@@ -103,8 +103,8 @@ export const CategoryCard = ({
     insights
 }: CategoryCardProps) => {
     const {
-        accessToken
-    } = useContext(AuthContext);
+        getAccessTokenSilently
+    } = useAuth0();
 
     const [categoryBreakdown, setCategoryBreakdown ] = useState<Array<CategoryBreakdown>>([]);
     const [activities, setActivities] = useState<Array<Activity>>([]);
@@ -127,9 +127,12 @@ export const CategoryCard = ({
         // todo: type event
         setSelectedCategory(event.name);
         setLoading(true);
-        getActivitiesByCategory(
-            accessToken, 
-            event.name
+        getAccessTokenSilently()
+        .then((accessToken) => 
+            getActivitiesByCategory(
+                accessToken, 
+                event.name
+            )
         ).then((activities) => {
             setActivities(activities.data);
         }).finally(() => setLoading(false));

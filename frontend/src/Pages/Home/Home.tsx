@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useEffect, useState, useContext } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import md5 from 'md5';
 import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
@@ -11,7 +11,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import styles from './Home.module.css'
 import { getActivities, getMappings, getChecksums, postActivities, postMappings, deleteActivity } from '../../api';
 import UpdateMappingModal from '../../Components/UpdateMappingModal';
-import { AuthContext } from '../../AuthContext';
+import { useAuth0 } from '@auth0/auth0-react';
 
 enum ColumnFormat {
     cap1 = "cap1",
@@ -33,20 +33,21 @@ interface FinanceDataRow {
     desc: string;
 }
 
-function useFetchPrevCheckSums(accessToken: string | null): Array<any> {
+function useFetchPrevCheckSums(getAccessToken: () => Promise<string>): Array<any> {
     const [chksums, setChksums] = useState<Array<string>>([]);
     useEffect(() => {
-        if (!accessToken) {
+        if (!getAccessToken) {
             return;
         }
-        if (accessToken) {
+        if (getAccessToken) {
+            getAccessToken().then((accessToken) => 
             getChecksums(accessToken).then((data) => {
                 setChksums(data);
-            }).catch((err) => {
+            })).catch((err) => {
                 console.log(err);
             });
         }
-    }, [accessToken])
+    }, [getAccessToken])
     return chksums;
 }
 
@@ -54,8 +55,8 @@ export function Home() {
 
     const {
         isAuthenticated,
-        accessToken,
-    } = useContext(AuthContext);
+        getAccessTokenSilently,
+    } = useAuth0();
     // csv format
     const [fileContent, setFileContent] = useState<File | null>(null);
     const [fileName, setFileName] = useState<string>("");
@@ -68,7 +69,7 @@ export function Home() {
     const [category, setCategory] = useState<string>("");
 
     // custom hooks to fetch and store user activities
-    const chksums = useFetchPrevCheckSums(accessToken);
+    const chksums = useFetchPrevCheckSums(getAccessTokenSilently);
 
 
     const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([]);
@@ -76,73 +77,9 @@ export function Home() {
     const [nextKey, setNextKey] = useState<string|null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     useEffect(() => {
-        if(accessToken) {
+        if(isAuthenticated) {
             setLoading(true);
-            getActivities(
-                accessToken,
-                null
-            ).then(({
-                data,
-                nextKey,
-            }) => {
-                setFinanceData(data);
-                setNextKey(nextKey);
-            }).catch((err) => {
-                console.log(err);
-                setErrorMessage(`Error fetching activities${err.message}`);
-            }).finally(() => {
-                setLoading(false);
-            });
-            getMappings(accessToken).then((data) => {
-                setCategoryMappings(data);
-            }).catch((err) => {
-                console.log(err);
-                setErrorMessage(`Error fetching activities${err.message}`);
-            });
-        }
-    }, [accessToken]);
-
-    // set up scroll listener
-    useEffect(() => {
-        window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
-                if (accessToken && nextKey !== null && nextKey !== undefined) {
-                    fetchMoreActivities();
-                }
-            }
-        };
-        return () => {
-            window.onscroll = null;
-        }
-    });
-
-    if (!isAuthenticated || accessToken === null) {
-        return (
-            <div>Not authenticated, please <Link to="/login">Log in </Link></div>
-        )
-    }
-    const fetchMoreActivities = () => {
-        setLoading(true);
-        if (accessToken === null) {
-            return;
-        }
-        getActivities(accessToken, nextKey).then(({data, nextKey}) => {
-            setFinanceData([...financeData, ...data]);
-            setNextKey(nextKey);
-        }).catch((err) => {
-            console.log(err);
-            setErrorMessage(`Error fetching activities${err.message}`);
-        }).finally(() => {
-            setLoading(false);
-        });
-    }
-
-    const deleteAndFetch = (id: string) => {
-        if (accessToken === null) {
-            return;
-        }
-        deleteActivity(accessToken, id).then((response) => {
-            if(response.ok){
+            getAccessTokenSilently().then((accessToken) => {
                 getActivities(
                     accessToken,
                     null
@@ -158,41 +95,114 @@ export function Home() {
                 }).finally(() => {
                     setLoading(false);
                 });
-            }
-        }).catch((err) => {
-            console.log(err);
-            setErrorMessage(`Error deleting activities${err.message}`);
-        });
-    }
 
-    const processUserFile = async (event: React.FormEvent) => {
-        event.preventDefault();
-        // processes user file, store in financeData state var
-        postActivities(
-            accessToken, 
-            columnFormat.toString(), 
-            fileContent!
-        ).then(() => {
-            setFinanceData([]);
-            setLoading(true);
-            getActivities(
-                accessToken,
-                null
-            ).then(({
-                data,
-                nextKey,
-            }) => {
-                setFinanceData(data);
+                getMappings(accessToken).then((data) => {
+                    setCategoryMappings(data);
+                }).catch((err) => {
+                    console.log(err);
+                    setErrorMessage(`Error fetching activities${err.message}`);
+                });
+            });
+        }
+    }, [getAccessTokenSilently, isAuthenticated]);
+
+    // set up scroll listener
+    useEffect(() => {
+        window.onscroll = () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+                if (isAuthenticated && nextKey !== null && nextKey !== undefined) {
+                    fetchMoreActivities();
+                }
+            }
+        };
+        return () => {
+            window.onscroll = null;
+        }
+    });
+
+    if (!isAuthenticated) {
+        return (
+            <div>Not authenticated, please <Link to="/login">Log in </Link></div>
+        )
+    }
+    const fetchMoreActivities = () => {
+        setLoading(true);
+        if (!isAuthenticated) {
+            return;
+        }
+        getAccessTokenSilently().then((accessToken) => 
+            getActivities(accessToken, nextKey).then(({data, nextKey}) => {
+                setFinanceData([...financeData, ...data]);
                 setNextKey(nextKey);
             }).catch((err) => {
                 console.log(err);
                 setErrorMessage(`Error fetching activities${err.message}`);
             }).finally(() => {
                 setLoading(false);
+            })
+        );
+    }
+
+    const deleteAndFetch = (id: string) => {
+        if (!isAuthenticated) {
+            return;
+        }
+        getAccessTokenSilently().then((accessToken) => {
+            deleteActivity(accessToken, id).then((response) => {
+                if(response.ok){
+                    getActivities(
+                        accessToken,
+                        null
+                    ).then(({
+                        data,
+                        nextKey,
+                    }) => {
+                        setFinanceData(data);
+                        setNextKey(nextKey);
+                    }).catch((err) => {
+                        console.log(err);
+                        setErrorMessage(`Error fetching activities${err.message}`);
+                    }).finally(() => {
+                        setLoading(false);
+                    });
+                }
+            }).catch((err) => {
+                console.log(err);
+                setErrorMessage(`Error deleting activities${err.message}`);
             });
-        }).catch((err) => {
-            console.log(err);
-            setErrorMessage(`Error posting activities${err.message}`);
+        });
+    }
+
+    const processUserFile = async (event: React.FormEvent) => {
+        event.preventDefault();
+        // processes user file, store in financeData state var
+        getAccessTokenSilently().then((accessToken) => {
+            postActivities(
+                accessToken, 
+                columnFormat.toString(), 
+                fileContent!
+            ).then(() => {
+                setFinanceData([]);
+                setLoading(true);
+                getActivities(
+                    accessToken,
+                    null
+                ).then(({
+                    data,
+                    nextKey,
+                }) => {
+                    setFinanceData(data);
+                    setNextKey(nextKey);
+                }).catch((err) => {
+                    console.log(err);
+                    setErrorMessage(`Error fetching activities${err.message}`);
+                }).finally(() => {
+                    setLoading(false);
+                });
+            }).catch((err) => {
+                console.log(err);
+                setErrorMessage(`Error posting activities${err.message}`);
+            });
         });
     }
 
@@ -233,23 +243,25 @@ export function Home() {
         newCategory: string
     ): void {
         // calls post /mappings endpoint to update category mapping
-        postMappings(
-            accessToken, 
-            {
-                description: desc,
-                category: newCategory
-            }
-        ).then((apiResponse) => {
-            if (apiResponse.ok) {
-                // return the updated activities, then we can update state locally?
-                // Should show a pop up indicate the result
-                console.log("mapping updated, updated informations should come later");
-                setShowModal(false);
-            }
-        }).catch((err) => {
-            console.log(err);
-            setErrorMessage(`Error updating category mapping${err.message}`);
-        });
+        getAccessTokenSilently().then((accessToken) => 
+            postMappings(
+                accessToken, 
+                {
+                    description: desc,
+                    category: newCategory
+                }
+            ).then((apiResponse) => {
+                if (apiResponse.ok) {
+                    // return the updated activities, then we can update state locally?
+                    // Should show a pop up indicate the result
+                    console.log("mapping updated, updated informations should come later");
+                    setShowModal(false);
+                }
+            }).catch((err) => {
+                console.log(err);
+                setErrorMessage(`Error updating category mapping${err.message}`);
+            })
+        );
     }
 
     return (

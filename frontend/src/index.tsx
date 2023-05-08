@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { AppState, Auth0Provider } from "@auth0/auth0-react";
+import { AppState, Auth0Provider, Auth0ProviderOptions } from "@auth0/auth0-react";
 import { BrowserHistory, createBrowserHistory } from "history";
 import './index.css';
 import App from './App';
@@ -19,7 +19,7 @@ const onRedirectCallback = (appState: AppState) => {
 // for a full list of the available properties on the provider
 const config = getConfig();
 
-const providerConfig = {
+const providerConfig : Auth0ProviderOptions = {
   domain: config.domain,
   clientId: config.clientId,
   onRedirectCallback,
@@ -27,6 +27,7 @@ const providerConfig = {
     redirect_uri: process.env.NODE_ENV === 'production' ? `${window.location.origin}/finance-app` : window.location.origin,
     ...(config.audience ? { audience: config.audience } : null),
   },
+  cacheLocation: "localstorage",
 };
 
 
