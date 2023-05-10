@@ -72,10 +72,12 @@ export const MonthlyCard = ({
 
     const cardStyles = isExpanded? {
         flexGrow: 2,
-        maxWidth: '800px'
+        maxWidth: '800px',
+        transition: "all 0.2s linear 0s",
     }: {
         flexGrow: 1,
-        maxWidth: '400px'
+        maxWidth: '400px',
+        transition: "all 0.2s linear 0s",
     };
 
     const selectedAllCategories = isExpanded ? insights[activeIndex].categories : null;
