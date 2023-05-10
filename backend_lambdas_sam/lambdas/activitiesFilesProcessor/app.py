@@ -101,7 +101,7 @@ def lambda_handler(event, context):
                     batch.put_item(
                         Item={
                             **item,
-                            'checksum': chksum,
+                            'chksum': chksum,
                         }
                     )
             # store the checksum
