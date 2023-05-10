@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Nav from 'react-bootstrap/Nav';
 import Navbar from "react-bootstrap/Navbar"
 import NavDropdown from 'react-bootstrap/NavDropdown';
@@ -15,10 +15,16 @@ const MyNavBar = () => {
         logout,
     } = useAuth0();
 
+    const location = useLocation();
+
+    const isPathActive = (path: string): boolean => {
+        return location.pathname === path;
+    };
+
     const logoutWithRedirect = () =>
         logout({
             logoutParams: {
-            returnTo: window.location.origin,
+                returnTo: window.location.origin,
             }
         });
     return (
@@ -27,40 +33,28 @@ const MyNavBar = () => {
                 <Navbar.Brand>Finance Calculator</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav 
-                        className="me-auto" 
-                        style={{alignItems: "center"}}
+                    {isAuthenticated && (<Nav 
+                        className="me-auto"
                     >
-                        {!isAuthenticated && (
-                        <Nav.Item>
+                            <Nav.Link as="span" href="/">
+                                <Link to="/" style={isPathActive("/")?{}: {textDecoration: 'none'}}>Home</Link>
+                            </Nav.Link>
+                            <Nav.Link as="span" href="/preferences">
+                                <Link to="/preferences" style={isPathActive("/preferences")? {}: {textDecoration: 'none'}}>Preferences</Link>
+                            </Nav.Link>
+                            <Nav.Link as="span" href="/insights">
+                                <Link to="/insights" style={isPathActive("/insights")? {}: {textDecoration: 'none'}}>Insights</Link>
+                            </Nav.Link>
+                    </Nav>)}
+                    <Nav>
+                        {isAuthenticated ? (
+                            <NavDropdown title={user?.name ?? "No user name"} id="basic-nav-dropdown">
+                                <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>
+                            </NavDropdown>
+                        ) : (
                             <Nav.Link onClick={() => loginWithRedirect()}>
                                 Log in
                             </Nav.Link>
-                        </Nav.Item>
-                        )}
-                        {isAuthenticated && (
-                            <>
-                                <Nav.Item>
-                                    <Nav.Link as="span">
-                                        <Link to="/">Home</Link>
-                                    </Nav.Link>
-                                </Nav.Item>
-                                <Nav.Item>
-                                    <Nav.Link as="span">
-                                        <Link to="/preferences">Preferences</Link>
-                                    </Nav.Link>
-                                </Nav.Item>
-                                <Nav.Item>
-                                    <Nav.Link as="span">
-                                        <Link to="/insights">Insights</Link>
-                                    </Nav.Link>
-                                </Nav.Item>
-                                <Nav.Item>
-                                    <NavDropdown title={user?.name ?? "No user name"} id="basic-nav-dropdown">
-                                        <NavDropdown.Item onClick={logoutWithRedirect}>Logout</NavDropdown.Item>
-                                    </NavDropdown>
-                                </Nav.Item>
-                            </>
                         )}
                     </Nav>
                 </Navbar.Collapse>
