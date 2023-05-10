@@ -144,10 +144,12 @@ export const CategoryCard = ({
 
     const cardStyles = isExpanded? {
         flexGrow: 2,
-        maxWidth: '800px'
+        maxWidth: '800px',
+        transition: "all 0.2s linear 0s",
     }: {
         flexGrow: 1,
-        maxWidth: '400px'
+        maxWidth: '400px',
+        transition: "all 0.2s linear 0s",
     };
 
     return <Card style={cardStyles}>
