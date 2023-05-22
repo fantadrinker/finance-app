@@ -12,6 +12,7 @@ import Preferences from './Pages/Preferences';
 import './App.css';
 import MyNavBar from './Components/MyNavBar';
 import Login from "./Pages/Login/Login";
+import Upload from "./Pages/Upload";
 
 function App() {
   const {
@@ -30,11 +31,10 @@ function App() {
 
   return (
     <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
-      <div>
-        <nav>
-          <MyNavBar />
-        </nav>
+      <MyNavBar />
+      <div className="main">
         <Routes>
+          <Route path="/upload" element={<Upload />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/" element={<Home />} />

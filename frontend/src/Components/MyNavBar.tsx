@@ -36,15 +36,18 @@ const MyNavBar = () => {
                     {isAuthenticated && (<Nav 
                         className="me-auto"
                     >
-                            <Nav.Link as="span" href="/">
-                                <Link to="/" style={isPathActive("/")?{}: {textDecoration: 'none'}}>Home</Link>
-                            </Nav.Link>
-                            <Nav.Link as="span" href="/preferences">
-                                <Link to="/preferences" style={isPathActive("/preferences")? {}: {textDecoration: 'none'}}>Preferences</Link>
-                            </Nav.Link>
-                            <Nav.Link as="span" href="/insights">
-                                <Link to="/insights" style={isPathActive("/insights")? {}: {textDecoration: 'none'}}>Insights</Link>
-                            </Nav.Link>
+                        <Nav.Link as="span" href="/">
+                            <Link to="/upload" style={isPathActive("/upload")?{}: {textDecoration: 'none'}}>Upload</Link>
+                        </Nav.Link>
+                        <Nav.Link as="span" href="/">
+                            <Link to="/" style={isPathActive("/")?{}: {textDecoration: 'none'}}>Home</Link>
+                        </Nav.Link>
+                        <Nav.Link as="span" href="/preferences">
+                            <Link to="/preferences" style={isPathActive("/preferences")? {}: {textDecoration: 'none'}}>Preferences</Link>
+                        </Nav.Link>
+                        <Nav.Link as="span" href="/insights">
+                            <Link to="/insights" style={isPathActive("/insights")? {}: {textDecoration: 'none'}}>Insights</Link>
+                        </Nav.Link>
                     </Nav>)}
                     <Nav>
                         {isAuthenticated ? (
