@@ -1,28 +1,14 @@
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import md5 from 'md5';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
 import Spinner from 'react-bootstrap/Spinner';
 
 import styles from './Home.module.css'
-import { getActivities, getMappings, getChecksums, postActivities, postMappings, deleteActivity } from '../../api';
+import { getActivities, getMappings, postMappings, deleteActivity } from '../../api';
 import UpdateMappingModal from '../../Components/UpdateMappingModal';
 import { useAuth0 } from '@auth0/auth0-react';
-
-enum ColumnFormat {
-    cap1 = "cap1",
-    rbc = "rbc",
-}
-
-const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc];
-const COLUMN_FORMAT_NAMES = Object.freeze({
-    [ColumnFormat.cap1]: "Capital One",
-    [ColumnFormat.rbc]: "RBC",
-})
 
 interface FinanceDataRow {
     id: string;
@@ -33,44 +19,17 @@ interface FinanceDataRow {
     desc: string;
 }
 
-function useFetchPrevCheckSums(getAccessToken: () => Promise<string>): Array<any> {
-    const [chksums, setChksums] = useState<Array<string>>([]);
-    useEffect(() => {
-        if (!getAccessToken) {
-            return;
-        }
-        if (getAccessToken) {
-            getAccessToken().then((accessToken) => 
-            getChecksums(accessToken).then((data) => {
-                setChksums(data);
-            })).catch((err) => {
-                console.log(err);
-            });
-        }
-    }, [getAccessToken])
-    return chksums;
-}
-
 export function Home() {
-
     const {
         isAuthenticated,
         getAccessTokenSilently,
     } = useAuth0();
-    // csv format
-    const [fileContent, setFileContent] = useState<File | null>(null);
-    const [fileName, setFileName] = useState<string>("");
-    const [columnFormat, setColumnFormat] = useState<ColumnFormat>(ColumnFormat.cap1);
-    const [warningMessage, setWarningMessage] = useState<string|null>(null);
-    const [errorMessage, setErrorMessage] = useState<string|null>(null);
 
     const [showModal, setShowModal] = useState<boolean>(false);
     const [description, setDescription] = useState<string>("");
     const [category, setCategory] = useState<string>("");
 
-    // custom hooks to fetch and store user activities
-    const chksums = useFetchPrevCheckSums(getAccessTokenSilently);
-
+    const [errorMessage, setErrorMessage] = useState<string|null>(null);
 
     const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([]);
     const [categoryMappings, setCategoryMappings] = useState<Array<any>>([]);
@@ -109,7 +68,7 @@ export function Home() {
     // set up scroll listener
     useEffect(() => {
         window.onscroll = () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight) {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1) {
                 if (isAuthenticated && nextKey !== null && nextKey !== undefined) {
                     fetchMoreActivities();
                 }
@@ -173,62 +132,6 @@ export function Home() {
         });
     }
 
-    const processUserFile = async (event: React.FormEvent) => {
-        event.preventDefault();
-        // processes user file, store in financeData state var
-        getAccessTokenSilently().then((accessToken) => {
-            postActivities(
-                accessToken, 
-                columnFormat.toString(), 
-                fileContent!
-            ).then(() => {
-                setFinanceData([]);
-                setLoading(true);
-                getActivities(
-                    accessToken,
-                    null
-                ).then(({
-                    data,
-                    nextKey,
-                }) => {
-                    setFinanceData(data);
-                    setNextKey(nextKey);
-                }).catch((err) => {
-                    console.log(err);
-                    setErrorMessage(`Error fetching activities${err.message}`);
-                }).finally(() => {
-                    setLoading(false);
-                });
-            }).catch((err) => {
-                console.log(err);
-                setErrorMessage(`Error posting activities${err.message}`);
-            });
-        });
-    }
-
-    const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
-        const target = event.target as HTMLInputElement;
-        if (!target.files || target.files.length === 0) {
-            return;
-        }
-        const fileName = target.value;
-        const fileContent = target.files[0];
-        setFileName(fileName);
-        setFileContent(fileContent);
-        
-        fileContent.text().then(text => {
-            const fileChksum = md5(text).toString();
-            if(chksums.map(({
-                chksum
-            }) => chksum).includes(fileChksum)) {
-                setWarningMessage("our server indicates this file has already been processed")
-            }
-        }).catch(err => {
-            console.log("error when parsing file text", err);
-            setErrorMessage("error when parsing file text");
-        });
-    }
-
     const openModalWithParams = (
         desc: string, 
         cat: string
@@ -266,30 +169,10 @@ export function Home() {
 
     return (
         <div className={styles.homeMain}>
-            <Form>
-                <Form.Group as={Row} controlId="file" className="mb-3">
-                    {warningMessage !== null && (<Form.Text className={styles.warningMessage}>{warningMessage}</Form.Text>)}
-                    {errorMessage !== null && (<Form.Text className={styles.errorMessage}>{errorMessage}</Form.Text>)}
-                    <Form.Label column sm="2">Select File</Form.Label>
-                    <Col sm="4">
-                        <Form.Control type="file" value={fileName} onChange={updateUserFile} />
-                    </Col>
-                    <Form.Label column sm="2">Choose Format</Form.Label>
-                    <Col sm="4">
-                        <Form.Select aria-label="select input type" value={columnFormat} onChange={(e) => setColumnFormat(e.target.value as ColumnFormat)}>
-                            {COLUMN_FORMATS.map((key) => {
-                                return (
-                                    <option key={key} value={key}>{COLUMN_FORMAT_NAMES[key]}</option>
-                                )
-                            })
-                            }
-                        </Form.Select>
-                    </Col>
-                </Form.Group>
-                <Button onClick={processUserFile} type="submit" disabled={fileContent === null}>Process File</Button>
-            </Form>
+            <h3> All Activities </h3>
             {(financeData.length === 0 && !loading) && <div className={styles.noData}>No data to display</div>}
             {(financeData.length === 0 && loading) && <Spinner animation="border" />}
+            {errorMessage && <div className={styles.error}>{errorMessage}</div>}
             {financeData.length > 0 && (
                 <div className={styles.activityTable}>
                     <Table striped bordered hover>
