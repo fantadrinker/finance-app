@@ -3,23 +3,19 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate
+  Navigate,
 } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-import Home from './Pages/Home';
-import Insights from './Pages/Insights';
-import Preferences from './Pages/Preferences';
-import './App.css';
-import MyNavBar from './Components/MyNavBar';
+import Home from "./Pages/Home";
+import Insights from "./Pages/Insights";
+import Preferences from "./Pages/Preferences";
+import "./App.css";
+import MyNavBar from "./Components/MyNavBar";
 import Login from "./Pages/Login/Login";
 import Upload from "./Pages/Upload";
 
 function App() {
-  const {
-    isLoading,
-    error,
-  } = useAuth0();
-
+  const { isLoading, error } = useAuth0();
 
   if (error) {
     return <div>Oops... {error.message}</div>;
@@ -30,7 +26,9 @@ function App() {
   }
 
   return (
-    <Router basename={process.env.NODE_ENV === 'production' ? '/finance-app': ''}>
+    <Router
+      basename={process.env.NODE_ENV === "production" ? "/finance-app" : ""}
+    >
       <MyNavBar />
       <div className="main">
         <Routes>
