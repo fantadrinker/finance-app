@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import Card from 'react-bootstrap/Card';
+import React, { useCallback, useState } from 'react'
+import Card from 'react-bootstrap/Card'
 import {
   Tooltip,
   BarChart,
@@ -8,17 +8,17 @@ import {
   Bar,
   CartesianGrid,
   Cell,
-} from 'recharts';
-import { Insight } from '../api';
-import { Table } from 'react-bootstrap';
+} from 'recharts'
+import { Insight } from '../api'
+import { Table } from 'react-bootstrap'
 
 interface MonthlyBreakdown {
-  month: string;
-  amount: number;
+  month: string
+  amount: number
 }
 
 interface MonthlyCardProps {
-  insights: Array<Insight>;
+  insights: Array<Insight>
 }
 
 function calculateMonthlyBreakdown(
@@ -30,43 +30,43 @@ function calculateMonthlyBreakdown(
       return {
         month: date,
         amount: Object.keys(categories).reduce((acc, cur) => {
-          const amount = categories[cur];
-          return acc + (amount > 0 ? amount : 0);
+          const amount = categories[cur]
+          return acc + (amount > 0 ? amount : 0)
         }, 0),
-      };
+      }
     })
     .sort((a, b) => {
-      return new Date(a.month).getTime() - new Date(b.month).getTime();
-    });
+      return new Date(a.month).getTime() - new Date(b.month).getTime()
+    })
   if (!numMonths) {
-    return allMonths;
+    return allMonths
   }
-  return allMonths.slice(0, numMonths);
+  return allMonths.slice(0, numMonths)
 }
 
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [hoveredIndex, setHoveredIndex] = useState(-1);
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const [hoveredIndex, setHoveredIndex] = useState(-1)
 
   const handleMouseEnter = useCallback((_: any, index: number) => {
-    setHoveredIndex(index);
-  }, []);
+    setHoveredIndex(index)
+  }, [])
 
-  const data = calculateMonthlyBreakdown(insights, 6);
+  const data = calculateMonthlyBreakdown(insights, 6)
 
-  const isExpanded = activeIndex !== -1;
+  const isExpanded = activeIndex !== -1
 
   const handleClickBarChart = (_: any, index: number) => {
     // expands card and show a list of top categories in the month
     // should also support a toggle to show the trend of a specific
     // category over time.
     if (activeIndex === index) {
-      setActiveIndex(-1);
+      setActiveIndex(-1)
     } else {
-      setActiveIndex(index);
+      setActiveIndex(index)
     }
-  };
+  }
 
   const cardStyles = isExpanded
     ? {
@@ -78,23 +78,23 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         flexGrow: 1,
         maxWidth: '400px',
         transition: 'all 0.2s linear 0s',
-      };
+      }
 
   const selectedAllCategories = isExpanded
     ? insights[activeIndex].categories
-    : null;
+    : null
 
   const topCategories = isExpanded
     ? Object.keys(selectedAllCategories)
         .sort((a, b) => {
-          return selectedAllCategories[b] - selectedAllCategories[a];
+          return selectedAllCategories[b] - selectedAllCategories[a]
         })
         .slice(0, 5)
-        .map((category) => ({
+        .map(category => ({
           category,
           amount: selectedAllCategories[category],
         }))
-    : [];
+    : []
 
   return (
     <Card style={cardStyles}>
@@ -162,5 +162,5 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         </div>
       </Card.Body>
     </Card>
-  );
-};
+  )
+}

@@ -1,28 +1,28 @@
-import React from 'react';
+import React from 'react'
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
-} from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
-import Home from './Pages/Home';
-import Insights from './Pages/Insights';
-import Preferences from './Pages/Preferences';
-import './App.css';
-import MyNavBar from './Components/MyNavBar';
-import Login from './Pages/Login/Login';
-import Upload from './Pages/Upload';
+} from 'react-router-dom'
+import { useAuth0 } from '@auth0/auth0-react'
+import Home from './Pages/Home'
+import Insights from './Pages/Insights'
+import Preferences from './Pages/Preferences'
+import './App.css'
+import MyNavBar from './Components/MyNavBar'
+import Login from './Pages/Login/Login'
+import Upload from './Pages/Upload'
 
 function App() {
-  const { isLoading, error } = useAuth0();
+  const { isLoading, error } = useAuth0()
 
   if (error) {
-    return <div>Oops... {error.message}</div>;
+    return <div>Oops... {error.message}</div>
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   return (
@@ -41,7 +41,7 @@ function App() {
         </Routes>
       </div>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App

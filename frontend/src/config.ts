@@ -1,9 +1,9 @@
-import configJson from './auth_config.json';
+import configJson from './auth_config.json'
 
 interface AuthConfig {
-  domain: string;
-  clientId: string;
-  audience?: string;
+  domain: string
+  clientId: string
+  audience?: string
 }
 
 export function getConfig(): AuthConfig {
@@ -16,11 +16,11 @@ export function getConfig(): AuthConfig {
   const audience: string =
     configJson.audience && configJson.audience !== 'YOUR_API_IDENTIFIER'
       ? configJson.audience
-      : null;
+      : null
 
   return {
     domain: configJson.domain,
     clientId: configJson.clientId,
     ...(audience ? { audience } : null),
-  };
+  }
 }

@@ -1,27 +1,27 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-import NavDropdown from 'react-bootstrap/NavDropdown';
-import Container from 'react-bootstrap/Container';
+import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import Nav from 'react-bootstrap/Nav'
+import Navbar from 'react-bootstrap/Navbar'
+import NavDropdown from 'react-bootstrap/NavDropdown'
+import Container from 'react-bootstrap/Container'
 
-import { useAuth0 } from '@auth0/auth0-react';
+import { useAuth0 } from '@auth0/auth0-react'
 
 const MyNavBar = () => {
-  const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0();
+  const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0()
 
-  const location = useLocation();
+  const location = useLocation()
 
   const isPathActive = (path: string): boolean => {
-    return location.pathname === path;
-  };
+    return location.pathname === path
+  }
 
   const logoutWithRedirect = () =>
     logout({
       logoutParams: {
         returnTo: window.location.origin,
       },
-    });
+    })
   return (
     <Navbar bg="light" expand="lg">
       <Container>
@@ -89,7 +89,7 @@ const MyNavBar = () => {
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  );
-};
+  )
+}
 
-export default MyNavBar;
+export default MyNavBar

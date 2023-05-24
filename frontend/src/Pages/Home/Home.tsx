@@ -1,72 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Button from 'react-bootstrap/Button';
-import Table from 'react-bootstrap/Table';
-import Form from 'react-bootstrap/Form';
-import Spinner from 'react-bootstrap/Spinner';
+import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import Button from 'react-bootstrap/Button'
+import Table from 'react-bootstrap/Table'
+import Form from 'react-bootstrap/Form'
+import Spinner from 'react-bootstrap/Spinner'
 
-import styles from './Home.module.css';
+import styles from './Home.module.css'
 import {
   getActivities,
   getMappings,
   postMappings,
   deleteActivity,
-} from '../../api';
-import UpdateMappingModal from '../../Components/UpdateMappingModal';
-import { useAuth0TokenSilent } from '../../hooks';
+} from '../../api'
+import UpdateMappingModal from '../../Components/UpdateMappingModal'
+import { useAuth0TokenSilent } from '../../hooks'
 
 interface FinanceDataRow {
-  id: string;
-  date: string;
-  category: string;
-  account: string;
-  amount: number;
-  desc: string;
+  id: string
+  date: string
+  category: string
+  account: string
+  amount: number
+  desc: string
 }
 
 export function Home() {
-  const token = useAuth0TokenSilent();
+  const token = useAuth0TokenSilent()
 
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [description, setDescription] = useState<string>('')
+  const [category, setCategory] = useState<string>('')
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([]);
-  const [categoryMappings, setCategoryMappings] = useState<Array<any>>([]);
-  const [nextKey, setNextKey] = useState<string | null>(null);
-  const [fetchNextKey, setFetchNextKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([])
+  const [categoryMappings, setCategoryMappings] = useState<Array<any>>([])
+  const [nextKey, setNextKey] = useState<string | null>(null)
+  const [fetchNextKey, setFetchNextKey] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
     if (token) {
-      setLoading(true);
+      setLoading(true)
       getActivities(token, fetchNextKey)
         .then(({ data, nextKey }) => {
-          setFinanceData((existingData) => [...existingData, ...data]);
-          setNextKey(nextKey);
+          setFinanceData(existingData => [...existingData, ...data])
+          setNextKey(nextKey)
         })
-        .catch((err) => {
-          console.log(err);
-          setErrorMessage(`Error fetching activities${err.message}`);
+        .catch(err => {
+          console.log(err)
+          setErrorMessage(`Error fetching activities${err.message}`)
         })
         .finally(() => {
-          setLoading(false);
-        });
+          setLoading(false)
+        })
     }
-  }, [token, fetchNextKey]);
+  }, [token, fetchNextKey])
 
   // set up scroll listener
   useEffect(() => {
     if (token) {
       getMappings(token)
-        .then((data) => {
-          setCategoryMappings(data);
+        .then(data => {
+          setCategoryMappings(data)
         })
-        .catch((err) => {
-          console.log(err);
-          setErrorMessage(`Error fetching activities${err.message}`);
-        });
+        .catch(err => {
+          console.log(err)
+          setErrorMessage(`Error fetching activities${err.message}`)
+        })
     }
     window.onscroll = () => {
       if (
@@ -75,60 +75,58 @@ export function Home() {
         nextKey &&
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
       ) {
-        setFetchNextKey(nextKey);
+        setFetchNextKey(nextKey)
       }
-    };
+    }
     return () => {
-      window.onscroll = null;
-    };
-  }, [loading, token, nextKey]);
+      window.onscroll = null
+    }
+  }, [loading, token, nextKey])
 
   if (!token) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>
       </div>
-    );
+    )
   }
 
   const deleteAndFetch = async (id: string) => {
     if (!token) {
-      return;
+      return
     }
     try {
-      const response = await deleteActivity(token, id);
+      const response = await deleteActivity(token, id)
       if (response.ok) {
-        setFetchNextKey(null);
+        setFetchNextKey(null)
       }
     } catch (err) {
-      console.log(err);
-      setErrorMessage(`Error deleting activities${err.message}`);
+      console.log(err)
+      setErrorMessage(`Error deleting activities${err.message}`)
     }
-  };
+  }
 
   const openModalWithParams = (desc: string, cat: string) => {
-    setDescription(desc);
-    setCategory(cat);
-    setShowModal(true);
-  };
+    setDescription(desc)
+    setCategory(cat)
+    setShowModal(true)
+  }
 
   function updateNewCategory(desc: string, newCategory: string): void {
     postMappings(token, {
       description: desc,
       category: newCategory,
     })
-      .then((apiResponse) => {
+      .then(apiResponse => {
         if (apiResponse.ok) {
-          console.log(
-            'mapping updated, updated informations should come later'
-          );
-          setShowModal(false);
+          console.log('mapping updated, updated informations should come later')
+          setShowModal(false)
         }
       })
-      .catch((err) => {
-        console.log(err);
-        setErrorMessage(`Error updating category mapping${err.message}`);
-      });
+      .catch(err => {
+        console.log(err)
+        setErrorMessage(`Error updating category mapping${err.message}`)
+      })
   }
 
   return (
@@ -204,7 +202,7 @@ export function Home() {
         submit={updateNewCategory}
       />
     </div>
-  );
+  )
 }
 
-export default Home;
+export default Home

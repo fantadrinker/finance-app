@@ -1,97 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import Button from 'react-bootstrap/esm/Button';
-import Table from 'react-bootstrap/esm/Table';
-import { Link } from 'react-router-dom';
-import { deleteMapping, getMappings, postMappings } from '../../api';
-import UpdateMappingModal from '../../Components/UpdateMappingModal';
-import { useAuth0 } from '@auth0/auth0-react';
+import React, { useState, useEffect } from 'react'
+import Button from 'react-bootstrap/esm/Button'
+import Table from 'react-bootstrap/esm/Table'
+import { Link } from 'react-router-dom'
+import { deleteMapping, getMappings, postMappings } from '../../api'
+import UpdateMappingModal from '../../Components/UpdateMappingModal'
+import { useAuth0 } from '@auth0/auth0-react'
 
 interface Mapping {
-  sk: string;
-  description: string;
-  category: string;
+  sk: string
+  description: string
+  category: string
 }
 
 // TODO: set up error handling
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
-  const [mappings, setMappings] = useState<Array<Mapping>>([]);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0()
+  const [mappings, setMappings] = useState<Array<Mapping>>([])
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [description, setDescription] = useState<string>('')
+  const [category, setCategory] = useState<string>('')
   useEffect(() => {
     if (!isAuthenticated) {
-      return;
+      return
     }
     // fetch data from /preferences endpoint
-    getAccessTokenSilently().then((accessToken) =>
+    getAccessTokenSilently().then(accessToken =>
       getMappings(accessToken)
-        .then((result) => {
-          setMappings(result);
+        .then(result => {
+          setMappings(result)
         })
-        .catch((err) => {
-          console.log(err);
+        .catch(err => {
+          console.log(err)
         })
-    );
-  }, [isAuthenticated, getAccessTokenSilently]);
+    )
+  }, [isAuthenticated, getAccessTokenSilently])
 
   if (!isAuthenticated) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>
       </div>
-    );
+    )
   }
 
   const openModalWithParams = (desc: string, cat: string) => {
-    setDescription(desc);
-    setCategory(cat);
-    setShowModal(true);
-  };
+    setDescription(desc)
+    setCategory(cat)
+    setShowModal(true)
+  }
   const deleteMappingAndFetch = (sk: string) => {
     // calls delete /mappings endpoint
-    getAccessTokenSilently().then((accessToken) =>
+    getAccessTokenSilently().then(accessToken =>
       deleteMapping(accessToken, sk)
-        .then((result) => {
+        .then(result => {
           if (!result.ok) {
-            return [];
+            return []
           }
           getMappings(accessToken ?? '')
-            .then((data) => {
-              setMappings(data);
+            .then(data => {
+              setMappings(data)
             })
-            .catch((err) => {
-              console.log(err);
-            });
+            .catch(err => {
+              console.log(err)
+            })
         })
-        .catch((err) => {
-          console.log(err);
+        .catch(err => {
+          console.log(err)
         })
-    );
-  };
+    )
+  }
 
   const updateNewCategory = async (desc: string, newCategory: string) => {
     // calls post /mappings endpoint to update category mapping
-    getAccessTokenSilently().then((accessToken) =>
+    getAccessTokenSilently().then(accessToken =>
       postMappings(accessToken, {
         description: desc,
         category: newCategory,
       })
-        .then((result) => {
+        .then(result => {
           if (!result.ok) {
-            return;
+            return
           }
-          console.log(
-            'mapping updated, updated informations should come later'
-          );
-          setShowModal(false);
+          console.log('mapping updated, updated informations should come later')
+          setShowModal(false)
         })
-        .catch((err) => {
-          console.log(err);
+        .catch(err => {
+          console.log(err)
         })
-    );
-  };
+    )
+  }
   return (
     <div>
       <h1>Preferences</h1>
@@ -136,5 +134,5 @@ export const Preferences = () => {
         submit={updateNewCategory}
       />
     </div>
-  );
-};
+  )
+}

@@ -1,10 +1,10 @@
 // "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
-export const processCapitalOneActivities = (rows) => {
+export const processCapitalOneActivities = rows => {
   return rows
     .reduce((acc, rowStr) => {
-      const dataArr = rowStr.split(',');
+      const dataArr = rowStr.split(',')
       if (dataArr.length < 7) {
-        return acc;
+        return acc
       }
       // output columns: account, date, desc, category, amount
       return [
@@ -16,20 +16,20 @@ export const processCapitalOneActivities = (rows) => {
           category: dataArr[4],
           amount: dataArr[5] || `-${dataArr[6]}`,
         },
-      ];
+      ]
     }, [])
     .sort((a, b) => {
-      return new Date(a.date) - new Date(b.date);
-    });
-};
+      return new Date(a.date) - new Date(b.date)
+    })
+}
 
 // "Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"
-export const processRBCActivities = (rows) => {
+export const processRBCActivities = rows => {
   return rows
     .reduce((acc, rowStr) => {
-      const dataArr = rowStr.split(',');
+      const dataArr = rowStr.split(',')
       if (dataArr.length < 7) {
-        return acc;
+        return acc
       }
       // output columns: account, date, desc, category, amount
       return [
@@ -41,32 +41,32 @@ export const processRBCActivities = (rows) => {
           category: '',
           amount: dataArr[6],
         },
-      ];
+      ]
     }, [])
     .sort((a, b) => {
-      return new Date(a.date) - new Date(b.date);
-    });
-};
+      return new Date(a.date) - new Date(b.date)
+    })
+}
 
 const download = (filename, text) => {
-  var element = document.createElement('a');
+  var element = document.createElement('a')
   element.setAttribute(
     'href',
     'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
-  );
-  element.setAttribute('download', filename);
+  )
+  element.setAttribute('download', filename)
 
-  element.style.display = 'none';
-  document.body.appendChild(element);
+  element.style.display = 'none'
+  document.body.appendChild(element)
 
-  element.click();
+  element.click()
 
-  document.body.removeChild(element);
-};
+  document.body.removeChild(element)
+}
 
-export const downloadFinanceData = (data) => {
+export const downloadFinanceData = data => {
   const text = data.reduce((acc, { date, account, desc, category, amount }) => {
-    return acc + `${date}, ${account}, ${desc}, ${category}, ${amount}\n`;
-  }, '');
-  download('test.csv', text);
-};
+    return acc + `${date}, ${account}, ${desc}, ${category}, ${amount}\n`
+  }, '')
+  download('test.csv', text)
+}

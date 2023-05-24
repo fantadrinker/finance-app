@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from './Login.module.css';
+import React from 'react'
+import styles from './Login.module.css'
 
 const Login = () => {
   return (
@@ -12,7 +12,7 @@ const Login = () => {
         Please click "Log In" on the navigation bar to use functionality
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
