@@ -1,3 +1,3 @@
-import {Insights} from "./Insights";
+import { Insights } from './Insights'
 
-export default Insights;
+export default Insights

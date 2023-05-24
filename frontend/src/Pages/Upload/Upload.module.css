@@ -1,19 +1,17 @@
-
-
 .warningMessage {
-    color: #ffc107;
+  color: #ffc107;
 }
 
 .errorMessage {
-    color: #ff1707;
+  color: #ff1707;
 }
 
 .uploadForm {
-    max-width: 400px;
-    margin: 50px auto;
+  max-width: 400px;
+  margin: 50px auto;
 }
 
 .uploadForm > div > input,
 .uploadForm > div > select {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }

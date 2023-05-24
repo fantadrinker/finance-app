@@ -94,6 +94,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.15.11",
+    "prettier": "2.8.8",
     "webpack": "^5.79.0",
     "webpack-cli": "^5.0.1"
   },
