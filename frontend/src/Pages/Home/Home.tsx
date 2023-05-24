@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import Button from "react-bootstrap/Button";
-import Table from "react-bootstrap/Table";
-import Form from "react-bootstrap/Form";
-import Spinner from "react-bootstrap/Spinner";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Button from 'react-bootstrap/Button';
+import Table from 'react-bootstrap/Table';
+import Form from 'react-bootstrap/Form';
+import Spinner from 'react-bootstrap/Spinner';
 
-import styles from "./Home.module.css";
+import styles from './Home.module.css';
 import {
   getActivities,
   getMappings,
   postMappings,
   deleteActivity,
-} from "../../api";
-import UpdateMappingModal from "../../Components/UpdateMappingModal";
-import { useAuth0TokenSilent } from "../../hooks";
+} from '../../api';
+import UpdateMappingModal from '../../Components/UpdateMappingModal';
+import { useAuth0TokenSilent } from '../../hooks';
 
 interface FinanceDataRow {
   id: string;
@@ -28,8 +28,8 @@ export function Home() {
   const token = useAuth0TokenSilent();
 
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  const [description, setDescription] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -120,7 +120,7 @@ export function Home() {
       .then((apiResponse) => {
         if (apiResponse.ok) {
           console.log(
-            "mapping updated, updated informations should come later"
+            'mapping updated, updated informations should come later'
           );
           setShowModal(false);
         }
@@ -159,7 +159,7 @@ export function Home() {
                     <td>{date}</td>
                     <td>{account}</td>
                     <td>{desc}</td>
-                    <td style={{ display: "flex" }}>
+                    <td style={{ display: 'flex' }}>
                       <Form.Select onChange={() => {}}>
                         {category && (
                           <option value={category}>{category}</option>

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
+import React, { useEffect, useState } from 'react';
+import Modal from 'react-bootstrap/Modal';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
 
 interface UpdateMappingModalProps {
   show: boolean;
@@ -22,13 +22,13 @@ const UpdateMappingModal = ({
 }: UpdateMappingModalProps) => {
   const [newCategory, setNewCategory] = useState<string>(currentCategory);
   const [selectedCategory, setSelectedCategory] = useState<string>(
-    allCategories.length > 0 ? currentCategory : ""
+    allCategories.length > 0 ? currentCategory : ''
   );
   const [newDescription, setNewDescription] =
     useState<string>(currentDescription);
   // updates state when props change
   useEffect(() => {
-    setNewCategory("");
+    setNewCategory('');
     setSelectedCategory(currentCategory);
     setNewDescription(currentDescription);
   }, [currentCategory, currentDescription, allCategories]);
@@ -45,7 +45,7 @@ const UpdateMappingModal = ({
         <Form.Control
           type="text"
           placeholder={currentDescription}
-          value={newDescription ?? ""}
+          value={newDescription ?? ''}
           onChange={(e) => setNewDescription(e.target.value)}
         />
         <Form.Label>Existing Categories</Form.Label>
@@ -60,13 +60,13 @@ const UpdateMappingModal = ({
           ))}
           <option value="">new category</option>
         </Form.Select>
-        {selectedCategory === "" && (
+        {selectedCategory === '' && (
           <>
             <Form.Label>New Category</Form.Label>
             <Form.Control
               type="text"
               placeholder="new category value"
-              value={newCategory ?? ""}
+              value={newCategory ?? ''}
               onChange={(e) => setNewCategory(e.target.value)}
             />
           </>
@@ -77,7 +77,7 @@ const UpdateMappingModal = ({
           onClick={() =>
             submit(
               newDescription ?? currentDescription,
-              selectedCategory === ""
+              selectedCategory === ''
                 ? newCategory ?? currentCategory
                 : selectedCategory
             )

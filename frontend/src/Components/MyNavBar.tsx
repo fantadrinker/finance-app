@@ -1,11 +1,11 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import Nav from "react-bootstrap/Nav";
-import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
-import Container from "react-bootstrap/Container";
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+import NavDropdown from 'react-bootstrap/NavDropdown';
+import Container from 'react-bootstrap/Container';
 
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0 } from '@auth0/auth0-react';
 
 const MyNavBar = () => {
   const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0();
@@ -34,7 +34,7 @@ const MyNavBar = () => {
                 <Link
                   to="/upload"
                   style={
-                    isPathActive("/upload") ? {} : { textDecoration: "none" }
+                    isPathActive('/upload') ? {} : { textDecoration: 'none' }
                   }
                 >
                   Upload
@@ -43,7 +43,7 @@ const MyNavBar = () => {
               <Nav.Link as="span" href="/">
                 <Link
                   to="/"
-                  style={isPathActive("/") ? {} : { textDecoration: "none" }}
+                  style={isPathActive('/') ? {} : { textDecoration: 'none' }}
                 >
                   Home
                 </Link>
@@ -52,9 +52,9 @@ const MyNavBar = () => {
                 <Link
                   to="/preferences"
                   style={
-                    isPathActive("/preferences")
+                    isPathActive('/preferences')
                       ? {}
-                      : { textDecoration: "none" }
+                      : { textDecoration: 'none' }
                   }
                 >
                   Preferences
@@ -64,7 +64,7 @@ const MyNavBar = () => {
                 <Link
                   to="/insights"
                   style={
-                    isPathActive("/insights") ? {} : { textDecoration: "none" }
+                    isPathActive('/insights') ? {} : { textDecoration: 'none' }
                   }
                 >
                   Insights
@@ -75,7 +75,7 @@ const MyNavBar = () => {
           <Nav>
             {isAuthenticated ? (
               <NavDropdown
-                title={user?.name ?? "No user name"}
+                title={user?.name ?? 'No user name'}
                 id="basic-nav-dropdown"
               >
                 <NavDropdown.Item onClick={logoutWithRedirect}>

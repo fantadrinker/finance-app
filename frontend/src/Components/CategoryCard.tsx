@@ -1,21 +1,21 @@
-import React, { useCallback, useEffect, useState } from "react";
-import Card from "react-bootstrap/Card";
-import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from "recharts";
-import { Insight, getActivitiesByCategory } from "../api";
-import { Spinner, Table } from "react-bootstrap";
-import { useAuth0 } from "@auth0/auth0-react";
+import React, { useCallback, useEffect, useState } from 'react';
+import Card from 'react-bootstrap/Card';
+import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts';
+import { Insight, getActivitiesByCategory } from '../api';
+import { Spinner, Table } from 'react-bootstrap';
+import { useAuth0 } from '@auth0/auth0-react';
 
 /**
  * TODO: animations
  */
 
 const COLORS_GPT = [
-  "#1f77b4",
-  "#ff7f0e",
-  "#2ca02c",
-  "#d62728",
-  "#9467bd",
-  "#8c564b",
+  '#1f77b4',
+  '#ff7f0e',
+  '#2ca02c',
+  '#d62728',
+  '#9467bd',
+  '#8c564b',
 ];
 
 interface Activity {
@@ -65,7 +65,7 @@ function calculateCategoryBreakdown(
     return allCategories;
   }
   const others: CategoryBreakdown = {
-    category: "Others",
+    category: 'Others',
     amount: allCategories
       .slice(displayTop)
       .reduce((acc, cur) => acc + cur.amount, 0),
@@ -105,7 +105,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
   >([]);
   const [activities, setActivities] = useState<Array<Activity>>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [hoveredIndex, setHoveredIndex] = useState<number>(-1);
 
   const handleMouseEnter = useCallback((_: any, index: number) => {
@@ -137,13 +137,13 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
   const cardStyles = isExpanded
     ? {
         flexGrow: 2,
-        maxWidth: "800px",
-        transition: "all 0.2s linear 0s",
+        maxWidth: '800px',
+        transition: 'all 0.2s linear 0s',
       }
     : {
         flexGrow: 1,
-        maxWidth: "400px",
-        transition: "all 0.2s linear 0s",
+        maxWidth: '400px',
+        transition: 'all 0.2s linear 0s',
       };
 
   return (
@@ -152,10 +152,10 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
         <Card.Title>Category Breakdown</Card.Title>
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-evenly",
-            cursor: isExpanded ? "pointer" : "default",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-evenly',
+            cursor: isExpanded ? 'pointer' : 'default',
           }}
         >
           <PieChart width={360} height={360}>
@@ -176,7 +176,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
               onClick={handleClick}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={() => setHoveredIndex(-1)}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: 'pointer' }}
             >
               {categoryBreakdown.map(({ category }, index) => (
                 <Cell
@@ -185,7 +185,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
                     isExpanded &&
                     category !== selectedCategory &&
                     index !== hoveredIndex
-                      ? "grey"
+                      ? 'grey'
                       : COLORS_GPT[index % COLORS_GPT.length]
                   }
                 />
@@ -196,8 +196,8 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
           </PieChart>
           {isExpanded && (
             <div
-              style={{ maxWidth: "360px", maxHeight: "360px" }}
-              onClick={() => setSelectedCategory("")}
+              style={{ maxWidth: '360px', maxHeight: '360px' }}
+              onClick={() => setSelectedCategory('')}
             >
               <h5>Top Activities for {selectedCategory}</h5>
               {loading ? (

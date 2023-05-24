@@ -2,7 +2,7 @@
 export const processCapitalOneActivities = (rows) => {
   return rows
     .reduce((acc, rowStr) => {
-      const dataArr = rowStr.split(",");
+      const dataArr = rowStr.split(',');
       if (dataArr.length < 7) {
         return acc;
       }
@@ -27,7 +27,7 @@ export const processCapitalOneActivities = (rows) => {
 export const processRBCActivities = (rows) => {
   return rows
     .reduce((acc, rowStr) => {
-      const dataArr = rowStr.split(",");
+      const dataArr = rowStr.split(',');
       if (dataArr.length < 7) {
         return acc;
       }
@@ -38,7 +38,7 @@ export const processRBCActivities = (rows) => {
           account: `${dataArr[1]}-${dataArr[0]}`,
           date: dataArr[2],
           desc: `${dataArr[4]} ${dataArr[5]}`,
-          category: "",
+          category: '',
           amount: dataArr[6],
         },
       ];
@@ -49,14 +49,14 @@ export const processRBCActivities = (rows) => {
 };
 
 const download = (filename, text) => {
-  var element = document.createElement("a");
+  var element = document.createElement('a');
   element.setAttribute(
-    "href",
-    "data:text/plain;charset=utf-8," + encodeURIComponent(text)
+    'href',
+    'data:text/plain;charset=utf-8,' + encodeURIComponent(text)
   );
-  element.setAttribute("download", filename);
+  element.setAttribute('download', filename);
 
-  element.style.display = "none";
+  element.style.display = 'none';
   document.body.appendChild(element);
 
   element.click();
@@ -67,6 +67,6 @@ const download = (filename, text) => {
 export const downloadFinanceData = (data) => {
   const text = data.reduce((acc, { date, account, desc, category, amount }) => {
     return acc + `${date}, ${account}, ${desc}, ${category}, ${amount}\n`;
-  }, "");
-  download("test.csv", text);
+  }, '');
+  download('test.csv', text);
 };

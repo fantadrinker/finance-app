@@ -1,20 +1,20 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
-import md5 from "md5";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-import { useAuth0 } from "@auth0/auth0-react";
-import styles from "./Upload.module.css";
-import { getChecksums, postActivities } from "../../api";
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import md5 from 'md5';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+import { useAuth0 } from '@auth0/auth0-react';
+import styles from './Upload.module.css';
+import { getChecksums, postActivities } from '../../api';
 
 enum ColumnFormat {
-  cap1 = "cap1",
-  rbc = "rbc",
+  cap1 = 'cap1',
+  rbc = 'rbc',
 }
 
 const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc];
 const COLUMN_FORMAT_NAMES = Object.freeze({
-  [ColumnFormat.cap1]: "Capital One",
-  [ColumnFormat.rbc]: "RBC",
+  [ColumnFormat.cap1]: 'Capital One',
+  [ColumnFormat.rbc]: 'RBC',
 });
 
 function useFetchPrevCheckSums(
@@ -45,7 +45,7 @@ export const Upload = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [fileContent, setFileContent] = useState<File | null>(null);
-  const [fileName, setFileName] = useState<string>("");
+  const [fileName, setFileName] = useState<string>('');
   const [columnFormat, setColumnFormat] = useState<ColumnFormat>(
     ColumnFormat.cap1
   );
@@ -69,13 +69,13 @@ export const Upload = () => {
         const fileChksum = md5(text).toString();
         if (chksums.map(({ chksum }) => chksum).includes(fileChksum)) {
           setWarningMessage(
-            "our server indicates this file has already been processed"
+            'our server indicates this file has already been processed'
           );
         }
       })
       .catch((err) => {
-        console.log("error when parsing file text", err);
-        setErrorMessage("error when parsing file text");
+        console.log('error when parsing file text', err);
+        setErrorMessage('error when parsing file text');
       });
   };
 
@@ -90,10 +90,10 @@ export const Upload = () => {
         fileContent!
       );
       if (!response.ok) {
-        setErrorMessage("error when processing file");
+        setErrorMessage('error when processing file');
       }
     } catch (e) {
-      setErrorMessage("error when processing file" + e.message);
+      setErrorMessage('error when processing file' + e.message);
     }
   };
 

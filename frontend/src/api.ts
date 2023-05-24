@@ -1,5 +1,5 @@
 export const awsLambdaAddr =
-  "https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test";
+  'https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test';
 
 interface CategoryMapping {
   sk: string;
@@ -48,22 +48,22 @@ export interface Insight {
 
 function postCall(
   url: string,
-  body: string = "",
-  contentType: string = "application/json",
-  auth: string = ""
+  body: string = '',
+  contentType: string = 'application/json',
+  auth: string = ''
 ): Promise<Response> {
   try {
     return fetch(awsLambdaAddr + url, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": contentType,
+        'Content-Type': contentType,
         Authorization: auth,
       },
-      mode: "cors",
+      mode: 'cors',
       body,
     });
   } catch (err) {
-    console.log("post error", err);
+    console.log('post error', err);
     throw err;
   }
 }
@@ -71,15 +71,15 @@ function postCall(
 function getCall(url: string, auth: string): Promise<Response> {
   try {
     return fetch(awsLambdaAddr + url, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: auth,
       },
-      mode: "cors",
+      mode: 'cors',
     });
   } catch (err) {
-    console.log("get error", err);
+    console.log('get error', err);
     throw err;
   }
 }
@@ -87,15 +87,15 @@ function getCall(url: string, auth: string): Promise<Response> {
 function deleteCall(url: string, auth: string): Promise<Response> {
   try {
     return fetch(awsLambdaAddr + url, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: auth,
       },
-      mode: "cors",
+      mode: 'cors',
     });
   } catch (err) {
-    console.log("get error", err);
+    console.log('get error', err);
     throw err;
   }
 }
@@ -140,14 +140,14 @@ export function getMappings(
   auth: string | null
 ): Promise<Array<CategoryMapping>> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
-  return getCall("/mappings", auth)
+  return getCall('/mappings', auth)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
       } else {
-        throw new Error("get mappings failed");
+        throw new Error('get mappings failed');
       }
     })
     .then((jsonResult) => {
@@ -160,12 +160,12 @@ export function postMappings(
   mapping: { description: string; category: string }
 ): Promise<Response> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   return postCall(
-    "/mappings",
+    '/mappings',
     JSON.stringify(mapping),
-    "application/json",
+    'application/json',
     auth
   );
 }
@@ -175,7 +175,7 @@ export function deleteMapping(
   id: string
 ): Promise<Response> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   return deleteCall(`/mappings?id=${id}`, auth);
 }
@@ -186,15 +186,15 @@ export function getActivities(
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth);
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   return getCall(
-    `/activities?size=20${nextKey ? `&nextDate=${nextKey}` : ""}`,
+    `/activities?size=20${nextKey ? `&nextDate=${nextKey}` : ''}`,
     auth
   )
     .then((res) => {
       if (!res.ok) {
-        throw new Error("get activities failed");
+        throw new Error('get activities failed');
       } else {
         return res.json();
       }
@@ -208,42 +208,42 @@ export function postActivities(
   fileContent: File
 ): Promise<Response> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   if (!fileContent) {
-    throw new Error("no file");
+    throw new Error('no file');
   }
   return fileContent
     .text()
     .then((file) =>
-      postCall(`/activities?format=${columnFormat}`, file, "text/html", auth)
+      postCall(`/activities?format=${columnFormat}`, file, 'text/html', auth)
     )
     .then((res) => {
       if (res.ok) {
         return res.json();
       } else {
-        throw new Error("post activities failed");
+        throw new Error('post activities failed');
       }
     });
 }
 
 export function deleteActivity(auth: string, id: string): Promise<Response> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   return deleteCall(`/activities?sk=${id}`, auth);
 }
 
 export function getChecksums(auth: string | null): Promise<Array<string>> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
-  return getCall("/chksums", auth)
+  return getCall('/chksums', auth)
     .then((res) => {
       if (res.status === 200) {
         return res.json();
       } else {
-        throw new Error("get checksums failed");
+        throw new Error('get checksums failed');
       }
     })
     .then((jsonResult) => {
@@ -255,14 +255,14 @@ export function getChecksums(auth: string | null): Promise<Array<string>> {
 
 export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
-  return getCall("/insights", auth)
+  return getCall('/insights', auth)
     .then((res) => {
       if (res.ok) {
         return res.json();
       } else {
-        throw new Error("get insights failed");
+        throw new Error('get insights failed');
       }
     })
     .then((jsonResult) => {
@@ -289,12 +289,12 @@ export function getActivitiesByCategory(
   category: string
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
-    throw new Error("no auth");
+    throw new Error('no auth');
   }
   return getCall(`/activities?category=${category}&size=5`, auth)
     .then((res) => {
       if (!res.ok) {
-        throw new Error("get activities failed");
+        throw new Error('get activities failed');
       } else {
         return res.json();
       }

@@ -1,4 +1,4 @@
-import configJson from "./auth_config.json";
+import configJson from './auth_config.json';
 
 interface AuthConfig {
   domain: string;
@@ -14,7 +14,7 @@ export function getConfig(): AuthConfig {
   // If this resolves to `null`, the API page changes to show some helpful info about what to do
   // with the audience.
   const audience: string =
-    configJson.audience && configJson.audience !== "YOUR_API_IDENTIFIER"
+    configJson.audience && configJson.audience !== 'YOUR_API_IDENTIFIER'
       ? configJson.audience
       : null;
 

@@ -1,16 +1,16 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import {
   AppState,
   Auth0Provider,
   Auth0ProviderOptions,
-} from "@auth0/auth0-react";
-import { BrowserHistory, createBrowserHistory } from "history";
-import "./index.css";
-import App from "./App";
-import reportWebVitals from "./reportWebVitals";
-import { getConfig } from "./config";
-import "bootstrap/dist/css/bootstrap.min.css";
+} from '@auth0/auth0-react';
+import { BrowserHistory, createBrowserHistory } from 'history';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { getConfig } from './config';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const onRedirectCallback = (appState: AppState) => {
   let history: BrowserHistory = createBrowserHistory();
@@ -29,15 +29,15 @@ const providerConfig: Auth0ProviderOptions = {
   onRedirectCallback,
   authorizationParams: {
     redirect_uri:
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === 'production'
         ? `${window.location.origin}/finance-app`
         : window.location.origin,
     ...(config.audience ? { audience: config.audience } : null),
   },
-  cacheLocation: "localstorage",
+  cacheLocation: 'localstorage',
 };
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
+const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <Auth0Provider {...providerConfig}>
     <React.StrictMode>

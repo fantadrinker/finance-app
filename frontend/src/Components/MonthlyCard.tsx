@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import Card from "react-bootstrap/Card";
+import React, { useCallback, useState } from 'react';
+import Card from 'react-bootstrap/Card';
 import {
   Tooltip,
   BarChart,
@@ -8,9 +8,9 @@ import {
   Bar,
   CartesianGrid,
   Cell,
-} from "recharts";
-import { Insight } from "../api";
-import { Table } from "react-bootstrap";
+} from 'recharts';
+import { Insight } from '../api';
+import { Table } from 'react-bootstrap';
 
 interface MonthlyBreakdown {
   month: string;
@@ -71,13 +71,13 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   const cardStyles = isExpanded
     ? {
         flexGrow: 2,
-        maxWidth: "800px",
-        transition: "all 0.2s linear 0s",
+        maxWidth: '800px',
+        transition: 'all 0.2s linear 0s',
       }
     : {
         flexGrow: 1,
-        maxWidth: "400px",
-        transition: "all 0.2s linear 0s",
+        maxWidth: '400px',
+        transition: 'all 0.2s linear 0s',
       };
 
   const selectedAllCategories = isExpanded
@@ -102,10 +102,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         <Card.Title>Monthly Trends</Card.Title>
         <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "space-evenly",
-            cursor: isExpanded ? "pointer" : "default",
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-evenly',
+            cursor: isExpanded ? 'pointer' : 'default',
           }}
         >
           <BarChart width={360} height={360} data={data}>
@@ -125,10 +125,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                   cursor="pointer"
                   fill={
                     index === activeIndex
-                      ? "#82ca9d"
+                      ? '#82ca9d'
                       : index === hoveredIndex
-                      ? "#87a9b5"
-                      : "#8884d8"
+                      ? '#87a9b5'
+                      : '#8884d8'
                   }
                   key={`cell-${index}`}
                 />
@@ -137,7 +137,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           </BarChart>
           {isExpanded && (
             <div
-              style={{ maxWidth: "360px", maxHeight: "360px" }}
+              style={{ maxWidth: '360px', maxHeight: '360px' }}
               onClick={() => setActiveIndex(-1)}
             >
               <h3>Top spending categories for {data[activeIndex].month}</h3>

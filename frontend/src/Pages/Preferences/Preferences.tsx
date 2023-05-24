@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
-import Button from "react-bootstrap/esm/Button";
-import Table from "react-bootstrap/esm/Table";
-import { Link } from "react-router-dom";
-import { deleteMapping, getMappings, postMappings } from "../../api";
-import UpdateMappingModal from "../../Components/UpdateMappingModal";
-import { useAuth0 } from "@auth0/auth0-react";
+import React, { useState, useEffect } from 'react';
+import Button from 'react-bootstrap/esm/Button';
+import Table from 'react-bootstrap/esm/Table';
+import { Link } from 'react-router-dom';
+import { deleteMapping, getMappings, postMappings } from '../../api';
+import UpdateMappingModal from '../../Components/UpdateMappingModal';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface Mapping {
   sk: string;
@@ -18,8 +18,8 @@ export const Preferences = () => {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [mappings, setMappings] = useState<Array<Mapping>>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [description, setDescription] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
+  const [description, setDescription] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -57,7 +57,7 @@ export const Preferences = () => {
           if (!result.ok) {
             return [];
           }
-          getMappings(accessToken ?? "")
+          getMappings(accessToken ?? '')
             .then((data) => {
               setMappings(data);
             })
@@ -83,7 +83,7 @@ export const Preferences = () => {
             return;
           }
           console.log(
-            "mapping updated, updated informations should come later"
+            'mapping updated, updated informations should come later'
           );
           setShowModal(false);
         })
