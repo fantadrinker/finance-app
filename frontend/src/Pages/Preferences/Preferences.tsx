@@ -4,7 +4,7 @@ import Table from 'react-bootstrap/esm/Table'
 import { Link } from 'react-router-dom'
 import { deleteMapping, getMappings, postMappings } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuth0TokenSilent } from '../../hooks'
 
 interface Mapping {
   sk: string
@@ -15,28 +15,26 @@ interface Mapping {
 // TODO: set up error handling
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0()
+  const token = useAuth0TokenSilent()
   const [mappings, setMappings] = useState<Array<Mapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!token) {
       return
     }
     // fetch data from /preferences endpoint
-    getAccessTokenSilently().then(accessToken =>
-      getMappings(accessToken)
-        .then(result => {
-          setMappings(result)
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    )
-  }, [isAuthenticated, getAccessTokenSilently])
+    getMappings(token)
+      .then(result => {
+        setMappings(result)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }, [token])
 
-  if (!isAuthenticated) {
+  if (!token) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>
@@ -51,44 +49,40 @@ export const Preferences = () => {
   }
   const deleteMappingAndFetch = (sk: string) => {
     // calls delete /mappings endpoint
-    getAccessTokenSilently().then(accessToken =>
-      deleteMapping(accessToken, sk)
-        .then(result => {
-          if (!result.ok) {
-            return []
-          }
-          getMappings(accessToken ?? '')
-            .then(data => {
-              setMappings(data)
-            })
-            .catch(err => {
-              console.log(err)
-            })
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    )
+    deleteMapping(token, sk)
+      .then(result => {
+        if (!result.ok) {
+          return []
+        }
+        getMappings(token ?? '')
+          .then(data => {
+            setMappings(data)
+          })
+          .catch(err => {
+            console.log(err)
+          })
+      })
+      .catch(err => {
+        console.log(err)
+      })
   }
 
   const updateNewCategory = async (desc: string, newCategory: string) => {
     // calls post /mappings endpoint to update category mapping
-    getAccessTokenSilently().then(accessToken =>
-      postMappings(accessToken, {
-        description: desc,
-        category: newCategory,
+    postMappings(token, {
+      description: desc,
+      category: newCategory,
+    })
+      .then(result => {
+        if (!result.ok) {
+          return
+        }
+        console.log('mapping updated, updated informations should come later')
+        setShowModal(false)
       })
-        .then(result => {
-          if (!result.ok) {
-            return
-          }
-          console.log('mapping updated, updated informations should come later')
-          setShowModal(false)
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    )
+      .catch(err => {
+        console.log(err)
+      })
   }
   return (
     <div>

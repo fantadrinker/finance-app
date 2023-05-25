@@ -56,7 +56,6 @@ export function Home() {
     }
   }, [token, fetchNextKey])
 
-  // set up scroll listener
   useEffect(() => {
     if (token) {
       getMappings(token)
@@ -68,6 +67,10 @@ export function Home() {
           setErrorMessage(`Error fetching activities${err.message}`)
         })
     }
+  }, [token])
+
+  // set up scroll listener
+  useEffect(() => {
     window.onscroll = () => {
       if (
         !loading &&
