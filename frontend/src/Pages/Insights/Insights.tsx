@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { getInsights, Insight } from '../../api'
 import { CategoryCard } from '../../Components/CategoryCard'
 import { MonthlyCard } from '../../Components/MonthlyCard'
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuth0TokenSilent } from '../../hooks'
 
 /**
  * TODO: 1. add a stacked bar chart to show the breakdown of each category https://recharts.org/en-US/examples/StackedBarChart
@@ -13,31 +13,29 @@ import { useAuth0 } from '@auth0/auth0-react'
  */
 
 export const Insights = () => {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0()
+  const token = useAuth0TokenSilent()
   const [insights, setInsights] = useState<Array<Insight>>([])
   const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!token) {
       return
     }
     setLoading(true)
     // fetch data from /insights endpoint
-    getAccessTokenSilently().then(accessToken =>
-      getInsights(accessToken)
-        .then(result => {
-          setInsights(result)
-        })
-        .catch(err => {
-          console.log(err)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    )
-  }, [getAccessTokenSilently, isAuthenticated])
+    getInsights(token)
+      .then(result => {
+        setInsights(result)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [token])
 
-  if (!isAuthenticated) {
+  if (!token) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>

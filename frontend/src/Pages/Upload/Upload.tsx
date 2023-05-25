@@ -2,9 +2,9 @@ import React, { useState, useEffect, ChangeEvent } from 'react'
 import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
-import { useAuth0 } from '@auth0/auth0-react'
 import styles from './Upload.module.css'
 import { getChecksums, postActivities } from '../../api'
+import { useAuth0TokenSilent } from '../../hooks'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -17,26 +17,22 @@ const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.rbc]: 'RBC',
 })
 
-function useFetchPrevCheckSums(
-  getAccessToken: () => Promise<string>
-): Array<any> {
+function useFetchPrevCheckSums(token: string | null): Array<any> {
   const [chksums, setChksums] = useState<Array<string>>([])
   useEffect(() => {
-    if (!getAccessToken) {
+    if (!token) {
       return
     }
-    if (getAccessToken) {
-      getAccessToken()
-        .then(accessToken =>
-          getChecksums(accessToken).then(data => {
-            setChksums(data)
-          })
-        )
+    if (token) {
+      getChecksums(token)
+        .then(data => {
+          setChksums(data)
+        })
         .catch(err => {
           console.log(err)
         })
     }
-  }, [getAccessToken])
+  }, [token])
   return chksums
 }
 
@@ -49,9 +45,8 @@ export const Upload = () => {
   const [columnFormat, setColumnFormat] = useState<ColumnFormat>(
     ColumnFormat.cap1
   )
-  const { getAccessTokenSilently } = useAuth0()
-
-  const chksums = useFetchPrevCheckSums(getAccessTokenSilently)
+  const token = useAuth0TokenSilent()
+  const chksums = useFetchPrevCheckSums(token)
 
   const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement
@@ -83,7 +78,6 @@ export const Upload = () => {
     event.preventDefault()
     try {
       // processes user file, store in financeData state var
-      const token = await getAccessTokenSilently()
       const response = await postActivities(
         token,
         columnFormat.toString(),
