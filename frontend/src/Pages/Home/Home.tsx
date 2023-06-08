@@ -48,22 +48,6 @@ const useFinanceDataFetcher = (token: string | null) => {
     }
   }, [token, fetchNextKey])
 
-  useEffect(() => {
-    window.onscroll = () => {
-      if (
-        !loading &&
-        token &&
-        nextKey &&
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
-      ) {
-        setFetchNextKey(nextKey)
-      }
-    }
-    return () => {
-      window.onscroll = null
-    }
-  }, [loading, token, nextKey])
-
   return {
     financeData,
     loading,
