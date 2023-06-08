@@ -24,20 +24,13 @@ interface FinanceDataRow {
   desc: string
 }
 
-export function Home() {
-  const token = useAuth0TokenSilent()
-
-  const [showModal, setShowModal] = useState<boolean>(false)
-  const [description, setDescription] = useState<string>('')
-  const [category, setCategory] = useState<string>('')
-
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
+const useFinanceDataFetcher = (token: string | null) => {
   const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([])
-  const [categoryMappings, setCategoryMappings] = useState<Array<any>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
   const [fetchNextKey, setFetchNextKey] = useState<string | null>(null)
+
   const [loading, setLoading] = useState<boolean>(false)
+
   useEffect(() => {
     if (token) {
       setLoading(true)
@@ -48,13 +41,62 @@ export function Home() {
         })
         .catch(err => {
           console.log(err)
-          setErrorMessage(`Error fetching activities${err.message}`)
         })
         .finally(() => {
           setLoading(false)
         })
     }
   }, [token, fetchNextKey])
+
+  useEffect(() => {
+    window.onscroll = () => {
+      if (
+        !loading &&
+        token &&
+        nextKey &&
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
+      ) {
+        setFetchNextKey(nextKey)
+      }
+    }
+    return () => {
+      window.onscroll = null
+    }
+  }, [loading, token, nextKey])
+
+  return {
+    financeData,
+    loading,
+    hasMore: !!nextKey,
+    fetchMore: () => {
+      setFetchNextKey(nextKey)
+    },
+    reFetch: () => {
+      setFinanceData([])
+      setNextKey(null)
+      setFetchNextKey(null)
+    }
+  }
+}
+
+export function Home() {
+  const token = useAuth0TokenSilent()
+
+  const [showModal, setShowModal] = useState<boolean>(false)
+  const [description, setDescription] = useState<string>('')
+  const [category, setCategory] = useState<string>('')
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const [categoryMappings, setCategoryMappings] = useState<Array<any>>([])
+
+  const {
+    financeData,
+    loading,
+    hasMore,
+    fetchMore,
+    reFetch,
+  } = useFinanceDataFetcher(token)
 
   useEffect(() => {
     if (token) {
@@ -75,16 +117,16 @@ export function Home() {
       if (
         !loading &&
         token &&
-        nextKey &&
+        hasMore &&
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
       ) {
-        setFetchNextKey(nextKey)
+        fetchMore()
       }
     }
     return () => {
       window.onscroll = null
     }
-  }, [loading, token, nextKey])
+  }, [loading, token, hasMore, fetchMore])
 
   if (!token) {
     return (
@@ -101,7 +143,7 @@ export function Home() {
     try {
       const response = await deleteActivity(token, id)
       if (response.ok) {
-        setFetchNextKey(null)
+        reFetch()
       }
     } catch (err) {
       console.log(err)
@@ -185,7 +227,7 @@ export function Home() {
                   </tr>
                 )
               )}
-              {nextKey !== null && nextKey !== undefined && (
+              {hasMore && (
                 <tr>
                   <td colSpan={5}>
                     {loading ? <Spinner animation="border" /> : null}
