@@ -23,7 +23,7 @@ const MyNavBar = () => {
       },
     })
   return (
-    <Navbar bg="light" expand="lg">
+    <Navbar expand="lg">
       <Container>
         <Navbar.Brand>Finance Calculator</Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
