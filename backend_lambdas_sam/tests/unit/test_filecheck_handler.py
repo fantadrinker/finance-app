@@ -96,7 +96,7 @@ def mock_chksums(user_id):
             "user": user_id,
             "sk": "chksum#test123",
             "date": base_date.strftime("%Y-%m-%d"),
-            "chksum": "test123"
+            "checksum": "test123"
         }
     ]
 
@@ -107,4 +107,4 @@ def test_get_chksums(activities_table, apigw_event_get, mock_chksums):
     response = app.lambda_handler(apigw_event_get, "")
     print(response["body"])
     assert response["statusCode"] == 200
-    assert json.loads(response["body"])["data"][0] == {"chksum": "test123"}
+    assert json.loads(response["body"])["data"][0] == {"checksum": "test123"}

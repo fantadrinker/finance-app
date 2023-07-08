@@ -62,7 +62,8 @@ def lambda_handler(event, context):
     try:
         query_params = {
             "KeyConditionExpression": Key('user').eq(user_id) & Key('sk').begins_with('chksum#'),
-            "ProjectionExpression": "chksum"
+            "ProjectionExpression": "checksum, start_date, end_date",
+            "Select": "SPECIFIC_ATTRIBUTES"
         }
         data = activities_table.query(
             **query_params

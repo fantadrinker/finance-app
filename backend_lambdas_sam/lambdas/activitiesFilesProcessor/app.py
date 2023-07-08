@@ -5,7 +5,7 @@ import csv
 import hashlib
 import os
 import re
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from urllib.parse import unquote_plus
 from boto3.dynamodb.conditions import Key
@@ -59,6 +59,11 @@ def lambda_handler(event, context):
         csv_reader = csv.reader(body_decoded.splitlines(), delimiter=',')
         firstRow = True
         with activities_table.batch_writer() as batch:
+            # these two to keep track of the earliest and latest dates in the file
+
+            start_date = date.max.strftime("%Y-%m-%d")
+            end_date = date.min.strftime("%Y-%m-%d")
+
             for row in csv_reader:
                 # skips first header row
                 if firstRow:
@@ -80,6 +85,9 @@ def lambda_handler(event, context):
                         'amount': amount
                     }
                 elif file_format == "rbc" and len(row) >= 7:
+                    if not row[6] or row[6] == "0":
+                        print('skipping row with no transaction amount, might be a usd transaction')
+                        continue
                     date_str = datetime.strptime(row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
                     amount = 0 - Decimal(row[6])
                     item = {
@@ -92,6 +100,11 @@ def lambda_handler(event, context):
                         'amount' : amount # need to flip sign, rbc uses negative val for expense
                     }
                 if item:
+                    # first update first and last dates
+                    if item['date'] < start_date:
+                        start_date = item['date']
+                    if item['date'] > end_date:
+                        end_date = item['date']
                     # iterate through mappings and override category if there is a match
                     for key in mappings:
                         if re.search(key, item["description"]):
@@ -111,7 +124,9 @@ def lambda_handler(event, context):
                     'user': user_id,
                     'date': datetime.now().strftime("%Y-%m-%d"),
                     'checksum': chksum,
-                    'file': s3_key
+                    'file': s3_key,
+                    'start_date': start_date,
+                    'end_date': end_date
                 }
             )
             # TODO: also put in a notification item for the user, so they can see the file was processed
