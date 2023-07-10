@@ -3,7 +3,7 @@ import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import styles from './Upload.module.css'
-import { getChecksums, postActivities } from '../../api'
+import { FileUpload, getUploads, postActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
 
 enum ColumnFormat {
@@ -17,23 +17,23 @@ const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.rbc]: 'RBC',
 })
 
-function useFetchPrevCheckSums(token: string | null): Array<any> {
-  const [chksums, setChksums] = useState<Array<string>>([])
+function useFetchPrevUploads(token: string | null): Array<FileUpload> {
+  const [uploads, setUploads] = useState<Array<FileUpload>>([])
   useEffect(() => {
     if (!token) {
       return
     }
     if (token) {
-      getChecksums(token)
+      getUploads(token)
         .then(data => {
-          setChksums(data)
+          setUploads(data)
         })
         .catch(err => {
           console.log(err)
         })
     }
   }, [token])
-  return chksums
+  return uploads
 }
 
 export const Upload = () => {
@@ -46,7 +46,7 @@ export const Upload = () => {
     ColumnFormat.cap1
   )
   const token = useAuth0TokenSilent()
-  const chksums = useFetchPrevCheckSums(token)
+  const uploads = useFetchPrevUploads(token)
 
   const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement
@@ -62,7 +62,7 @@ export const Upload = () => {
       .text()
       .then(text => {
         const fileChksum = md5(text).toString()
-        if (chksums.map(({ chksum }) => chksum).includes(fileChksum)) {
+        if (uploads.map(({ checksum }) => checksum).includes(fileChksum)) {
           setWarningMessage(
             'our server indicates this file has already been processed'
           )
@@ -91,8 +91,9 @@ export const Upload = () => {
     }
   }
 
-  return (
+  return (<div style={{ display: 'flex', flexDirection: 'column'}}>
     <Form className={styles.uploadForm}>
+      <h2>Upload a File</h2>
       {warningMessage !== null && (
         <Form.Text className={styles.warningMessage}>
           {warningMessage}
@@ -127,5 +128,18 @@ export const Upload = () => {
         </Button>
       </Form.Group>
     </Form>
+    <div>
+      <h2>Previous Uploads</h2>
+      <ul>
+        {uploads.map(({ checksum, start_date, end_date }) => {
+          return (
+            <li key={checksum}>
+              {start_date} - {end_date}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  </div>
   )
 }
