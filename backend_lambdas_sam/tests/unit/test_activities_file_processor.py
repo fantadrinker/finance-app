@@ -1,10 +1,8 @@
 import pytest
-import json
 from lambdas.activitiesFilesProcessor import app
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 from moto import mock_dynamodb, mock_s3
-
 
 @pytest.fixture()
 def activities_table():
@@ -32,19 +30,27 @@ def user_id():
     return "test-user-id"
 
 @pytest.fixture()
-def s3(user_id):
+def cap1_file_raw():
+    return b'Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2023-02-25,2023-02-27,0733,RAMEN DANBO ROBSON,Dining,20.47,\n2023-02-24,2023-02-27,0733,SAFEWAY #4931,Merchandise,26.73,\n'
+
+@pytest.fixture()
+def rbc_file_raw():
+    return b'"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA",,69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n'
+
+@pytest.fixture()
+def s3(user_id, cap1_file_raw):
     with mock_s3():
         s3 = boto3.resource('s3', region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
-        s3.Object("test-bucket", f"{user_id}/cap1/2021-01-01.csv").put(Body=b'Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2023-02-25,2023-02-27,0733,RAMEN DANBO ROBSON,Dining,20.47,\n2023-02-24,2023-02-27,0733,SAFEWAY #4931,Merchandise,26.73,\n')
+        s3.Object("test-bucket", f"{user_id}/cap1/2021-01-01.csv").put(Body=cap1_file_raw)
         yield s3
 
 @pytest.fixture()
-def s3_rbc(user_id):
+def s3_rbc(user_id, rbc_file_raw):
     with mock_s3():
         s3 = boto3.resource('s3', region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
-        s3.Object("test-bucket", f"{user_id}/rbc/2021-01-01.csv").put(Body=b'"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA",,69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n')
+        s3.Object("test-bucket", f"{user_id}/rbc/2021-01-01.csv").put(Body=rbc_file_raw)
         yield s3
 
 @pytest.fixture()
