@@ -36,11 +36,6 @@ interface GetActivitiesResponse {
   data: Array<ActivityRow>
   nextKey: string
 }
-
-interface ChksumItem {
-  chksum: string
-}
-
 export interface Insight {
   date: string
   categories: Record<string, number>
