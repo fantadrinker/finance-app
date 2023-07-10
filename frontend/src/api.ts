@@ -36,11 +36,6 @@ interface GetActivitiesResponse {
   data: Array<ActivityRow>
   nextKey: string
 }
-
-interface ChksumItem {
-  chksum: string
-}
-
 export interface Insight {
   date: string
   categories: Record<string, number>
@@ -234,7 +229,13 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
   return deleteCall(`/activities?sk=${id}`, auth)
 }
 
-export function getChecksums(auth: string | null): Promise<Array<string>> {
+export interface FileUpload {
+  checksum: string,
+  end_date: string,
+  start_date: string,
+}
+
+export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
   if (!auth) {
     throw new Error('no auth')
   }
@@ -247,9 +248,7 @@ export function getChecksums(auth: string | null): Promise<Array<string>> {
       }
     })
     .then(jsonResult => {
-      return jsonResult.data.map(
-        (item: ChksumItem) => item.chksum
-      ) as Array<string>
+      return jsonResult.data as Array<FileUpload>
     })
 }
 
