@@ -70,6 +70,18 @@ const MyNavBar = () => {
                   Insights
                 </Link>
               </Nav.Link>
+              <Nav.Link>
+                <Link
+                  to="/wishlist"
+                  style={
+                    isPathActive('/wishlist')
+                      ? {}
+                      : { textDecoration: 'none' }
+                  }
+                >
+                  Wishlists
+                </Link>
+              </Nav.Link>
             </Nav>
           )}
           <Nav>
