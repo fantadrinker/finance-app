@@ -13,6 +13,7 @@ import './App.css'
 import MyNavBar from './Components/MyNavBar'
 import Login from './Pages/Login/Login'
 import Upload from './Pages/Upload'
+import Wishlist from './Pages/Wishlist'
 
 function App() {
   const { isLoading, error } = useAuth0()
@@ -35,7 +36,7 @@ function App() {
           <Route path="/upload" element={<Upload />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
-          <Route path="/wishlist" element={<div>Wishlists</div>} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
