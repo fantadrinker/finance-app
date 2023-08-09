@@ -35,6 +35,7 @@ function App() {
           <Route path="/upload" element={<Upload />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
+          <Route path="/wishlist" element={<div>Wishlists</div>} />
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
