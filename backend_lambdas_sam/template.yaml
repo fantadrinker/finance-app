@@ -315,6 +315,50 @@ Resources:
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+  
+  WishListFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/wishList/
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          ACTIVITIES_TABLE: !Ref ActivitiesTable
+      Events:
+        GetWishList:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /wishlist
+            Method: GET
+        PostWishList:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /wishlist
+            Method: POST
+        DeleteWishList:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /wishlist
+            Method: DELETE
+        UpdateWishList:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /wishlist
+            Method: PUT
 
 
   # s3 bucket to store user-uploaded activities files
