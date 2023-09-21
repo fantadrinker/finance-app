@@ -18,6 +18,7 @@ export function Wishlist() {
 
   function addNewItem(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.preventDefault()
+    // TODO: sync with backend
     setItems([...items, {
       name: newName,
       description: newDescription,
