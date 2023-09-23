@@ -1,5 +1,6 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Form, Table } from "react-bootstrap"
+import { getWishlist } from "../../api"
 
 interface WishedItem {
   name: string,
@@ -15,6 +16,13 @@ export function Wishlist() {
   const [newDescription, setNewDescription] = useState<string>("")
   const [newUrl, setNewUrl] = useState<string>("")
   const [newPrice, setNewPrice] = useState<number>(0)
+
+  useEffect(() => {
+    // fetch items from backend
+    getWishlist('testauth').then(res => {
+      setItems(res)
+    })
+  }, [])
 
   function addNewItem(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.preventDefault()

@@ -300,3 +300,31 @@ export function getActivitiesByCategory(
     })
     .then(obj => serializeActivitiesAPIResponse(obj, { start: 0, end: 5 }))
 }
+
+export interface WishListItem {
+  id: string
+  name: string
+  price: number
+  url: string
+  image: string
+  description: string
+}
+
+export function getWishlist(
+  auth: string | null = null,
+) {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return getCall('/wishlist', auth)
+    .then(res => {
+      if (res.status === 200) {
+        return res.json()
+      } else {
+        throw new Error('get wishlist failed')
+      }
+    })
+    .then(jsonResult => {
+      return jsonResult.data as Array<WishListItem>
+    })
+}
