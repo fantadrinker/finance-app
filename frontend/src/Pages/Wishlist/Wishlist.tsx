@@ -76,7 +76,7 @@ export function Wishlist() {
           return (<tr key={index}>
             <td>{item.name}</td>
             <td>{item.description}</td>
-            <td>{item.url}</td>
+            <td><a href={item.url} target="_blank" >link</a></td>
             <td>{item.price}</td>
           </tr>)
         })}

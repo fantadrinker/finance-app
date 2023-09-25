@@ -8,7 +8,7 @@ mocks = [
         "name": "graphics card",
         "description": "RTX 3080",
         "category": "Grocery",
-        "url": "https://https://www.newegg.ca/msi-geforce-rtx-4070-rtx-4070-ventus-2x-12g-oc/p/N82E16814137787?item=N82E16814137787",
+        "url": "https://www.newegg.ca/msi-geforce-rtx-4070-rtx-4070-ventus-2x-12g-oc/p/N82E16814137787?item=N82E16814137787",
         "price": 1000,
         "priority": 1,
     },
@@ -35,8 +35,9 @@ def get(user_id):
         })
     }
 
+
 def post(user_id, event):
-    # stub
+    # stub - create new wishlist item
     print('post wishlist', event)
 
     return {
@@ -44,8 +45,9 @@ def post(user_id, event):
         "body": "success ppost"
     }
 
+
 def delete(user_id, event):
-    # stub
+    # stub - delete wishlist item by id
     print('delete wishlist', event)
 
     return {
@@ -53,8 +55,9 @@ def delete(user_id, event):
         "body": "success delete"
     }
 
+
 def put(user_id, event):
-    # stub
+    # stub - update wishlist item by id
     print('put wishlist', event)
 
     return {
@@ -63,17 +66,16 @@ def put(user_id, event):
     }
 
 
-
 def lambda_handler(event, context):
     global table
-    #user_id = get_user_id(event)
-    
-    #if not user_id:
+    # user_id = get_user_id(event)
+
+    # if not user_id:
     #    return {
     #        "statusCode": 400,
     #        "body": "unable to retrive user information",
     #    }
-    #if not table:
+    # if not table:
     #    dynamodb = boto3.resource("dynamodb")
     #    table_name = os.environ.get("MAPPINGS_TABLE", "")
     #    table = dynamodb.Table(table_name)
