@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { Form, Table } from "react-bootstrap"
-import { getWishlist } from "../../api"
+import { addWishlistItem, getWishlist } from "../../api"
+import { useAuth0TokenSilent } from "../../hooks"
 
 interface WishedItem {
   name: string,
@@ -11,6 +12,11 @@ interface WishedItem {
 
 
 export function Wishlist() {
+  // TODO: add auth support
+  //
+  // TODO: add delete, update actions, hook up create with backend
+  //
+  const token = useAuth0TokenSilent()
   const [items, setItems] = useState<WishedItem[]>([])
   const [newName, setNewName] = useState<string>("")
   const [newDescription, setNewDescription] = useState<string>("")
@@ -19,44 +25,55 @@ export function Wishlist() {
 
   useEffect(() => {
     // fetch items from backend
-    getWishlist('testauth').then(res => {
-      setItems(res)
-    })
-  }, [])
+    if (token) {
+      getWishlist(token).then(res => {
+        setItems(res)
+      })
+    }
+  }, [token])
+
 
   function addNewItem(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     e.preventDefault()
-    // TODO: sync with backend
-    setItems([...items, {
+
+    addWishlistItem(token, {
       name: newName,
       description: newDescription,
       url: newUrl,
       price: newPrice,
-    }])
-    setNewName("")
-    setNewDescription("")
-    setNewUrl("")
-    setNewPrice(0)
+    }).then(res => {
+      if (res.status !== 200) {
+        console.log("error adding item")
+        return
+      }
+      setNewName("")
+      setNewDescription("")
+      setNewUrl("")
+      setNewPrice(0)
+      getWishlist(token).then(res => {
+        setItems(res)
+      })
+    })
   }
 
   return (<div className="flex flex-column" >
     <h1>Wishlist</h1>
 
     <Form className="flex flex-row" >
-      <Form.Group className="mb-3" controlId="formBasicEmail">
-        <Form.Label for="item-name">Name</Form.Label>
+      <Form.Group className="mb-3">
+        <Form.Label htmlFor="item-name">Name</Form.Label>
         <Form.Control id="item-name" type="text" placeholder="Enter name" value={newName} onChange={e => setNewName(e.target.value)} />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formBasicEmail">
-        <Form.Label for="item-description" >Description</Form.Label>
+      <Form.Group className="mb-3" >
+        <Form.Label htmlFor="item-description" >Description</Form.Label>
         <Form.Control id="item-description" type="text" placeholder="Enter description" value={newDescription} onChange={e => setNewDescription(e.target.value)} />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formBasicEmail">
-        <Form.Label for="item-url" >URL</Form.Label>
+      <Form.Group className="mb-3" >
+        <Form.Label htmlFor="item-url" >URL</Form.Label>
         <Form.Control id="item-url" type="text" placeholder="Enter URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} />
       </Form.Group>
-      <Form.Group className="mb-3" controlId="formBasicEmail">
-        <Form.Label for="item-price" >Price</Form.Label>
+      <Form.Group className="mb-3" >
+        <Form.Label htmlFor="item-price" >Price</Form.Label>
         <Form.Control id="item-price" type="number" placeholder="Enter price" value={newPrice} onChange={e => setNewPrice(parseInt(e.target.value))} />
       </Form.Group>
       <button type="submit" className="btn btn-primary" onClick={addNewItem}>Submit</button>
@@ -69,6 +86,7 @@ export function Wishlist() {
           <th>Description</th>
           <th>URL</th>
           <th>Price</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -76,8 +94,9 @@ export function Wishlist() {
           return (<tr key={index}>
             <td>{item.name}</td>
             <td>{item.description}</td>
-            <td><a href={item.url} target="_blank" >link</a></td>
+            <td><a href={item.url} target="_blank" rel="noreferrer">link</a></td>
             <td>{item.price}</td>
+            <td><button className="btn btn-danger">Delete</button></td>
           </tr>)
         })}
       </tbody>

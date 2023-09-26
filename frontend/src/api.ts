@@ -95,6 +95,23 @@ function deleteCall(url: string, auth: string): Promise<Response> {
   }
 }
 
+function putCall(url: string, body: string, auth: string): Promise<Response> {
+  try {
+    return fetch(awsLambdaAddr + url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: auth,
+      },
+      mode: 'cors',
+      body,
+    })
+  } catch (err) {
+    console.log('get error', err)
+    throw err
+  }
+}
+
 function serializeActivitiesAPIResponse(
   res: ActivitiesAPIResponse,
   sliceResult?: {
@@ -302,11 +319,9 @@ export function getActivitiesByCategory(
 }
 
 export interface WishListItem {
-  id: string
   name: string
   price: number
   url: string
-  image: string
   description: string
 }
 
@@ -328,3 +343,45 @@ export function getWishlist(
       return jsonResult.data as Array<WishListItem>
     })
 }
+
+export function deleteWishlistItem(
+  auth: string | null = null,
+  id: string,
+) {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return deleteCall(`/wishlist?id=${id}`, auth)
+}
+
+export function addWishlistItem(
+  auth: string | null = null,
+  item: WishListItem,
+) {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return postCall('/wishlist', JSON.stringify(item), 'application/json', auth)
+}
+
+export function updateWishlistItem(
+  auth: string | null = null,
+  item: WishListItem,
+) {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return putCall('/wishlist', JSON.stringify(item), auth)
+}
+
+
+
+
+
+
+
+
+
+
+
+
