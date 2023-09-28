@@ -330,6 +330,7 @@ Resources:
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
+          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         GetWishList:
           Type: HttpApi 
