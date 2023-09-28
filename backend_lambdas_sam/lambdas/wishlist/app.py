@@ -51,7 +51,7 @@ def get_user_id(event):
         return ""
 
 
-def _serialize_item(body):
+def _deserialize_item(body):
     name = body.get("name", "")
     description = body.get("description", "")
     url = body.get("url", "")
@@ -61,10 +61,20 @@ def _serialize_item(body):
         return None
 
     return {
-        "name": name,
-        "description": description,
-        "url": url,
-        "price": price,
+        "item_name": name,
+        "item_description": description,
+        "item_url": url,
+        "item_price": price,
+    }
+
+
+def _serialize_item(item):
+    return {
+        "id": item.get("sk", ""),
+        "name": item.get("item_name", ""),
+        "description": item.get("item_description", ""),
+        "url": item.get("item_url", ""),
+        "price": str(item.get("item_price", 0)),
     }
 
 
@@ -72,17 +82,14 @@ def get(user_id):
     try:
         response = table.query(
             KeyConditionExpression=Key('user').eq(
-                user_id) & Key("sk").begins_with("mapping#")
+                user_id) & Key("sk").begins_with("wishlist#")
         )
         print(response)
         return {
             "statusCode": 200,
             "body": json.dumps({
                 "data": [
-                    {
-                        **item,
-                        "price": str(item["price"])
-                    } for item in response['Items']
+                    _serialize_item(item) for item in response['Items']
                 ],
             })
         }
@@ -111,7 +118,7 @@ def post(user_id, event):
             "body": "invalid body",
         }
 
-    item = _serialize_item(body)
+    item = _deserialize_item(body)
     if not item:
         return {
             "statusCode": 400,
@@ -122,7 +129,7 @@ def post(user_id, event):
         table.put_item(
             Item={
                 **item,
-                "pk": user_id,
+                "user": user_id,
                 "sk": f"wishlist#{datetime.datetime.now().timestamp()}",
             }
         )
@@ -142,7 +149,7 @@ def post(user_id, event):
 def delete(user_id, event):
     # given item id from path parameter, delete item
 
-    sk = event.get("path", {}).get("sk", "")
+    sk = event.get("queryStringParameters", {}).get("sk", "")
     if not sk:
         return {
             "statusCode": 400,
@@ -171,11 +178,11 @@ def delete(user_id, event):
 
 def put(user_id, event):
     # given item id from query parameter, update item
-    sk = event.get("queryParams", {}).get("sk", "")
+    sk = event.get("queryStringParameters", {}).get("sk", "")
     if not sk:
         return {
             "statusCode": 400,
-            "body": "invalid body",
+            "body": "item key not provided",
         }
 
     body = json.loads(event.get("body", "{}"))
@@ -186,7 +193,7 @@ def put(user_id, event):
             "body": "invalid body",
         }
 
-    item = _serialize_item(body)
+    item = _deserialize_item(body)
     if not item:
         return {
             "statusCode": 400,
@@ -199,12 +206,12 @@ def put(user_id, event):
                 'user': user_id,
                 'sk': sk
             },
-            UpdateExpression="set name=:n, description=:d, url=:u, price=:p",
+            UpdateExpression="set item_name=:n, item_description=:d, item_url=:u, item_price=:p",
             ExpressionAttributeValues={
-                ':n': item.get("name", ""),
-                ':d': item.get("description", ""),
-                ':u': item.get("url", ""),
-                ':p': item.get("price", 0)
+                ':n': item.get("item_name", ""),
+                ':d': item.get("item_description", ""),
+                ':u': item.get("item_url", ""),
+                ':p': item.get("item_price", 0)
             },
             ReturnValues="UPDATED_NEW"
         )
