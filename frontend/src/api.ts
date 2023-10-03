@@ -375,14 +375,3 @@ export function updateWishlistItem(
   return putCall('/wishlist', JSON.stringify(item), auth)
 }
 
-
-
-
-
-
-
-
-
-
-
-
