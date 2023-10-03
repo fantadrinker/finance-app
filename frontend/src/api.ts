@@ -319,6 +319,7 @@ export function getActivitiesByCategory(
 }
 
 export interface WishListItem {
+  id?: string
   name: string
   price: number
   url: string

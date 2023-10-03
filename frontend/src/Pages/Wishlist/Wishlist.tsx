@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { Form, Table } from "react-bootstrap"
-import { addWishlistItem, getWishlist } from "../../api"
+import { addWishlistItem, getWishlist, WishListItem } from "../../api"
 import { useAuth0TokenSilent } from "../../hooks"
-
-interface WishedItem {
-  name: string,
-  description: string,
-  url: string,
-  price: number,
-}
-
 
 export function Wishlist() {
   // TODO: add auth support
@@ -17,7 +9,7 @@ export function Wishlist() {
   // TODO: add delete, update actions, hook up create with backend
   //
   const token = useAuth0TokenSilent()
-  const [items, setItems] = useState<WishedItem[]>([])
+  const [items, setItems] = useState<WishListItem[]>([])
   const [newName, setNewName] = useState<string>("")
   const [newDescription, setNewDescription] = useState<string>("")
   const [newUrl, setNewUrl] = useState<string>("")
