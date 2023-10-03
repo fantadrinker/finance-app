@@ -70,7 +70,7 @@ const MyNavBar = () => {
                   Insights
                 </Link>
               </Nav.Link>
-              <Nav.Link>
+              <Nav.Link as="span" href="/wishlist">
                 <Link
                   to="/wishlist"
                   style={
