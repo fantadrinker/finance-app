@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import Spinner from 'react-bootstrap/esm/Spinner'
+import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
 import { getInsights, Insight } from '../../api'
 import { CategoryCard } from '../../Components/CategoryCard'
