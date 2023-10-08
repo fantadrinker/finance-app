@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import Button from 'react-bootstrap/esm/Button'
-import Table from 'react-bootstrap/esm/Table'
+import Button from 'react-bootstrap/Button'
+import Table from 'react-bootstrap/Table'
 import { Link } from 'react-router-dom'
 import { deleteMapping, getMappings, postMappings } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
