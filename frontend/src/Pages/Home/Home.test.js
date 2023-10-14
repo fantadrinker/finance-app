@@ -1,39 +1,42 @@
 import { waitFor, render, screen } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
-import { rest } from 'msw'
-import { setupServer } from 'msw/node'
+import * as API from '../../api'
 import Home from './Home'
 
 jest.mock('../../hooks')
+jest.mock('../../api')
 
-const server = setupServer(
-  rest.get('/activities', (res, ctx) => {
-    return res(ctx.json([]))
-  })
-)
-
-beforeAll(() => server.listen())
-afterEach(() => server.resetHandlers())
-afterAll(() => server.close())
+beforeEach(() => {
+  API.getActivities.mockReturnValue(new Promise((resolve) => resolve({
+    data: [],
+    nextKey: ''
+  })))
+  API.getMappings.mockReturnValue(new Promise((resolve) => resolve([])))
+})
 
 describe('Home, if not logged in', () => {
   beforeEach(() => {
-    auth0Helper.useAuth0TokenSilent.mockResolvedValue(null)
+    auth0Helper.useAuth0TokenSilent.mockReturnValue(null)
     render(<Home />)
   })
-  test('should redirect user to log in', () => {
-    expect(screen.getByText(/log in/i)).toBeInTheDocument()
+  test('should redirect user to log in', async () => {
+    expect(await screen.findByText(/not authenticated/i)).toBeInTheDocument()
+    expect(await screen.findByText(/log in/i)).toBeInTheDocument()
   })
 })
 
 describe('if logged in', () => {
   beforeEach(() => {
-    auth0Helper.useAuth0TokenSilent.mockResolvedValue('test token')
+    auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
     render(<Home />)
   })
+
   test("if logged in and no activities is logged, shows the correct prompt", async () => {
     await waitFor(() => expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled())
-    await waitFor(() => expect(screen.getByText(/no data to display/i)).tobeinthedocument())
+    // await waitFor(() => expect(API.getActivities).toHaveBeenCalled())
+    // await waitFor(() => expect(API.getMappings).toHaveBeenCalled())
+    expect(await screen.findByRole('status')).toBeInTheDocument()
+    expect(await screen.findByText(/no data to display/i)).toBeInTheDocument()
   })
 })
 

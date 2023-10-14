@@ -1,5 +1,5 @@
-export const awsLambdaAddr =
-  'https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test'
+export const awsLambdaAddr = process.env.NODE_ENV === 'test' ?
+  '/test' : 'https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test'
 
 interface CategoryMapping {
   sk: string
@@ -142,7 +142,7 @@ function serializeActivitiesAPIResponse(
         }
       }
     ),
-    nextKey: res.LastEvaluatedKey.sk,
+    nextKey: res.LastEvaluatedKey?.sk,
   }
 }
 
