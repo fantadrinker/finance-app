@@ -1,5 +1,5 @@
 # workflow for testing builds for PRs
-name: Check if PR can be built successfully
+name: Frontend Test
 
 on:
   # Runs on pushes targeting the default branch
