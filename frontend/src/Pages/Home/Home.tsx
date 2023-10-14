@@ -40,7 +40,7 @@ const useFinanceDataFetcher = (token: string | null) => {
           setNextKey(nextKey)
         })
         .catch(err => {
-          console.log(err)
+          console.log(`error fetching activities ${err}`)
         })
         .finally(() => {
           setLoading(false)
@@ -90,7 +90,7 @@ export function Home() {
         })
         .catch(err => {
           console.log(err)
-          setErrorMessage(`Error fetching activities${err.message}`)
+          setErrorMessage(`Error fetching activity mappings ${err.message}`)
         })
     }
   }, [token])
@@ -164,7 +164,7 @@ export function Home() {
       {financeData.length === 0 && !loading && (
         <div className={styles.noData}>No data to display</div>
       )}
-      {financeData.length === 0 && loading && <Spinner animation="border" />}
+      {financeData.length === 0 && loading && <Spinner animation="border" role='status' />}
       {errorMessage && <div className={styles.error}>{errorMessage}</div>}
       {financeData.length > 0 && (
         <div className={styles.activityTable}>
@@ -187,7 +187,7 @@ export function Home() {
                     <td>{account}</td>
                     <td>{desc}</td>
                     <td style={{ display: 'flex' }}>
-                      <Form.Select onChange={() => {}}>
+                      <Form.Select onChange={() => { }}>
                         {category && (
                           <option value={category}>{category}</option>
                         )}
