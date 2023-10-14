@@ -32,7 +32,6 @@ const useFinanceDataFetcher = (token: string | null) => {
   const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
-    console.log(`fetching activities with token ${token}, nextKey ${fetchNextKey}, loading ${loading}, hasMore ${!!nextKey}`)
     if (token) {
       setLoading(true)
       getActivities(token, fetchNextKey)
