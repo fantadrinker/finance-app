@@ -1,4 +1,4 @@
-import { waitFor, render, screen, waitForElementToBeRemoved } from '../../test-utils'
+import { waitFor, render, screen } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import Home from './Home'
