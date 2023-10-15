@@ -168,7 +168,7 @@ export function Home() {
       {errorMessage && <div className={styles.error}>{errorMessage}</div>}
       {financeData.length > 0 && (
         <div className={styles.activityTable}>
-          <Table striped bordered hover>
+          <Table striped bordered hover data-testid="activity-table">
             <thead>
               <tr>
                 <td>date</td>

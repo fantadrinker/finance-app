@@ -1,4 +1,4 @@
-import { waitFor, render, screen } from '../../test-utils'
+import { waitFor, render, screen, waitForElementToBeRemoved } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import Home from './Home'
@@ -28,15 +28,47 @@ describe('Home, if not logged in', () => {
 describe('if logged in', () => {
   beforeEach(() => {
     auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
-    render(<Home />)
   })
 
   test("if logged in and no activities is logged, shows the correct prompt", async () => {
+    render(<Home />)
     await waitFor(() => expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled())
-    // await waitFor(() => expect(API.getActivities).toHaveBeenCalled())
-    // await waitFor(() => expect(API.getMappings).toHaveBeenCalled())
-    expect(await screen.findByRole('status')).toBeInTheDocument()
+    const spinnerElement = screen.getByRole('status')
+    await waitFor(() => expect(spinnerElement).toBeInTheDocument()) // wait for spinner to show
     expect(await screen.findByText(/no data to display/i)).toBeInTheDocument()
+  })
+
+  test("if logged in and has activities, shows activity table", async () => {
+    API.getActivities.mockReturnValue(new Promise((resolve) => resolve({
+      data: [
+        {
+          "id": "1",
+          "date": "2021-01-01",
+          "category": "test activity",
+          "desc": "test description",
+          "account": "0123",
+          "amount": 100,
+        },
+        {
+          "id": "2",
+          "date": "2021-01-02",
+          "category": "test activity 2",
+          "desc": "test description 2",
+          "account": "0123",
+          "amount": 200,
+        }
+      ],
+      nextKey: ''
+    })))
+    render(<Home />)
+    await waitFor(() => expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled())
+    // find by test id for activity table row. assert count
+    expect(await screen.findByRole('status')).toBeInTheDocument()
+    await waitFor(() => {
+      const actTable = screen.getByTestId('activity-table')
+      expect(actTable).toBeInTheDocument()
+      expect(actTable).toHaveTextContent('test activity')
+    })
   })
 })
 
