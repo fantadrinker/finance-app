@@ -1,4 +1,4 @@
-import { waitFor, render, screen } from '../../test-utils'
+import { act, waitFor, render, screen } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import Home from './Home'
@@ -70,5 +70,17 @@ describe('if logged in', () => {
       expect(actTable).toHaveTextContent('test activity')
     })
   })
+
+  test("if logged in but activity request fails, shows failure message", async () => {
+    API.getActivities.mockReturnValue(new Promise((resolve, reject) => reject('test error')))
+    act(() => {
+      render(<Home />)
+    })
+    await waitFor(() => expect(screen.getByText(/failed to load activities/i)).toBeInTheDocument())
+  })
+
+  test.skip("clicking on delete sends delete request to the server", async () => { })
+
+  test.skip("scrolling to the bottom of the page sends request to the server for more activities", async () => { })
 })
 

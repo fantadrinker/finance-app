@@ -24,7 +24,7 @@ interface FinanceDataRow {
   desc: string
 }
 
-const useFinanceDataFetcher = (token: string | null) => {
+const useFinanceDataFetcher = (token: string | null, setError: (e: string) => void) => {
   const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
   const [fetchNextKey, setFetchNextKey] = useState<string | null>(null)
@@ -40,13 +40,14 @@ const useFinanceDataFetcher = (token: string | null) => {
           setNextKey(nextKey)
         })
         .catch(err => {
-          console.log(`error fetching activities ${err}`)
+          setError(`failed to load activities`)
+          console.log(`error fetching activities: ${err}`)
         })
         .finally(() => {
           setLoading(false)
         })
     }
-  }, [token, fetchNextKey])
+  }, [token, fetchNextKey, setError])
 
   return {
     financeData,
@@ -80,7 +81,7 @@ export function Home() {
     hasMore,
     fetchMore,
     reFetch,
-  } = useFinanceDataFetcher(token)
+  } = useFinanceDataFetcher(token, setErrorMessage)
 
   useEffect(() => {
     if (token) {
