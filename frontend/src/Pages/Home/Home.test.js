@@ -1,4 +1,4 @@
-import { act, waitFor, render, screen } from '../../test-utils'
+import { within, waitFor, render, screen, fireEvent } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import Home from './Home'
@@ -73,14 +73,59 @@ describe('if logged in', () => {
 
   test("if logged in but activity request fails, shows failure message", async () => {
     API.getActivities.mockReturnValue(new Promise((resolve, reject) => reject('test error')))
-    act(() => {
-      render(<Home />)
-    })
+    render(<Home />)
     await waitFor(() => expect(screen.getByText(/failed to load activities/i)).toBeInTheDocument())
   })
 
-  test.skip("clicking on delete sends delete request to the server", async () => { })
+  test("clicking on delete sends delete request to the server", async () => {
+    API.deleteActivity.mockReturnValue(new Promise((resolve) => resolve({ ok: true })))
+    API.getActivities.mockReturnValue(new Promise((resolve) => resolve({
+      data: [
+        {
+          "id": "1",
+          "date": "2021-01-01",
+          "category": "test activity",
+          "desc": "test description",
+          "account": "0123",
+          "amount": 100,
+        },
+        {
+          "id": "2",
+          "date": "2021-01-02",
+          "category": "test activity 2",
+          "desc": "test description 2",
+          "account": "0123",
+          "amount": 200,
+        }
+      ],
+      nextKey: ''
+    })))
+    render(<Home />)
+    const actTable = await screen.findByTestId('activity-table')
+    expect(actTable).toBeInTheDocument()
+    const deleteButtons = await within(actTable).findAllByText(/delete/i)
+    deleteButtons[0].click()
+    await waitFor(() => expect(API.deleteActivity).toHaveBeenCalledWith('test token', '1'))
+  })
 
-  test.skip("scrolling to the bottom of the page sends request to the server for more activities", async () => { })
+  test("scrolling to the bottom of the page sends request to the server for more activities", async () => {
+    API.getActivities.mockReturnValue(new Promise((resolve) => resolve({
+      data: [
+        {
+          "id": "2",
+          "date": "2021-01-02",
+          "category": "test activity 2",
+          "desc": "test description 2",
+          "account": "0123",
+          "amount": 200,
+        }
+      ],
+      nextKey: 'test next key'
+    })))
+    render(<Home />)
+    await screen.findByTestId('activity-table')
+    fireEvent.scroll(window, { target: { scrollY: 1000 } })
+    await waitFor(() => expect(API.getActivities).toHaveBeenCalledWith('test token', 'test next key'))
+  })
 })
 
