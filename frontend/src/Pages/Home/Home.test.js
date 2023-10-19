@@ -123,12 +123,12 @@ describe('if logged in', () => {
       nextKey: 'test next key'
     })))
     render(<Home />)
-    await screen.findByTestId('activity-table')
+    const actTable = await screen.findByTestId('activity-table')
 
     fireEvent.scroll(window, { target: { scrollY: 1000 } })
 
-    await waitFor(() => expect(screen.getAllByText(/test activity 2/i)).toHaveLength(2))
-    await waitFor(() => expect(API.getActivities).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(within(actTable).getAllByText(/test activity 2/i)).toHaveLength(2), { timeout: 5000 })
+    expect(API.getActivities).toHaveBeenCalledTimes(2)
     expect(API.getActivities).toHaveBeenLastCalledWith('test token', 'test next key')
   })
 })
