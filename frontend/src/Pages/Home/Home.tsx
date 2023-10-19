@@ -106,6 +106,8 @@ export function Home() {
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
       ) {
         fetchMore()
+      } else {
+        console.log(`no more to load, ${loading}, ${token}, ${hasMore}, ${window.innerHeight}, ${window.scrollY}, ${document.body.offsetHeight}`)
       }
     }
     return () => {
