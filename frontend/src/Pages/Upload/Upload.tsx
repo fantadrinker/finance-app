@@ -91,7 +91,7 @@ export const Upload = () => {
     }
   }
 
-  return (<div style={{ display: 'flex', flexDirection: 'column'}}>
+  return (<div style={{ display: 'flex', flexDirection: 'column' }}>
     <Form className={styles.uploadForm}>
       <h2>Upload a File</h2>
       {warningMessage !== null && (
@@ -104,7 +104,7 @@ export const Upload = () => {
       )}
       <Form.Group controlId="file" className="mb-3">
         <Form.Label>Select File</Form.Label>
-        <Form.Control type="file" value={fileName} onChange={updateUserFile} />
+        <Form.Control role="file" type="file" value={fileName} onChange={updateUserFile} />
         <Form.Label>Choose Format</Form.Label>
         <Form.Select
           aria-label="select input type"
@@ -122,6 +122,7 @@ export const Upload = () => {
         <Button
           onClick={processUserFile}
           type="submit"
+          role="submit"
           disabled={fileContent === null}
         >
           Process File
