@@ -1,4 +1,4 @@
-import { within, waitFor, render, screen, fireEvent } from '../../test-utils'
+import { waitFor, render, screen } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import { Upload } from './Upload'
