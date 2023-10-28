@@ -108,6 +108,7 @@ describe('if logged in', () => {
     await waitFor(() => expect(API.deleteActivity).toHaveBeenCalledWith('test token', '1'))
   })
 
+  // TODO: fix, failing intermittently on expect api call to get called twice
   test.skip("scrolling to the bottom of the page sends request to the server for more activities", async () => {
     API.getActivities.mockReturnValue(new Promise((resolve) => resolve({
       data: [
