@@ -13,13 +13,56 @@ from boto3.dynamodb.conditions import Key
 activities_table = None
 s3 = None
 
+SKIPPING_ROW = "skipping row with no transaction amount, might be a usd transaction"
+
+
+def serialize_rbc_activity(row):
+    if len(row) < 7:
+        return None
+
+    if not row[6] or row[6] == "0":
+        print(SKIPPING_ROW)
+        return None
+
+    date_str = datetime.strptime(
+        row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
+    amount = 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        'account': f"{row[1]}-{row[0]}",
+        'date': date_str,
+        'description': row[5],
+        'category': row[4],  # in the future we should get this
+        'amount': amount  # need to flip sign, rbc uses negative val for expense
+    }
+
+
+def serialize_cap1_activity(row):
+    if len(row) < 6:
+        return None
+
+    date_str = datetime.strptime(
+        row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
+    amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        # concat uuid with date to make unique keys but also keep date ordering
+        'date': date_str,
+        'account': row[2],
+        'description': row[3],
+        'category': row[4],
+        'amount': amount
+    }
+
+
 def lambda_handler(event, context):
     global activities_table
     global s3
 
     if not activities_table:
         dynamodb = boto3.resource('dynamodb')
-        activities_table = dynamodb.Table(os.environ.get('ACTIVITIES_TABLE', ''))
+        activities_table = dynamodb.Table(
+            os.environ.get('ACTIVITIES_TABLE', ''))
 
     if not s3:
         s3 = boto3.resource('s3')
@@ -39,7 +82,8 @@ def lambda_handler(event, context):
         s3_body = s3_response['Body'].read()
         chksum = hashlib.md5(s3_body).hexdigest()
         body_decoded = s3_body.decode('utf-8')
-        chksum_entry = activities_table.get_item(Key={'user': user_id, 'sk': f"chksum#{chksum}"})
+        chksum_entry = activities_table.get_item(
+            Key={'user': user_id, 'sk': f"chksum#{chksum}"})
         if 'Item' in chksum_entry:
             print('skipping duplicate file')
             return {
@@ -50,7 +94,8 @@ def lambda_handler(event, context):
 
         mappings = {}
         mappings_response = activities_table.query(
-            KeyConditionExpression=Key('user').eq(user_id) & Key('sk').begins_with('mapping#')
+            KeyConditionExpression=Key('user').eq(
+                user_id) & Key('sk').begins_with('mapping#')
         )
         for item in mappings_response['Items']:
             if item['description'] not in mappings:
@@ -71,34 +116,10 @@ def lambda_handler(event, context):
                     continue
                 # format and store them in dynamodb
                 item = {}
-                if file_format == "cap1" and len(row) >= 6:
-                    date_str = datetime.strptime(row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
-                    amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
-                    item = {
-                        'sk': date_str + str(uuid.uuid4()), 
-                        # concat uuid with date to make unique keys but also keep date ordering
-                        'user': user_id,
-                        'date': date_str,
-                        'account': row[2],
-                        'description': row[3],
-                        'category': row[4],
-                        'amount': amount
-                    }
-                elif file_format == "rbc" and len(row) >= 7:
-                    if not row[6] or row[6] == "0":
-                        print('skipping row with no transaction amount, might be a usd transaction')
-                        continue
-                    date_str = datetime.strptime(row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
-                    amount = 0 - Decimal(row[6])
-                    item = {
-                        'sk': date_str + str(uuid.uuid4()),
-                        'user': user_id,
-                        'account': f"{row[1]}-{row[0]}",
-                        'date': date_str,
-                        'description': row[5],
-                        'category': row[4], # in the future we should get this
-                        'amount' : amount # need to flip sign, rbc uses negative val for expense
-                    }
+                if file_format == "cap1":
+                    item = serialize_cap1_activity(row)
+                elif file_format == "rbc":
+                    item = serialize_rbc_activity(row)
                 if item:
                     # first update first and last dates
                     if item['date'] < start_date:
@@ -108,12 +129,14 @@ def lambda_handler(event, context):
                     # iterate through mappings and override category if there is a match
                     for key in mappings:
                         if re.search(key, item["description"]):
-                            print(f"found mapping, overriding {item['category']} with {mappings[key]}")
+                            print(
+                                f"found mapping, overriding {item['category']} with {mappings[key]}")
                             item["category"] = mappings[key]
                             break
                     batch.put_item(
                         Item={
                             **item,
+                            'user': user_id,
                             'chksum': chksum,
                         }
                     )

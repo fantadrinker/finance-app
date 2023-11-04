@@ -10,10 +10,12 @@ table = None
 
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 
+
 def update_activity_category(user_id, category, description):
     # first get all activities that contains the description
     response = table.query(
-        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("20"),
+        KeyConditionExpression=Key("user").eq(
+            user_id) & Key("sk").begins_with("20"),
         FilterExpression=Attr("description").contains(description)
     )
     # then update the category of each activity
@@ -31,8 +33,10 @@ def update_activity_category(user_id, category, description):
 
 # helpers to identify stream record type
 
+
 def check_record_type(record, event_type, sk_prefix):
     return record["eventName"] == event_type and record["dynamodb"]["Keys"]["sk"]["S"].startswith(sk_prefix)
+
 
 def process_new_mapping(record):
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
@@ -40,12 +44,14 @@ def process_new_mapping(record):
     description = record["dynamodb"]["NewImage"]["description"]["S"]
     update_activity_category(user_id, category, description)
 
+
 def process_new_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     category = record["dynamodb"]["NewImage"]["category"]["S"]
     amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
-    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    month = datetime.strptime(
+        record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
     if user_id not in existing_mapping:
         existing_mapping[user_id] = {}
     per_user_mapping = existing_mapping[user_id]
@@ -56,13 +62,15 @@ def process_new_activity(record, existing_mapping):
         per_month_mapping[category] = Decimal(0)
     per_month_mapping[category] += amount
 
+
 def process_modified_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     old_category = record["dynamodb"]["OldImage"]["category"]["S"]
     new_category = record["dynamodb"]["NewImage"]["category"]["S"]
     amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
-    month = datetime.strptime(record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    month = datetime.strptime(
+        record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
     if old_category != new_category:
         if user_id not in existing_mapping:
             existing_mapping[user_id] = {}
@@ -79,12 +87,14 @@ def process_modified_activity(record, existing_mapping):
         else:
             per_month_mapping[new_category] = amount
 
+
 def process_deleted_activity(record, existing_mapping):
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     category = record["dynamodb"]["OldImage"]["category"]["S"]
     amount = Decimal(record["dynamodb"]["OldImage"]["amount"]["N"])
-    month = datetime.strptime(record["dynamodb"]["OldImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
+    month = datetime.strptime(
+        record["dynamodb"]["OldImage"]["date"]["S"], "%Y-%m-%d").strftime("%Y-%m")
     if user_id not in existing_mapping:
         existing_mapping[user_id] = {}
     per_user_mapping = existing_mapping[user_id]
@@ -95,10 +105,12 @@ def process_deleted_activity(record, existing_mapping):
         per_month_mapping[category] = Decimal(0)
     per_month_mapping[category] -= amount
 
+
 def process_deleted_mapping(record):
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     description = record["dynamodb"]["OldImage"]["description"]["S"]
     update_activity_category(user_id, "others", description)
+
 
 def lambda_handler(event, context):
     global table
@@ -122,7 +134,8 @@ def lambda_handler(event, context):
                     process_new_activity(record, insights_activity_mapping)
                 elif check_record_type(record, "MODIFY", "20"):
                     print("processing modified activity", record)
-                    process_modified_activity(record, insights_activity_mapping)
+                    process_modified_activity(
+                        record, insights_activity_mapping)
                 elif check_record_type(record, "REMOVE", "20"):
                     print("processing deleted activity", record)
                     process_deleted_activity(record, insights_activity_mapping)
@@ -139,7 +152,8 @@ def lambda_handler(event, context):
                         )
                         # merge existing mappings with new mappings
                         if "Item" in response:
-                            existing_mapping = json.loads(response["Item"]["categories"], parse_float=Decimal)
+                            existing_mapping = json.loads(
+                                response["Item"]["categories"], parse_float=Decimal)
                             for category, amount in per_month_mapping.items():
                                 if category in existing_mapping:
                                     existing_mapping[category] += amount
@@ -154,7 +168,7 @@ def lambda_handler(event, context):
                                 },
                                 UpdateExpression="set categories = :a",
                                 ExpressionAttributeValues={
-                                    ":a": json.dumps(per_month_mapping) 
+                                    ":a": json.dumps(per_month_mapping)
                                 }
                             )
                         else:
