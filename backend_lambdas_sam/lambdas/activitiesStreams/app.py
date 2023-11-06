@@ -1,9 +1,10 @@
 import os
 import boto3
 import simplejson as json
+import uuid
 from boto3.dynamodb.conditions import Key, Attr
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # first set up activity table
 table = None
@@ -11,6 +12,7 @@ table = None
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 
 
+# find all activities that contains the description and update the category
 def update_activity_category(user_id, category, description):
     # first get all activities that contains the description
     response = table.query(
@@ -46,6 +48,7 @@ def process_new_mapping(record):
 
 
 def process_new_activity(record, existing_mapping):
+    global table
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     category = record["dynamodb"]["NewImage"]["category"]["S"]
@@ -61,6 +64,21 @@ def process_new_activity(record, existing_mapping):
     if category not in per_month_mapping:
         per_month_mapping[category] = Decimal(0)
     per_month_mapping[category] += amount
+
+    related_activities = find_related_activities(record)
+    print(len(related_activities))
+    for activity in related_activities:
+        item = {
+            "user": user_id,
+            "sk": "related_activity#" + str(uuid.uuid4()),
+            "related": activity["activity"]["sk"],
+            "activity": record["dynamodb"]["Keys"]["sk"]["S"],
+            "opposite": activity.get("opposite", False),
+            "duplicate": activity.get("duplicate", False)
+        }
+        print("inserting related activity", item)
+        # for insights we're using batch writer
+        table.put_item(Item=item)
 
 
 def process_modified_activity(record, existing_mapping):
@@ -112,6 +130,62 @@ def process_deleted_mapping(record):
     update_activity_category(user_id, "others", description)
 
 
+def process_activity_insights(records):
+    insights = {}
+    for record in records:
+        if check_record_type(record, "INSERT", "mapping#"):
+            print("processing new mapping", record)
+            process_new_mapping(record)
+        elif check_record_type(record, "REMOVE", "mapping#"):
+            print("processing deleted mapping", record)
+            process_deleted_mapping(record)
+        elif check_record_type(record, "INSERT", "20"):
+            print("processing new activity", record)
+            process_new_activity(record, insights)
+        elif check_record_type(record, "MODIFY", "20"):
+            print("processing modified activity", record)
+            process_modified_activity(
+                record, insights)
+        elif check_record_type(record, "REMOVE", "20"):
+            print("processing deleted activity", record)
+            process_deleted_activity(record, insights)
+    return insights
+
+
+RELATED_ACTIVITY_TIMEDELTA = 7
+
+
+def find_related_activities(record):
+    global table
+    user_id = record["dynamodb"]["Keys"]["user"]["S"]
+    sk = record["dynamodb"]["Keys"]["sk"]["S"]
+    amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])
+    date = datetime.strptime(
+        record["dynamodb"]["NewImage"]["date"]["S"], "%Y-%m-%d")
+    begin_find_date = (date - timedelta(days=RELATED_ACTIVITY_TIMEDELTA)).strftime(
+        "%Y-%m-%d")
+    end_find_date = (date + timedelta(days=RELATED_ACTIVITY_TIMEDELTA)).strftime(
+        "%Y-%m-%d")
+    duplicate_responses = table.query(
+        KeyConditionExpression=Key("user").eq(
+            user_id) & Key("sk").gt(begin_find_date) & Key("sk").lt(end_find_date),
+        FilterExpression=Attr("amount").eq(amount) & Attr("sk").ne(sk)
+    )
+
+    opposite_responses = table.query(
+        KeyConditionExpression=Key("user").eq(
+            user_id) & Key("sk").gt(begin_find_date) & Key("sk").lt(end_find_date),
+        FilterExpression=Attr("amount").eq(-amount)
+    )
+    return [{
+        "activity": x,
+        "duplicate": True
+    } for x in duplicate_responses["Items"]] + [{
+        "activity": x,
+        "opposite": True
+    } for x in opposite_responses["Items"]]
+
+
 def lambda_handler(event, context):
     global table
     if not table:
@@ -121,24 +195,8 @@ def lambda_handler(event, context):
     if event.get("Records", None):
         try:
             # initialize mapping: user -> month -> category -> amount
-            insights_activity_mapping = {}
-            for record in event.get("Records", []):
-                if check_record_type(record, "INSERT", "mapping#"):
-                    print("processing new mapping", record)
-                    process_new_mapping(record)
-                elif check_record_type(record, "REMOVE", "mapping#"):
-                    print("processing deleted mapping", record)
-                    process_deleted_mapping(record)
-                elif check_record_type(record, "INSERT", "20"):
-                    print("processing new activity", record)
-                    process_new_activity(record, insights_activity_mapping)
-                elif check_record_type(record, "MODIFY", "20"):
-                    print("processing modified activity", record)
-                    process_modified_activity(
-                        record, insights_activity_mapping)
-                elif check_record_type(record, "REMOVE", "20"):
-                    print("processing deleted activity", record)
-                    process_deleted_activity(record, insights_activity_mapping)
+            insights_activity_mapping = process_activity_insights(
+                event.get("Records", []))
             if insights_activity_mapping:
                 print("updating insights", insights_activity_mapping)
                 for user_id, per_user_mapping in insights_activity_mapping.items():

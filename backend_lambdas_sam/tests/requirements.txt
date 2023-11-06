@@ -7,3 +7,4 @@ moto[all]
 requests-mock
 pytest-env
 simplejson
+uuid

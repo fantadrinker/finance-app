@@ -16,6 +16,7 @@ s3 = None
 
 # handle auth tokens
 
+
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
@@ -24,12 +25,14 @@ def verify_token_with_jwks(token, jwks_url, audiences):
 
     try:
         # Verify the token using the extracted public key
-        decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
+        decoded_token = jwt.decode(token, key=key, algorithms=[
+                                   "RS256"], audience=audiences)
         # If the token was successfully verified, return the decoded token
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
         raise ValueError("Token verification failed.")
+
 
 def get_user_id(event):
     if os.environ.get("SKIP_AUTH", "") == "1":
@@ -47,6 +50,7 @@ def get_user_id(event):
         return decoded.get("sub", "")
     except:
         return ""
+
 
 def postActivities(user, file_format, body):
     global s3
@@ -89,10 +93,11 @@ def postActivities(user, file_format, body):
             "body": "missing header or request params"
         }
 
+
 def getActivities(
-        user: str, 
-        size: int, 
-        startKey : str = None, 
+        user: str,
+        size: int,
+        startKey: str = None,
         category: str = None,
         orderByAmount: bool = False):
     global activities_table
@@ -142,6 +147,7 @@ def getActivities(
             "body": "client error happened while fetching data, see logs"
         }
 
+
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
     global activities_table
@@ -156,7 +162,8 @@ def delete_activities(user: str, sk: str):
         else:
             print("deleting all activities")
             all_activities = activities_table.query(
-                KeyConditionExpression=Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99")
+                KeyConditionExpression=Key('user').eq(user) & Key(
+                    'sk').between("0000-00-00", "9999-99-99")
             )
             while True:
                 with activities_table.batch_writer() as batch:
@@ -169,7 +176,8 @@ def delete_activities(user: str, sk: str):
                         )
                 if 'LastEvaluatedKey' in all_activities:
                     all_activities = activities_table.query(
-                        KeyConditionExpression=Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
+                        KeyConditionExpression=Key('user').eq(user) & Key(
+                            'sk').between("0000-00-00", "9999-99-99"),
                         ExclusiveStartKey=all_activities['LastEvaluatedKey']
                     )
                 else:
@@ -187,6 +195,7 @@ def delete_activities(user: str, sk: str):
             "body": "client error happened while fetching data, see logs"
         }
 
+
 def lambda_handler(event, context):
     # processes user activities data, store in db
     # right now just pings and returns body
@@ -199,7 +208,7 @@ def lambda_handler(event, context):
 
     if not s3:
         s3 = boto3.resource('s3')
-        
+
     user_id = get_user_id(event)
     if not user_id:
         return {
@@ -213,7 +222,8 @@ def lambda_handler(event, context):
         print(event)
     if method == "POST":
         params = event.get("queryStringParameters", {})
-        file_format = "cap1" if not params or "format" not in params else params.get("format")
+        file_format = "cap1" if not params or "format" not in params else params.get(
+            "format")
         body = event["body"]
         print(f"processing POST request")
 
