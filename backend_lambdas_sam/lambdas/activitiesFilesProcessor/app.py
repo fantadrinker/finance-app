@@ -55,7 +55,6 @@ def serialize_cap1_activity(row):
     }
 
 
-# TODO: if description is empty, use category as description
 def lambda_handler(event, context):
     global activities_table
     global s3
@@ -137,6 +136,7 @@ def lambda_handler(event, context):
                     batch.put_item(
                         Item={
                             **item,
+                            'description': item['category'] if not item['description'] else item['description'],
                             'user': user_id,
                             'chksum': chksum,
                         }
