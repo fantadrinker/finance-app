@@ -55,6 +55,7 @@ def serialize_cap1_activity(row):
     }
 
 
+# TODO: if description is empty, use category as description
 def lambda_handler(event, context):
     global activities_table
     global s3

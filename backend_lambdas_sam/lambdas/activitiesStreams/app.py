@@ -65,20 +65,23 @@ def process_new_activity(record, existing_mapping):
         per_month_mapping[category] = Decimal(0)
     per_month_mapping[category] += amount
 
-    related_activities = find_related_activities(record)
-    print(len(related_activities))
-    for activity in related_activities:
-        item = {
-            "user": user_id,
-            "sk": "related_activity#" + str(uuid.uuid4()),
-            "related": activity["activity"]["sk"],
-            "activity": record["dynamodb"]["Keys"]["sk"]["S"],
-            "opposite": activity.get("opposite", False),
-            "duplicate": activity.get("duplicate", False)
-        }
-        print("inserting related activity", item)
-        # for insights we're using batch writer
-        table.put_item(Item=item)
+    try:
+        related_activities = find_related_activities(record)
+        print(len(related_activities))
+        for activity in related_activities:
+            item = {
+                "user": user_id,
+                "sk": "related_activity#" + str(uuid.uuid4()),
+                "related": activity["activity"]["sk"],
+                "activity": record["dynamodb"]["Keys"]["sk"]["S"],
+                "opposite": activity.get("opposite", False),
+                "duplicate": activity.get("duplicate", False)
+            }
+            print("inserting related activity", item)
+            # for insights we're using batch writer
+            table.put_item(Item=item)
+    except Exception as e:
+        print("error", e)
 
 
 def process_modified_activity(record, existing_mapping):
@@ -168,22 +171,22 @@ def find_related_activities(record):
         "%Y-%m-%d")
     duplicate_responses = table.query(
         KeyConditionExpression=Key("user").eq(
-            user_id) & Key("sk").gt(begin_find_date) & Key("sk").lt(end_find_date),
-        FilterExpression=Attr("amount").eq(amount) & Attr("sk").ne(sk)
+            user_id) & Key("sk").between(begin_find_date, end_find_date),
+        FilterExpression=Attr("amount").eq(amount)
     )
 
     opposite_responses = table.query(
         KeyConditionExpression=Key("user").eq(
-            user_id) & Key("sk").gt(begin_find_date) & Key("sk").lt(end_find_date),
+            user_id) & Key("sk").between(begin_find_date, end_find_date),
         FilterExpression=Attr("amount").eq(-amount)
     )
     return [{
         "activity": x,
         "duplicate": True
-    } for x in duplicate_responses["Items"]] + [{
+    } for x in duplicate_responses["Items"] if x["sk"] != sk] + [{
         "activity": x,
         "opposite": True
-    } for x in opposite_responses["Items"]]
+    } for x in opposite_responses["Items"] if x["sk"] != sk]
 
 
 def lambda_handler(event, context):
