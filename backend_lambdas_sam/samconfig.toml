@@ -5,7 +5,7 @@ version = 0.1
 [default]
 [default.global]
 [default.global.parameters]
-stack_name = "backend_lambdas_sam"
+stack_name = "backendLambdasSam"
 
 [default.build]
 [default.build.parameters]

@@ -3,7 +3,7 @@ import json
 import uuid
 import requests
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
@@ -148,6 +148,99 @@ def getActivities(
         }
 
 
+RELATED_ACTIVITY_TIMEDELTA = 7
+
+
+def getRelatedActivities(user: str, sk: str):
+    global activities_table
+    print("getting related activities for sk", sk)
+    try:
+        # get the date from the sk
+        record = activities_table.get_item(
+            Key={
+                "user": user,
+                "sk": sk
+            }
+        )
+
+        if not record.get("Item"):
+            return {
+                "statusCode": 404,
+                "body": "no record found"
+            }
+    except botocore.exceptions.ClientError as error:
+        print(error)
+        return {
+            "statusCode": 500,
+            "body": "client error happened while fetching data, see logs"
+        }
+
+    date = datetime.strptime(record["Item"]["date"], "%Y-%m-%d")
+    amount = record["Item"]["amount"]
+
+    print("got item", record["Item"])
+
+    begin_find_date = (date - timedelta(days=RELATED_ACTIVITY_TIMEDELTA)).strftime(
+        "%Y-%m-%d")
+    end_find_date = (date + timedelta(days=RELATED_ACTIVITY_TIMEDELTA)).strftime(
+        "%Y-%m-%d")
+
+    try:
+        duplicate_responses = activities_table.query(
+            KeyConditionExpression=Key("user").eq(
+                user) & Key("sk").between(begin_find_date, end_find_date),
+            FilterExpression=Attr("amount").eq(amount)
+        )
+        print("got duplicate responses", duplicate_responses)
+
+        opposite_responses = activities_table.query(
+            KeyConditionExpression=Key("user").eq(
+                user) & Key("sk").between(begin_find_date, end_find_date),
+            FilterExpression=Attr("amount").eq(-amount)
+        )
+        print("got opposite responses", opposite_responses)
+
+        responses = [{
+            **x,
+            amount: str(x["amount"]),
+            "duplicate": True
+        } for x in duplicate_responses["Items"] if x["sk"] != sk] + [{
+            **x,
+            amount: str(x["amount"]),
+            "opposite": True
+        } for x in opposite_responses["Items"] if x["sk"] != sk]
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": responses
+            })
+        }
+    except botocore.exceptions.ClientError as error:
+        print("error fetching related activities", error)
+        return {
+            "statusCode": 500,
+            "body": "client error happened while fetching data, see logs"
+        }
+
+
+def getEmptyDescriptionActivities(user_id):
+    global activities_table
+    empty_description_activities = activities_table.query(
+        KeyConditionExpression=Key('user').eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99"),
+        FilterExpression=Attr('description').eq('')
+    )
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "data": [{
+                **item,
+                "amount": str(item["amount"]),
+            } for item in empty_description_activities["Items"]]
+        })
+    }
+
+
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
     global activities_table
@@ -216,6 +309,8 @@ def lambda_handler(event, context):
             "body": "unable to retrive user information",
         }
     print(f"got user id {user_id}")
+    print("processing event")
+    print(event)
     method = event.get("routeKey", "").split(' ')[0]
     if not method:
         print("debug: no method found in request")
@@ -230,12 +325,27 @@ def lambda_handler(event, context):
         return postActivities(user_id, file_format, body)
     elif method == "GET":
         params = event.get("queryStringParameters", {})
+        print("processing GET request")
+
+        checkRelated = params.get("related", False)
+        if checkRelated:
+            return getRelatedActivities(user_id, checkRelated)
+
         size = int(params.get("size", 0))
         nextDate = params.get("nextDate", "")
         category = params.get("category", "")
         orderByAmount = params.get("orderByAmount", False)
-        print(f"processing GET request")
-        return getActivities(user_id, size, nextDate, category, orderByAmount)
+
+        checkEmpty = params.get("emptyDescription", False)
+        if checkEmpty:
+            return getEmptyDescriptionActivities(user_id, size)
+
+        return getActivities(
+            user_id,
+            size,
+            nextDate,
+            category,
+            orderByAmount)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")
