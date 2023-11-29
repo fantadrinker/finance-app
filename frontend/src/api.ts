@@ -23,7 +23,12 @@ interface ActivitiesAPIResponse {
   }
 }
 
-interface ActivityRow {
+interface GetActivitiesResponse {
+  data: Array<ActivityRow>
+  nextKey: string
+}
+
+export interface ActivityRow {
   id: string
   date: string
   category: string
@@ -32,10 +37,6 @@ interface ActivityRow {
   desc: string
 }
 
-interface GetActivitiesResponse {
-  data: Array<ActivityRow>
-  nextKey: string
-}
 export interface Insight {
   date: string
   categories: Record<string, number>
@@ -207,6 +208,24 @@ export function getActivities(
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
+      } else {
+        return res.json()
+      }
+    })
+    .then(serializeActivitiesAPIResponse)
+}
+
+export function getRelatedActivities(
+  auth: string,
+  id: string
+): Promise<GetActivitiesResponse> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return getCall(`/activities?related=${id}`, auth)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('get related activities failed')
       } else {
         return res.json()
       }

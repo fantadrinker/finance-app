@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
 import { Insight, getActivitiesByCategory } from '../api'
-import { Spinner, Table } from 'react-bootstrap'
+import { Spinner } from 'react-bootstrap'
 import { useAuth0 } from '@auth0/auth0-react'
+import { ActivitiesTable } from './ActivitiesTable'
 
 /**
  * TODO: animations
@@ -136,15 +137,15 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
 
   const cardStyles = isExpanded
     ? {
-        flexGrow: 2,
-        maxWidth: '800px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 2,
+      maxWidth: '800px',
+      transition: 'all 0.2s linear 0s',
+    }
     : {
-        flexGrow: 1,
-        maxWidth: '400px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 1,
+      maxWidth: '400px',
+      transition: 'all 0.2s linear 0s',
+    }
 
   return (
     <Card style={cardStyles}>
@@ -183,8 +184,8 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
                   key={`cell-${index}`}
                   fill={
                     isExpanded &&
-                    category !== selectedCategory &&
-                    index !== hoveredIndex
+                      category !== selectedCategory &&
+                      index !== hoveredIndex
                       ? 'grey'
                       : COLORS_GPT[index % COLORS_GPT.length]
                   }
@@ -203,26 +204,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
               {loading ? (
                 <Spinner animation="border" />
               ) : (
-                <Table>
-                  <thead>
-                    <tr>
-                      <td>date</td>
-                      <td>account</td>
-                      <td>description</td>
-                      <td>amount</td>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activities.map(activity => (
-                      <tr key={activity.id}>
-                        <td>{activity.date}</td>
-                        <td>{activity.account}</td>
-                        <td>{activity.desc}</td>
-                        <td>{activity.amount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                <ActivitiesTable activities={activities} />
               )}
             </div>
           )}

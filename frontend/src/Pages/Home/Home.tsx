@@ -11,21 +11,14 @@ import {
   getMappings,
   postMappings,
   deleteActivity,
+  ActivityRow
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
-
-interface FinanceDataRow {
-  id: string
-  date: string
-  category: string
-  account: string
-  amount: number
-  desc: string
-}
+import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 
 const useFinanceDataFetcher = (token: string | null, setError: (e: string) => void) => {
-  const [financeData, setFinanceData] = useState<Array<FinanceDataRow>>([])
+  const [financeData, setFinanceData] = useState<Array<ActivityRow>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
   const [fetchNextKey, setFetchNextKey] = useState<string | null>(null)
 
@@ -67,7 +60,9 @@ const useFinanceDataFetcher = (token: string | null, setError: (e: string) => vo
 export function Home() {
   const token = useAuth0TokenSilent()
 
-  const [showModal, setShowModal] = useState<boolean>(false)
+  const [showUpdateMappingModal, setShowUpdateMappingModal] = useState<boolean>(false)
+  const [showRelatedActivitiesModal, setShowRelatedActivitiesModal] = useState<boolean>(false)
+  const [relatedActivityId, setRelatedActivitiesId] = useState<string | null>(null)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
 
@@ -136,10 +131,24 @@ export function Home() {
     }
   }
 
-  const openModalWithParams = (desc: string, cat: string) => {
+  const openUpdateMappingModalWithParams = (
+    desc: string = "",
+    cat: string = "",
+  ) => {
+    if (!desc || !cat) {
+      return
+    }
     setDescription(desc)
     setCategory(cat)
-    setShowModal(true)
+    setShowUpdateMappingModal(true)
+  }
+
+  function openRelatedActivitiesModal(id: string) {
+    if (!id) {
+      return
+    }
+    setRelatedActivitiesId(id)
+    setShowRelatedActivitiesModal(true)
   }
 
   function updateNewCategory(desc: string, newCategory: string): void {
@@ -150,7 +159,7 @@ export function Home() {
       .then(apiResponse => {
         if (apiResponse.ok) {
           console.log('mapping updated, updated informations should come later')
-          setShowModal(false)
+          setShowUpdateMappingModal(false)
         }
       })
       .catch(err => {
@@ -195,7 +204,7 @@ export function Home() {
                         <option value="new category">new category</option>
                       </Form.Select>
                       <Button
-                        onClick={() => openModalWithParams(desc, category)}
+                        onClick={() => openUpdateMappingModalWithParams(desc, category)}
                       >
                         Update
                       </Button>
@@ -207,6 +216,11 @@ export function Home() {
                         onClick={() => deleteAndFetch(id)}
                       >
                         Delete
+                      </Button>
+                      <Button
+                        onClick={() => openRelatedActivitiesModal(id)}
+                      >
+                        Related
                       </Button>
                     </td>
                   </tr>
@@ -224,12 +238,18 @@ export function Home() {
         </div>
       )}
       <UpdateMappingModal
-        show={showModal}
-        closeModal={() => setShowModal(false)}
+        show={showUpdateMappingModal}
+        closeModal={() => setShowUpdateMappingModal(false)}
         currentCategory={category}
         currentDescription={description}
         allCategories={categoryMappings.map(({ category }) => category)}
         submit={updateNewCategory}
+      />
+      <RelatedActivitiesModal
+        show={showRelatedActivitiesModal}
+        closeModal={() => setShowRelatedActivitiesModal(false)}
+        activityId={relatedActivityId}
+        submit={() => { }}
       />
     </div>
   )
