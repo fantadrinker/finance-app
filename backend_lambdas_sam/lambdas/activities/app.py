@@ -191,22 +191,22 @@ def getRelatedActivities(user: str, sk: str):
                 user) & Key("sk").between(begin_find_date, end_find_date),
             FilterExpression=Attr("amount").eq(amount)
         )
-        print("got duplicate responses", duplicate_responses)
+        # print("got duplicate responses", duplicate_responses)
 
         opposite_responses = activities_table.query(
             KeyConditionExpression=Key("user").eq(
                 user) & Key("sk").between(begin_find_date, end_find_date),
             FilterExpression=Attr("amount").eq(-amount)
         )
-        print("got opposite responses", opposite_responses)
+        # print("got opposite responses", opposite_responses)
 
         responses = [{
             **x,
-            amount: str(x["amount"]),
+            "amount": str(x["amount"]),
             "duplicate": True
         } for x in duplicate_responses["Items"] if x["sk"] != sk] + [{
             **x,
-            amount: str(x["amount"]),
+            "amount": str(x["amount"]),
             "opposite": True
         } for x in opposite_responses["Items"] if x["sk"] != sk]
         return {
