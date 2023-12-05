@@ -26,15 +26,18 @@ const UpdateMappingModal = ({
   )
   const [newDescription, setNewDescription] =
     useState<string>(currentDescription)
+
   // updates state when props change
   useEffect(() => {
     setNewCategory('')
     setSelectedCategory(currentCategory)
     setNewDescription(currentDescription)
   }, [currentCategory, currentDescription, allCategories])
+
   const selectCategories = allCategories.includes(currentCategory)
     ? allCategories
     : allCategories.concat([currentCategory])
+
   return (
     <Modal show={show} onHide={closeModal}>
       <Modal.Header closeButton>
