@@ -36,7 +36,7 @@ function calculateMonthlyBreakdown(
       }
     })
     .sort((a, b) => {
-      return new Date(a.month).getTime() - new Date(b.month).getTime()
+      return new Date(b.month).getTime() - new Date(a.month).getTime()
     })
   if (!numMonths) {
     return allMonths
@@ -70,15 +70,15 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
 
   const cardStyles = isExpanded
     ? {
-        flexGrow: 2,
-        maxWidth: '800px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 2,
+      maxWidth: '800px',
+      transition: 'all 0.2s linear 0s',
+    }
     : {
-        flexGrow: 1,
-        maxWidth: '400px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 1,
+      maxWidth: '400px',
+      transition: 'all 0.2s linear 0s',
+    }
 
   const selectedAllCategories = isExpanded
     ? insights[activeIndex].categories
@@ -86,14 +86,14 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
 
   const topCategories = isExpanded
     ? Object.keys(selectedAllCategories)
-        .sort((a, b) => {
-          return selectedAllCategories[b] - selectedAllCategories[a]
-        })
-        .slice(0, 5)
-        .map(category => ({
-          category,
-          amount: selectedAllCategories[category],
-        }))
+      .sort((a, b) => {
+        return selectedAllCategories[b] - selectedAllCategories[a]
+      })
+      .slice(0, 5)
+      .map(category => ({
+        category,
+        amount: selectedAllCategories[category],
+      }))
     : []
 
   return (
@@ -127,8 +127,8 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                     index === activeIndex
                       ? '#82ca9d'
                       : index === hoveredIndex
-                      ? '#87a9b5'
-                      : '#8884d8'
+                        ? '#87a9b5'
+                        : '#8884d8'
                   }
                   key={`cell-${index}`}
                 />
