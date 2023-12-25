@@ -1,4 +1,5 @@
 import os
+from functools import reduce
 import json
 import uuid
 import requests
@@ -99,7 +100,8 @@ def getActivities(
         size: int,
         startKey: str = None,
         category: str = None,
-        orderByAmount: bool = False):
+        orderByAmount: bool = False,
+        account: str = None):
     global activities_table
     try:
         query_params = {
@@ -117,10 +119,23 @@ def getActivities(
                 "user": user,
                 "sk": startKey
             }
+        filter_exps = []
+        noLimit = False
         if category:
             # TODO: implement sort by amount DESC. this needs an LSI
-            query_params["FilterExpression"] = Attr('category').eq(category)
+            filter_exps.append(Attr('category').eq(category))
+            noLimit = True
+        
+        if account:
+            filter_exps.append(Attr('account').eq(account))
+            noLimit = True
+
+        if filter_exps:
+            query_params["FilterExpression"] = reduce(lambda x, y: x & y, filter_exps)
+        
+        if noLimit and "Limit" in query_params:
             del query_params["Limit"]
+
         data = activities_table.query(
             **query_params
         )
@@ -335,6 +350,7 @@ def lambda_handler(event, context):
         nextDate = params.get("nextDate", "")
         category = params.get("category", "")
         orderByAmount = params.get("orderByAmount", False)
+        account = params.get("account", "")
 
         checkEmpty = params.get("emptyDescription", False)
         if checkEmpty:
@@ -345,7 +361,8 @@ def lambda_handler(event, context):
             size,
             nextDate,
             category,
-            orderByAmount)
+            orderByAmount,
+            account)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")
