@@ -95,6 +95,65 @@ def apigw_event_post(user_id):
         "path": "/examplepath",
     }
 
+
+@pytest.fixture()
+def apigw_event_get_base(user_id):
+    """ Generates API GW Event"""
+
+    return {
+        "body": "",
+        "resource": "/{proxy+}",
+        "requestContext": {
+            "resourceId": "123456",
+            "apiId": "1234567890",
+            "resourcePath": "/{proxy+}",
+            "httpMethod": "POST",
+            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
+            "accountId": "123456789012",
+            "identity": {
+                "apiKey": "",
+                "userArn": "",
+                "cognitoAuthenticationType": "",
+                "caller": "",
+                "userAgent": "Custom User Agent String",
+                "user": "",
+                "cognitoIdentityPoolId": "",
+                "cognitoIdentityId": "",
+                "cognitoAuthenticationProvider": "",
+                "sourceIp": "127.0.0.1",
+                "accountId": "",
+            },
+            "stage": "prod",
+        },
+        "routeKey": "GET /activity",
+        "headers": {
+            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
+            "Accept-Language": "en-US,en;q=0.8",
+            "CloudFront-Is-Desktop-Viewer": "true",
+            "CloudFront-Is-SmartTV-Viewer": "false",
+            "CloudFront-Is-Mobile-Viewer": "false",
+            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
+            "CloudFront-Viewer-Country": "US",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Upgrade-Insecure-Requests": "1",
+            "X-Forwarded-Port": "443",
+            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
+            "X-Forwarded-Proto": "https",
+            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
+            "CloudFront-Is-Tablet-Viewer": "false",
+            "Cache-Control": "max-age=0",
+            "User-Agent": "Custom User Agent String",
+            "CloudFront-Forwarded-Proto": "https",
+            "Accept-Encoding": "gzip, deflate, sdch",
+            "authorization": user_id
+        },
+        "pathParameters": {"proxy": "/examplepath"},
+        "httpMethod": "GET",
+        "stageVariables": {"baz": "qux"},
+        "path": "/examplepath",
+    }
+
+
 @pytest.fixture()
 def apigw_event_get_max_5(user_id):
     """ Generates API GW Event"""
@@ -344,6 +403,17 @@ def mock_activities(user_id):
         for i in range(10)
     ]
 
+@pytest.fixture()
+def mock_activities_with_different_amount(user_id):
+    amounts = [10, 20, 30, 40, 50]
+    return [{
+        "user": user_id,
+        "sk": f"2020-01-01#{value}",
+        "description": "test activity",
+        "category": "test_cat",
+        "amount": value,
+    } for value in amounts]
+
 def test_post_activities(s3, user_id, apigw_event_post):
     
     app.s3 = s3
@@ -451,3 +521,38 @@ def test_get_activities_by_account(activities_table, apigw_event_get_by_account,
     assert data["count"] == 5
     assert all([item["account"] == "acct_1_visa" for item in data["data"]])
 
+
+def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_base, mock_activities_with_different_amount):
+
+    for items in mock_activities_with_different_amount:
+        activities_table.put_item(Item=items)
+    
+    # max 30
+    ret = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"amountMax": "30"},
+    }, "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 3
+    assert all([int(item["amount"]) <= 30 for item in data["data"]])
+
+    # min 20
+    ret = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"amountMin": "20"},
+    }, "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 4
+    assert all([int(item["amount"]) >= 20 for item in data["data"]])
+
+    # min 20 max 40
+    ret = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"amountMin": "20", "amountMax": "40"},
+    }, "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 3
+    assert all([int(item["amount"]) >= 20 and int(item["amount"]) <= 40 for item in data["data"]])
