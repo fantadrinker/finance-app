@@ -101,11 +101,12 @@ def getActivities(
         startKey: str = None,
         category: str = None,
         orderByAmount: bool = False,
-        account: str = None):
+        account: str = None,
+        amountMax: int = None,
+        amountMin: int = None):
     global activities_table
     try:
         query_params = {
-            "Limit": size,
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
             "ScanIndexForward": False
         }
@@ -129,12 +130,20 @@ def getActivities(
         if account:
             filter_exps.append(Attr('account').eq(account))
             noLimit = True
+        
+        if amountMax:
+            filter_exps.append(Attr('amount').lte(int(amountMax)))
+            noLimit = True
+        
+        if amountMin:
+            filter_exps.append(Attr('amount').gte(int(amountMin)))
+            noLimit = True
 
         if filter_exps:
             query_params["FilterExpression"] = reduce(lambda x, y: x & y, filter_exps)
         
-        if noLimit and "Limit" in query_params:
-            del query_params["Limit"]
+        if not noLimit and size > 0:
+            query_params["Limit"] = size
 
         data = activities_table.query(
             **query_params
@@ -351,6 +360,8 @@ def lambda_handler(event, context):
         category = params.get("category", "")
         orderByAmount = params.get("orderByAmount", False)
         account = params.get("account", "")
+        amountMax = params.get("amountMax", None)
+        amountMin = params.get("amountMin", None)
 
         checkEmpty = params.get("emptyDescription", False)
         if checkEmpty:
@@ -362,7 +373,9 @@ def lambda_handler(event, context):
             nextDate,
             category,
             orderByAmount,
-            account)
+            account,
+            amountMax,
+            amountMin)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")
