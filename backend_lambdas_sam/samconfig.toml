@@ -19,7 +19,7 @@ lint = true
 [default.deploy]
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
-confirm_changeset = true
+confirm_changeset = false
 resolve_s3 = true
 stack_name = "backendLambdasSamDev"
 s3_prefix = "backendLambdasSam/dev"
@@ -54,3 +54,7 @@ stack_name="backendLambdasSam"
 resolve_s3 = true
 stack_name = "backendLambdasSam"
 s3_prefix="backendLambdasSam"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+region = "us-east-1"
+parameter_overrides = "BranchPrefix='prod',ApiStageName=Prod"
