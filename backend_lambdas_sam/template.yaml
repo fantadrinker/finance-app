@@ -5,6 +5,14 @@ Description: >
 
   Sample SAM Template for backend_lambdas_sam
 
+Parameters:
+  BranchPrefix:
+    Type: String
+    Default: "dev"
+  ApiStageName:
+    Type: String
+    Default: "Test"
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -19,7 +27,7 @@ Resources:
   FinanceAPI:
     Type: AWS::Serverless::HttpApi
     Properties:
-      StageName: Test
+      StageName: !Ref ApiStageName
       AccessLogSettings:
         DestinationArn: !GetAtt ApiLogs.Arn
         Format: >-
@@ -363,12 +371,15 @@ Resources:
 
 
   # s3 bucket to store user-uploaded activities files
+  # be EXTRA careful when changing this bucket!!!!
   ActivitiesFiles:
     Type: 'AWS::S3::Bucket'
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-activities-files"
+      BucketName: !Sub 
+        - "${AWS::AccountId}${Branch}-activities-files"
+        - Branch: !Ref BranchPrefix
 
   # dynamodb tables
   ActivitiesTable:
@@ -393,12 +404,13 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  MultiplyApi:
-    Description: API Gateway endpoint URL for Prod stage for Multiply function
-    Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/Prod/multiply/"
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/Test"
   MultiplyFunction:
     Description: Multiply Lambda Function ARN
     Value: !GetAtt MultiplyFunction.Arn
   MultiplyFunctionIamRole:
     Description: Implicit IAM Role created for Multiply function
     Value: !GetAtt MultiplyFunctionRole.Arn
+  

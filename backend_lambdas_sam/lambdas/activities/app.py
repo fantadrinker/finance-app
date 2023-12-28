@@ -247,12 +247,13 @@ def getRelatedActivities(user: str, sk: str):
         }
 
 
-def getEmptyDescriptionActivities(user_id):
+def getEmptyDescriptionActivities(user_id, size):
     global activities_table
     empty_description_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
             'sk').between("0000-00-00", "9999-99-99"),
-        FilterExpression=Attr('description').eq('')
+        FilterExpression=Attr('description').eq(''),
+        Limit=size if size else 10
     )
     return {
         "statusCode": 200,

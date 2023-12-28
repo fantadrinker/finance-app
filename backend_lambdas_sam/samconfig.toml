@@ -5,7 +5,7 @@ version = 0.1
 [default]
 [default.global]
 [default.global.parameters]
-stack_name = "backendLambdasSam"
+stack_name = "backendLambdasSamDev"
 
 [default.build]
 [default.build.parameters]
@@ -21,11 +21,12 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-stack_name = "backendLambdasSam"
-s3_prefix = "backendLambdasSam"
+stack_name = "backendLambdasSamDev"
+s3_prefix = "backendLambdasSam/dev"
 region = "us-east-1"
 disable_rollback = true
 image_repositories = []
+parameter_overrides = "BranchPrefix=dev"
 
 [default.package]
 [default.package.parameters]
@@ -42,3 +43,14 @@ warm_containers = "EAGER"
 [default.local_start_lambda]
 [default.local_start_lambda.parameters]
 warm_containers = "EAGER"
+
+[prod]
+[prod.global]
+[prod.global.parameters]
+stack_name="backendLambdasSam"
+
+[prod.deploy]
+[prod.deploy.parameters]
+resolve_s3 = true
+stack_name = "backendLambdasSam"
+s3_prefix="backendLambdasSam"
