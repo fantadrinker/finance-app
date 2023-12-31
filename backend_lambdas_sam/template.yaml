@@ -137,13 +137,17 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - S3WritePolicy:
-            BucketName: !Ref ActivitiesFiles
+            BucketName: !Sub 
+              - "${AWS::AccountId}-${Branch}-activities-files"
+              - Branch: !Ref BranchPrefix
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
-          ACTIVITIES_BUCKET: !Ref ActivitiesFiles
+          ACTIVITIES_BUCKET: !Sub 
+            - "${AWS::AccountId}-${Branch}-activities-files"
+            - Branch: !Ref BranchPrefix
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
       Events:
         PostActivities:
@@ -290,13 +294,17 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - S3ReadPolicy:
-            BucketName: !Sub "${AWS::AccountId}-activities-files"
+            BucketName: !Sub 
+              - "${AWS::AccountId}-${Branch}-activities-files"
+              - Branch: !Ref BranchPrefix
       Architectures:
       - x86_64
       Environment:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
-          ACTIVITIES_BUCKET: !Sub "${AWS::AccountId}-activities-files"
+          ACTIVITIES_BUCKET: !Sub 
+            - "${AWS::AccountId}-${Branch}-activities-files"
+            - Branch: !Ref BranchPrefix
       Events:
         ProcessNewActivitiesFiles:
           Type: S3
