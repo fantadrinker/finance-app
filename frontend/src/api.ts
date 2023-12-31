@@ -1,5 +1,10 @@
-export const awsLambdaAddr = process.env.NODE_ENV === 'test' ?
-  '/test' : 'https://j2qtj8bns9.execute-api.us-east-1.amazonaws.com/Test' // todo: add prod env
+export const API_GATEWAY_URL_MAP: Record<string, string> = Object.freeze({
+  development: process.env.REACT_APP_API_GATEWAY_URL_DEV,
+  production: process.env.REACT_APP_API_GATEWAY_URL_PROD,
+  test: '/test',
+})
+
+export const awsLambdaAddr: string = API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
 
 interface CategoryMapping {
   sk: string
@@ -65,6 +70,7 @@ function postCall(
 }
 
 function getCall(url: string, auth: string): Promise<Response> {
+  console.log('get call', awsLambdaAddr, process.env.NODE_ENV, process.env.API_GATEWAY_URL_DEV)
   try {
     return fetch(awsLambdaAddr + url, {
       method: 'GET',
