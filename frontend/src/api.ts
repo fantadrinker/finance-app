@@ -1,5 +1,5 @@
 export const awsLambdaAddr = process.env.NODE_ENV === 'test' ?
-  '/test' : 'https://6idb1tvzk8.execute-api.us-east-1.amazonaws.com/Test'
+  '/test' : 'https://j2qtj8bns9.execute-api.us-east-1.amazonaws.com/Test' // todo: add prod env
 
 interface CategoryMapping {
   sk: string

@@ -131,4 +131,6 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 
 ### extras
 
-modified to test gh actions
+to build and deploy locally, run `sam deploy`
+
+to deploy to prod/main dev, run `sam deploy --config-env=prod`
