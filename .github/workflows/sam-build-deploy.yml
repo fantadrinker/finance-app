@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - fix-broken-prod-deploy # todo: delete
   workflow_dispatch:
 
 permissions:
