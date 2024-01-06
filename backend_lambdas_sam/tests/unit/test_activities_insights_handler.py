@@ -138,7 +138,7 @@ def test_get_activities_insights(activities_table, apigw_event_get_2022_01, mock
     data = json.loads(ret["body"])
     print(data)
     assert ret["statusCode"] == 200
-    assert data["totalAmount"] == "35.9"
-    assert data["activitiesCount"] == 2
+    assert len(data["data"]) == 1
+    assert data["data"][0]['categories'][0]["all"] == "35.9"
 
     

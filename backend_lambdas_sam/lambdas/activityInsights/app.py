@@ -1,5 +1,6 @@
 import os
 from decimal import Decimal
+from datetime import datetime, timedelta
 import requests
 import json
 import boto3
@@ -51,11 +52,12 @@ def get_user_id(event):
 def get_new(user_id, starting_date, ending_date):
     global activities_table
 
-    if not starting_date or not ending_date:
-        return {
-            "statusCode": 400,
-            "body": "missing required parameters",
-        }
+    if not ending_date:
+        ending_date = datetime.now().strftime("%Y-%m-%d")
+    
+    if not starting_date:
+        starting_date = (datetime.strptime(ending_date, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+
     try:
         # first get all transactions for the time period
         params = {
@@ -73,12 +75,19 @@ def get_new(user_id, starting_date, ending_date):
                 ExclusiveStartKey=response["LastEvaluatedKey"]
             )
             items.extend(more_response.get("Items", []))
-        # TODO: add group by category
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "activitiesCount": len(items),
-                "totalAmount": str(sum([Decimal(item["amount"]) for item in items]))
+                "data": [{
+                    # TODO: add date
+                    "categories": [
+                        {
+                            "all": str(sum([Decimal(item["amount"]) for item in items]))
+                            # TODO: add category wise amount
+                        }
+                    ]
+                }, #TODO: add data grouped by month
+                ]
             })
         }
     except botocore.exceptions.ClientError as error:
