@@ -1,4 +1,6 @@
 import os
+from decimal import Decimal
+from datetime import datetime, timedelta
 import requests
 import json
 import boto3
@@ -47,27 +49,20 @@ def get_user_id(event):
     except:
         return ""
 
-
-def get(user_id, starting_date=None, ending_date=None, categories=None):
+def get_new(user_id, starting_date, ending_date):
     global activities_table
-    # for user, get summary for each category in each month
-    # and return the list of categories
-    # or for now just get from existing activities table instead
+
+    if not ending_date:
+        ending_date = datetime.now().strftime("%Y-%m-%d")
+    
+    if not starting_date:
+        starting_date = (datetime.strptime(ending_date, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+
     try:
+        # first get all transactions for the time period
         params = {
-            "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").begins_with("insights#"),
+            "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").between(starting_date, ending_date),
         }
-        if starting_date and ending_date:
-            params["KeyConditionExpression"] = Key("user").eq(user_id) & Key(
-                "sk").between(f"insights#{starting_date}", f"insights#{ending_date}")
-        elif starting_date:
-            params["KeyConditionExpression"] = Key("user").eq(
-                user_id) & Key("sk").gte(f"insights#{starting_date}")
-        elif ending_date:
-            params["KeyConditionExpression"] = Key("user").eq(
-                user_id) & Key("sk").lte(f"insights#{ending_date}")
-        if categories:
-            params["FilterExpression"] = Attr("category").is_in(categories)
         response = activities_table.query(
             **params
         )
@@ -83,7 +78,16 @@ def get(user_id, starting_date=None, ending_date=None, categories=None):
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": items
+                "data": [{
+                    # TODO: add date
+                    "categories": [
+                        {
+                            "all": str(sum([Decimal(item["amount"]) for item in items]))
+                            # TODO: add category wise amount
+                        }
+                    ]
+                }, #TODO: add data grouped by month
+                ]
             })
         }
     except botocore.exceptions.ClientError as error:
@@ -92,7 +96,6 @@ def get(user_id, starting_date=None, ending_date=None, categories=None):
             "statusCode": 500,
             "body": "client error happened while processing file, see logs"
         }
-
 
 def lambda_handler(event, context):
     global activities_table
@@ -111,11 +114,10 @@ def lambda_handler(event, context):
     if method == "GET":
         query_params = event.get("queryStringParameters", {})
         # need to do some request validation here
-        return get(
+        return get_new(
             user_id,
             query_params.get("starting_date", None),
-            query_params.get("ending_date", None),
-            query_params.get("categories", None))  # need to get from multivalue query params
+            query_params.get("ending_date", None))  # need to get from multivalue query params
     else:
         return {
             "statusCode": 400,

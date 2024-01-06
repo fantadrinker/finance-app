@@ -32,7 +32,7 @@ def user_id():
 
 
 @pytest.fixture()
-def apigw_event_get(user_id):
+def apigw_event_get_2022_01(user_id):
     """ Generates API GW Event"""
 
     return {
@@ -61,7 +61,7 @@ def apigw_event_get(user_id):
             "stage": "prod",
         },
         "routeKey": "GET /activityInsights",
-        "queryStringParameters": {},
+        "queryStringParameters": {"starting_date": "2022-01-01", "ending_date": "2022-02-01"},
         "headers": {
             "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
             "Accept-Language": "en-US,en;q=0.8",
@@ -90,36 +90,55 @@ def apigw_event_get(user_id):
     }
 
 @pytest.fixture()
-def mock_insights(user_id):
+def mock_activities(user_id):
     """ Generates mock insights data"""
     return [{
         "user": user_id,
-        "sk": f"insights#2022-100",
-        "categories": json.dumps({
-            "some category": 10.0,
-            "other category": 4.5,
-        }),
+        "sk": f"2021-01-10#12344",
+        "description": "SAFEWAY #2345",
+        "category": "Groceries",
+        "amount": "98.4",
+        "account": "VISA123"
     }, {
-        "user": "other-user",
-        "sk": f"insights#2022-110",
-        "categories": json.dumps({
-            "some category": 30.0,
-        }),
+        "user": user_id,
+        "sk": f"2022-01-10#12344",
+        "description": "PAY PARKING #2345",
+        "category": "Transit",
+        "amount": "3.5",
+        "account": "MASTERCARD4"
+    }, {
+        "user": user_id,
+        "sk": f"2022-01-31#12344",
+        "description": "MCDONALDS #4342",
+        "category": "Dining",
+        "amount": "32.4",
+        "account": "VISA123"
+    }, {
+        "user": user_id,
+        "sk": f"2022-02-02#12344",
+        "description": "RAMEN DANBO",
+        "category": "Dining",
+        "amount": "13",
+        "account": "VISA123"
+    }, {
+        "user": user_id,
+        "sk": f"2023-01-01#12344",
+        "description": "PAYROLL MSFT",
+        "category": "Income",
+        "amount": "-4000",
+        "account": "SAVINGS123"
     }]
 
-def test_get_activities(activities_table, user_id, apigw_event_get, mock_insights):
+def test_get_activities_insights(activities_table, apigw_event_get_2022_01, mock_activities):
     # setup table and insert some activities data in there
     # also test pagination
-    for item in mock_insights:
+    for item in mock_activities:
         activities_table.put_item(Item=item)
-    ret = app.lambda_handler(apigw_event_get, "")
+    ret = app.lambda_handler(apigw_event_get_2022_01, "")
     data = json.loads(ret["body"])
     print(data)
     assert ret["statusCode"] == 200
-    assert len(data) == 1
-    assert json.loads(data["data"][0]["categories"]) == {
-        "some category": 10.0,
-        "other category": 4.5,
-    }
+    assert len(data["data"]) == 1
+    assert data["data"][0]['categories'][0]["all"] == "35.9"
 
     

@@ -69,10 +69,10 @@ function postCall(
   }
 }
 
-function getCall(url: string, auth: string): Promise<Response> {
+function getCall(url: string, auth: string, params: any = {}): Promise<Response> {
   console.log('get call', awsLambdaAddr, process.env.NODE_ENV, process.env.API_GATEWAY_URL_DEV)
   try {
-    return fetch(awsLambdaAddr + url, {
+    return fetch(awsLambdaAddr + url + new URLSearchParams(params), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -309,14 +309,13 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     .then(jsonResult => {
       const { data } = jsonResult
       return data.map(
-        ({ date, categories }: { date: string; categories: string }) => {
-          const categoriesObj = JSON.parse(categories)
+        ({ date, categories }: { date: string; categories: Record<string, string> }) => {
           return {
             date,
-            categories: Object.keys(categoriesObj).reduce((acc, category) => {
+            categories: Object.keys(categories).reduce((acc, category) => {
               return {
                 ...acc,
-                [category]: parseFloat(categoriesObj[category]),
+                [category]: parseFloat(categories[category]),
               }
             }, {}),
           }
