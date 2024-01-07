@@ -1,8 +1,6 @@
 import pytest
 import simplejson as json
 from lambdas.activityInsights import app
-from datetime import datetime, timedelta
-from boto3.dynamodb.conditions import Key
 
 @pytest.fixture()
 def user_id():
