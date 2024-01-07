@@ -1,32 +1,8 @@
 import pytest
 from lambdas.activitiesFilesProcessor import app
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
-from moto import mock_dynamodb, mock_s3
-
-
-@pytest.fixture()
-def activities_table():
-    """ Creates a dynamodb table for testing purposes"""
-    with mock_dynamodb():
-        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-        table = dynamodb.create_table(
-            TableName="activities",
-            KeySchema=[
-                {"AttributeName": "user", "KeyType": "HASH"},
-                {"AttributeName": "sk", "KeyType": "RANGE"}
-            ],
-            AttributeDefinitions=[
-                {"AttributeName": "user", "AttributeType": "S"},
-                {"AttributeName": "sk", "AttributeType": "S"},
-            ],
-            ProvisionedThroughput={
-                "ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
-        )
-        table.meta.client.get_waiter(
-            "table_exists").wait(TableName="activities")
-        yield table
-
+from boto3.dynamodb.conditions import Key
+from moto import mock_s3
 
 @pytest.fixture()
 def user_id():
