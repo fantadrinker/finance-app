@@ -1,11 +1,21 @@
-# All shared fixtures for unit tests
-
+import os
 import pytest
 from moto import mock_dynamodb, mock_s3
 import boto3
 
+# All shared fixtures for unit tests
+
 @pytest.fixture(scope="function")
-def activities_table():
+def aws_credentials():
+    """Mocked AWS Credentials for moto."""
+    os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+    os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+    os.environ["AWS_SECURITY_TOKEN"] = "testing"
+    os.environ["AWS_SESSION_TOKEN"] = "testing"
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+
+@pytest.fixture(scope="function")
+def activities_table(aws_credentials):
     """ Creates a dynamodb table for testing purposes"""
     with mock_dynamodb():
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
@@ -26,7 +36,7 @@ def activities_table():
 
 
 @pytest.fixture(scope="function")
-def s3():
+def s3(aws_credentials):
     with mock_s3():
         s3 = boto3.resource('s3', region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
