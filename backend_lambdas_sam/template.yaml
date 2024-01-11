@@ -52,7 +52,7 @@ Resources:
             JwtConfiguration:
               issuer: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/"
               audience:
-                - https://fbbvgusi51.execute-api.us-east-1.amazonaws.com
+                - https://j2qtj8bns9.execute-api.us-east-1.amazonaws.com/Test/
             IdentitySource: "$request.header.Authorization"
       CorsConfiguration:
         AllowMethods: 
@@ -164,6 +164,8 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: GET
+            Auth:
+              Authorizer: OAuthAuthorizer
         DeleteActivities:
           Type: HttpApi
           Properties:

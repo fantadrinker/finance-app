@@ -19,7 +19,7 @@ lint = true
 [default.deploy]
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
-confirm_changeset = false
+confirm_changeset = true
 resolve_s3 = true
 stack_name = "backendLambdasSamDev"
 s3_prefix = "backendLambdasSam/dev"
