@@ -12,6 +12,9 @@ Parameters:
   ApiStageName:
     Type: String
     Default: "Test"
+  SkipAuth:
+    Type: String
+    Default: "0" # 0 = false, 1 = true
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -34,20 +37,6 @@ Resources:
           {"requestId": "$context.requestId", "error": "$context.authorizer.error" }
       Auth:
         Authorizers:
-          MyLambdaTokenAuthorizer:
-            AuthorizerPayloadFormatVersion: 1.0
-            FunctionInvokeRole:
-              Fn::GetAtt:
-                - MyAuthRole
-                - Arn
-            FunctionArn:
-              Fn::GetAtt:
-                - MyAuthFunction
-                - Arn
-            Identity:
-              Headers:
-                - Authorization
-              ReauthorizeEvery: 0
           OAuthAuthorizer:
             JwtConfiguration:
               issuer: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/"
@@ -125,8 +114,6 @@ Resources:
               Ref: FinanceAPI
             Path: /multiply
             Method: GET
-            Auth:
-              Authorizer: OAuthAuthorizer
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -149,6 +136,7 @@ Resources:
             - "${AWS::AccountId}-${Branch}-activities-files"
             - Branch: !Ref BranchPrefix
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+          SKIP_AUTH: !Ref SkipAuth
       Events:
         PostActivities:
           Type: HttpApi 
@@ -164,8 +152,6 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: GET
-            Auth:
-              Authorizer: OAuthAuthorizer
         DeleteActivities:
           Type: HttpApi
           Properties:
@@ -173,6 +159,8 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: DELETE
+
+
   FileCheckFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -188,6 +176,7 @@ Resources:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetFileChecks:
           Type: HttpApi 
@@ -211,6 +200,7 @@ Resources:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetInsights:
           Type: HttpApi 
@@ -235,6 +225,7 @@ Resources:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetMappings:
           Type: HttpApi 
@@ -349,6 +340,7 @@ Resources:
         Variables:
           ACTIVITIES_TABLE: !Ref ActivitiesTable
           BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetWishList:
           Type: HttpApi 

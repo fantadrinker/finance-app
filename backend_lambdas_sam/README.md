@@ -134,3 +134,10 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 to build and deploy locally, run `sam deploy`
 
 to deploy to prod/main dev, run `sam deploy --config-env=prod`
+
+### Integration tests
+
+(this is WIP for now)
+ run `sam sync --config-env=test` to sync the test stack with cloud, then run integration tests
+
+I will need to look into a way to run the api locally at some point
