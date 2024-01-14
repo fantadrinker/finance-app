@@ -110,10 +110,13 @@ Tests are defined in the `tests` folder in this project. Use PIP to install the 
 backend_lambdas_sam$ pip install -r tests/requirements.txt --user
 # unit test
 backend_lambdas_sam$ python -m pytest tests/unit -v
-# integration test, requiring deploying the stack first.
+# integration test, requiring deploying the test stack first
+backend_lambdas_sam$ sam deploy --config-env=test
 # Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
-backend_lambdas_sam$ AWS_SAM_STACK_NAME=<stack-name> python -m pytest tests/integration -v
+backend_lambdas_sam$ AWS_SAM_STACK_NAME=backendLambdasSamTest python -m pytest tests/integration -v
 ```
+
+Running the integration tests against the dev stack should fail because it requires a jwt token to retrieve the test user
 
 ## Cleanup
 
@@ -134,3 +137,12 @@ Next, you can use AWS Serverless Application Repository to deploy ready to use A
 to build and deploy locally, run `sam deploy`
 
 to deploy to prod/main dev, run `sam deploy --config-env=prod`
+
+### Integration tests
+
+(this is WIP for now)
+ run `sam sync --config-env=test` to sync the test stack with cloud, then run integration tests
+
+I will need to look into a way to run the api locally at some point
+
+This app is pain in the ass.

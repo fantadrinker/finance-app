@@ -37,9 +37,29 @@ class TestApiGateway:
 
         return api_outputs[0]["OutputValue"]  # Extract url from stack outputs
 
-    def test_api_gateway(self, api_gateway_url):
+    @pytest.fixture(scope='module')
+    def api_auth_token(self):
+        # we will be running the api in skip auth mode so this is not needed
+        return "testtoken"
+
+
+    def test_api_gateway_multiply(self, api_gateway_url):
         """ Call the API Gateway endpoint and check the response """
-        response = requests.get(api_gateway_url)
+        response = requests.get(f"{api_gateway_url}/multiply?a=2&b=3")
 
         assert response.status_code == 200
-        assert response.json() == {"message": "hello world"}
+        assert response.json() == { "product": 6 }
+    
+    def test_api_gateway_get_activities(self, api_gateway_url, api_auth_token):
+        """ Call the API Gateway endpoint and check the response """
+        response = requests.get(
+            api_gateway_url + "/activities?size=20",
+            headers={
+                'Authorization': api_auth_token
+            }
+        )
+
+        assert response.status_code == 200
+        response_data = response.json()
+        assert response_data["count"] == 0
+        assert response_data["data"] == []

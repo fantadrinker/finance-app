@@ -19,14 +19,14 @@ lint = true
 [default.deploy]
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
-confirm_changeset = false
+confirm_changeset = true
 resolve_s3 = true
 stack_name = "backendLambdasSamDev"
 s3_prefix = "backendLambdasSam/dev"
 region = "us-east-1"
 disable_rollback = true
 image_repositories = []
-parameter_overrides = "BranchPrefix=dev"
+parameter_overrides = "BranchPrefix='dev'"
 
 [default.package]
 [default.package.parameters]
@@ -57,4 +57,24 @@ s3_prefix="backendLambdasSam"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 region = "us-east-1"
-parameter_overrides = "BranchPrefix='prod',ApiStageName=Prod"
+parameter_overrides = "BranchPrefix='prod' ApiStageName='Prod'"
+
+
+[test]
+[test.global]
+[test.global.parameters]
+stack_name="backendLambdasSamTest"
+
+[test.sync]
+[test.sync.parameters]
+watch = true
+
+[test.deploy]
+[test.deploy.parameters]
+resolve_s3 = true
+stack_name = "backendLambdasSamTest"
+s3_prefix="backendLambdasSamTest"
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+region = "us-east-1"
+parameter_overrides = "BranchPrefix='test' ApiStageName='Test' SkipAuth='1'"

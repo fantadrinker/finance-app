@@ -2,12 +2,14 @@ import os
 from functools import reduce
 import json
 import uuid
-import requests
 import re
 from datetime import datetime, timedelta
+
+import requests
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
+
 import jwt
 from jwt.exceptions import InvalidSignatureError
 
