@@ -141,3 +141,5 @@ to deploy to prod/main dev, run `sam deploy --config-env=prod`
  run `sam sync --config-env=test` to sync the test stack with cloud, then run integration tests
 
 I will need to look into a way to run the api locally at some point
+
+This app is pain in the ass.
