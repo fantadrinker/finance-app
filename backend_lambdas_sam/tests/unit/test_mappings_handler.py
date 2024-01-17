@@ -241,7 +241,13 @@ def test_get_mapping(apigw_event_get, activities_table, mock_mappings_items):
     body = json.loads(response["body"])
 
     assert len(body["data"]) == 10
-    assert body["data"][0]["category"] == "testCategory0"
+    first_item = body["data"][0]
+    assert first_item["category"] == "testCategory0"
+    assert first_item["descriptions"] == [{
+        "description": "testDescription0",
+        "priority": 0,
+        "sk": "mapping#testDescription0"
+    }]
 
 def test_delete_mapping(apigw_event_delete, activities_table, mock_mappings_items):
     """ Test delete mapping """

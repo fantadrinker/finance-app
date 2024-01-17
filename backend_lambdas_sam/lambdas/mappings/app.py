@@ -102,21 +102,51 @@ def post(user, description, category, priority):
 
 
 def get(user):
+    # returns a list of unique category names
     global table
     try:
         response = table.query(
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
         )
-        # TODO: handle pagination
-        if response.get("LastEvaluatedKey"):
-            print("pagination not supported yet")
+        all_mappings = response.get("Items", [])
+        
+        while response.get("LastEvaluatedKey"):
+            response = table.query(
+                KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+                ExclusiveStartKey=response["LastEvaluatedKey"]
+            )
+            all_mappings.extend(response.get("Items", []))
+                
+        # now try to group the mappings by category
+        group_by_categories = []
+        for mapping in all_mappings:
+            category = mapping.get("category", "")
+            description = mapping.get("description", "")
+            sk = mapping.get("sk", "")
+            priority = mapping.get("priority", 0)
+
+            found_category = [item for item in group_by_categories if item["category"] == category]
+            if found_category:
+                found_category[0]["descriptions"].append({
+                    "description": description,
+                    "priority": str(priority),
+                    "sk": sk
+                })
+            else:
+                group_by_categories.append({
+                    "category": category,
+                    "descriptions": [{
+                        "description": description,
+                        "priority": str(priority),
+                        "sk": sk
+                    }]
+                })
+
+
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": [{
-                    **item,
-                    "priority": int(item.get("priority", 0)),
-                } for item in response.get("Items", [])]
+                "data": group_by_categories
             })
         }
     except botocore.exceptions.ClientError as error:
