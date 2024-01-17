@@ -11,7 +11,8 @@ import {
   getMappings,
   postMappings,
   deleteActivity,
-  ActivityRow
+  ActivityRow,
+  CategoryMapping
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
@@ -68,7 +69,7 @@ export function Home() {
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const [categoryMappings, setCategoryMappings] = useState<Array<any>>([])
+  const [categoryMappings, setCategoryMappings] = useState<Array<CategoryMapping>>([])
 
   const {
     financeData,
