@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import { Link } from 'react-router-dom'
-import { deleteMapping, getMappings, postMappings } from '../../api'
+import { CategoryMapping, deleteMapping, getMappings, postMappings } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 
@@ -10,6 +10,19 @@ interface Mapping {
   sk: string
   description: string
   category: string
+}
+
+function transformMappings(mappings: Array<CategoryMapping>) {
+  return mappings.reduce((acc, {category, descriptions}) => {
+    return acc.concat(descriptions.map(({
+      description,
+      sk,
+    }) => ({
+      category,
+      description,
+      sk
+    })))
+  }, [])
 }
 
 // TODO: set up error handling
@@ -27,7 +40,7 @@ export const Preferences = () => {
     // fetch data from /preferences endpoint
     getMappings(token)
       .then(result => {
-        setMappings(result)
+        setMappings(transformMappings(result))
       })
       .catch(err => {
         console.log(err)
@@ -56,7 +69,7 @@ export const Preferences = () => {
         }
         getMappings(token ?? '')
           .then(data => {
-            setMappings(data)
+            setMappings(transformMappings(data))
           })
           .catch(err => {
             console.log(err)
@@ -99,7 +112,7 @@ export const Preferences = () => {
             </tr>
           </thead>
           <tbody>
-            {mappings.map(({ sk, category, description }) => (
+            {mappings.map(({ category, description, sk }) => (
               <tr key={category}>
                 <td>{category}</td>
                 <td>{description}</td>

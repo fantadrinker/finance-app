@@ -6,10 +6,14 @@ export const API_GATEWAY_URL_MAP: Record<string, string> = Object.freeze({
 
 export const awsLambdaAddr: string = API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
 
-interface CategoryMapping {
-  sk: string
+interface CategoryMappingDescription {
+  description: string,
+  sk: string,
+}
+
+export interface CategoryMapping {
   category: string
-  description: string
+  descriptions: Array<CategoryMappingDescription>
 }
 
 interface ActivityResponse {
