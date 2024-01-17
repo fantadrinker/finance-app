@@ -116,7 +116,7 @@ def get(user):
                 ExclusiveStartKey=response["LastEvaluatedKey"]
             )
             all_mappings.extend(response.get("Items", []))
-                
+
         # now try to group the mappings by category
         group_by_categories = []
         for mapping in all_mappings:

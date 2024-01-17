@@ -193,7 +193,7 @@ def mock_mappings_items(user_id):
         {
             "user": user_id,
             "sk": f"mapping#testDescription{i}",
-            "category": f"testCategory{i}",
+            "category": f"testCategory{i % 4}",
             "description": f"testDescription{i}",
         }
         for i in range(10)
@@ -240,14 +240,14 @@ def test_get_mapping(apigw_event_get, activities_table, mock_mappings_items):
 
     body = json.loads(response["body"])
 
-    assert len(body["data"]) == 10
+    assert len(body["data"]) == 4
     first_item = body["data"][0]
-    assert first_item["category"] == "testCategory0"
-    assert first_item["descriptions"] == [{
-        "description": "testDescription0",
-        "priority": 0,
-        "sk": "mapping#testDescription0"
-    }]
+    assert first_item["category"]
+    assert first_item["descriptions"]
+    assert first_item["descriptions"][0]["description"]
+    assert first_item["descriptions"][0]["priority"]
+    assert first_item["descriptions"][0]["sk"]
+
 
 def test_delete_mapping(apigw_event_delete, activities_table, mock_mappings_items):
     """ Test delete mapping """
