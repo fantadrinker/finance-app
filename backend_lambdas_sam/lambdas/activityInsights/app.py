@@ -49,7 +49,21 @@ def get_user_id(event):
     except:
         return ""
 
-def get_new(user_id, starting_date, ending_date):
+
+def get_grouped_by_categories(items, all_categories, categories):
+    # todo: calculate and return an array of {category: amount} objects
+    # with first object with category = "all"
+    return [
+        {
+            "all": str(sum([Decimal(item["amount"]) for item in items]))
+            # TODO: add category wise amount
+        } 
+    ]
+
+# starting_date and ending_date are in the format YYYY-MM-DD
+# all_categories is a boolean, if true we return all categories, else we only return what's 
+# in the 'categories' param
+def get_new(user_id, starting_date, ending_date, all_categories = False, categories = []): 
     global activities_table
 
     if not ending_date:
@@ -75,17 +89,14 @@ def get_new(user_id, starting_date, ending_date):
                 ExclusiveStartKey=response["LastEvaluatedKey"]
             )
             items.extend(more_response.get("Items", []))
+        
+        grouped_by_categories = get_grouped_by_categories(items, all_categories, categories)
         return {
             "statusCode": 200,
             "body": json.dumps({
                 "data": [{
                     # TODO: add date
-                    "categories": [
-                        {
-                            "all": str(sum([Decimal(item["amount"]) for item in items]))
-                            # TODO: add category wise amount
-                        }
-                    ]
+                    "categories": grouped_by_categories
                 }, #TODO: add data grouped by month
                 ]
             })
@@ -117,7 +128,10 @@ def lambda_handler(event, context):
         return get_new(
             user_id,
             query_params.get("starting_date", None),
-            query_params.get("ending_date", None))  # need to get from multivalue query params
+            query_params.get("ending_date", None),
+            query_params.get("all_categories", False),
+            query_params.get("categories", [])
+        )  # need to get from multivalue query params
     else:
         return {
             "statusCode": 400,
