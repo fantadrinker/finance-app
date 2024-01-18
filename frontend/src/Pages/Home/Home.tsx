@@ -25,6 +25,24 @@ const useFinanceDataFetcher = (token: string | null, setError: (e: string) => vo
 
   const [loading, setLoading] = useState<boolean>(false)
 
+  function fetchData() {
+    if (token) {
+      setLoading(true)
+      getActivities(token, fetchNextKey)
+        .then(({ data, nextKey }) => {
+          setFinanceData(data)
+          setNextKey(nextKey)
+        })
+        .catch(err => {
+          setError(`failed to load activities`)
+          console.log(`error fetching activities: ${err}`)
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    }
+  }
+
   useEffect(() => {
     if (token) {
       setLoading(true)
@@ -50,11 +68,7 @@ const useFinanceDataFetcher = (token: string | null, setError: (e: string) => vo
     fetchMore: () => {
       setFetchNextKey(nextKey)
     },
-    reFetch: () => {
-      setFinanceData([])
-      setNextKey(null)
-      setFetchNextKey(null)
-    }
+    reFetch: fetchData
   }
 }
 
@@ -161,6 +175,15 @@ export function Home() {
         if (apiResponse.ok) {
           console.log('mapping updated, updated informations should come later')
           setShowUpdateMappingModal(false)
+          getMappings(token)
+            .then(data => {
+              setCategoryMappings(data)
+            })
+            .catch(err => {
+              console.log(err)
+              setErrorMessage(`Error fetching activity mappings ${err.message}`)
+            })
+          reFetch()
         }
       })
       .catch(err => {
