@@ -385,6 +385,34 @@ def mock_activities_with_different_amount(user_id):
         "amount": value,
     } for value in amounts]
 
+@pytest.fixture()
+def mock_activities_with_descriptions(user_id):
+    return [{
+        "user": user_id,
+        "sk": f"2020-01-01#1",
+        "description": "SAFEWAY #2345",
+        "category": "SAFEWAY",
+        "amount": 10,
+    }, {
+        "user": user_id,
+        "sk": f"2020-01-01#2",
+        "description": "SAFEWAY #3456",
+        "category": "SAFEWAY1",
+        "amount": 20,
+    }, {
+        "user": user_id,
+        "sk": f"2020-01-01#4",
+        "description": "safeway #3456",
+        "category": "SAFEWAY",
+        "amount": 20,
+    },{
+        "user": user_id,
+        "sk": f"2020-01-01#3",
+        "description": "LONDON DRUGS #2345",
+        "category": "Groceries",
+        "amount": 30,
+    }]
+
 def test_post_activities(s3, user_id, apigw_event_post):
     
     app.s3 = s3
@@ -527,3 +555,44 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_
     data = json.loads(ret["body"])
     assert data["count"] == 3
     assert all([int(item["amount"]) >= 20 and int(item["amount"]) <= 40 for item in data["data"]])
+
+
+def test_get_activities_by_description(activities_table, apigw_event_get_base, mock_activities_with_descriptions):
+    for items in mock_activities_with_descriptions:
+        activities_table.put_item(Item=items)
+
+    # first should match everything that starts with key
+    resposne_match_start = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"description": "SAFEWAY"},
+    }, "")
+    assert resposne_match_start["statusCode"] == 200
+    data = json.loads(resposne_match_start["body"])
+    assert data["count"] == 2
+    keys = [item["sk"] for item in data["data"]]
+    assert "2020-01-01#1" in keys
+    assert "2020-01-01#2" in keys
+    # below line fails b/c of case sensitivity
+    assert "2020-01-01#4" not in keys
+
+    # second should match everything that ends with key
+    resposne_match_end = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"description": "2345"},
+    }, "")
+    assert resposne_match_end["statusCode"] == 200
+    data = json.loads(resposne_match_end["body"])
+    assert data["count"] == 2
+    keys = [item["sk"] for item in data["data"]]
+    assert "2020-01-01#1" in keys
+    assert "2020-01-01#3" in keys
+
+    # third should match everything that exactly matches the key
+    resposne_match_exact = app.lambda_handler({
+        **apigw_event_get_base,
+        "queryStringParameters": {"description": "SAFEWAY #2345"},
+    }, "")
+    assert resposne_match_exact["statusCode"] == 200
+    data = json.loads(resposne_match_exact["body"])
+    assert data["count"] == 1
+    assert data["data"][0]["sk"] == "2020-01-01#1"

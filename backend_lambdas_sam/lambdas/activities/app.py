@@ -102,6 +102,7 @@ def getActivities(
         size: int,
         startKey: str = None,
         category: str = None,
+        description: str = None,
         orderByAmount: bool = False,
         account: str = None,
         amountMax: int = None,
@@ -129,6 +130,10 @@ def getActivities(
             filter_exps.append(Attr('category').eq(category))
             noLimit = True
         
+        if description:
+            filter_exps.append(Attr('description').contains(description))
+            noLimit = True
+
         if account:
             filter_exps.append(Attr('account').eq(account))
             noLimit = True
@@ -146,12 +151,21 @@ def getActivities(
         
         if not noLimit and size > 0:
             query_params["Limit"] = size
-
+        
         data = activities_table.query(
             **query_params
         )
         # should also fetch total count for page numbers
         items = data.get("Items", [])
+        lastKey = data.get("LastEvaluatedKey", {})
+        
+        while lastKey and noLimit:
+            data = activities_table.query(
+                **query_params,
+                ExclusiveStartKey=lastKey
+            )
+            items.extend(data.get("Items", []))
+            lastKey = data.get("LastEvaluatedKey", {})
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
@@ -336,7 +350,6 @@ def lambda_handler(event, context):
             "body": "unable to retrive user information",
         }
     print(f"got user id {user_id}")
-    print("processing event")
     print(event)
     method = event.get("routeKey", "").split(' ')[0]
     if not method:
@@ -361,6 +374,7 @@ def lambda_handler(event, context):
         size = int(params.get("size", 0))
         nextDate = params.get("nextDate", "")
         category = params.get("category", "")
+        description = params.get("description", "")
         orderByAmount = params.get("orderByAmount", False)
         account = params.get("account", "")
         amountMax = params.get("amountMax", None)
@@ -375,6 +389,7 @@ def lambda_handler(event, context):
             size,
             nextDate,
             category,
+            description,
             orderByAmount,
             account,
             amountMax,
