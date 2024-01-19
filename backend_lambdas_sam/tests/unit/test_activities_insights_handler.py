@@ -174,7 +174,8 @@ def test_get_activities_insights(activities_table, apigw_event_get_2022_01, mock
     print(data)
     assert ret["statusCode"] == 200
     assert len(data["data"]) == 1
-    assert data["data"][0]['categories'][0]["all"] == "35.9"
+    assert data["data"][0]['categories'][0]["category"] == "all"
+    assert data["data"][0]['categories'][0]["amount"] == "35.9"
 
 
 def test_get_activities_insights_by_category(activities_table, apigw_event_get_by_category, mock_activities):
@@ -184,5 +185,4 @@ def test_get_activities_insights_by_category(activities_table, apigw_event_get_b
     data = json.loads(ret["body"])
     print(data)
     assert ret["statusCode"] == 200
-    assert len(data["data"]) == 1
-    assert data["data"][0]['categories'][0]["all"] == "35.9"
+    assert len(data["data"][0]["categories"]) == 3
