@@ -29,8 +29,8 @@ function calculateMonthlyBreakdown(
     .map(({ date, categories }) => {
       return {
         month: date,
-        amount: Object.keys(categories).reduce((acc, cur) => {
-          const amount = categories[cur]
+        amount: categories.reduce((acc, cur) => {
+          const amount = cur.amount
           return acc + (amount > 0 ? amount : 0)
         }, 0),
       }
@@ -85,15 +85,11 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     : null
 
   const topCategories = isExpanded
-    ? Object.keys(selectedAllCategories)
+    ? selectedAllCategories
       .sort((a, b) => {
-        return selectedAllCategories[b] - selectedAllCategories[a]
+        return b.amount - a.amount
       })
       .slice(0, 5)
-      .map(category => ({
-        category,
-        amount: selectedAllCategories[category],
-      }))
     : []
 
   return (

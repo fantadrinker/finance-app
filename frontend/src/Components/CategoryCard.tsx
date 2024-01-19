@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
-import { Insight, getActivitiesByCategory } from '../api'
+import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'
 import { Spinner } from 'react-bootstrap'
 import { useAuth0 } from '@auth0/auth0-react'
 import { ActivitiesTable } from './ActivitiesTable'
@@ -38,8 +38,10 @@ function calculateCategoryBreakdown(
 ): Array<CategoryBreakdown> {
   const allCategories = insights
     .reduce((acc: Array<CategoryBreakdown>, cur: Insight) => {
-      Object.keys(cur.categories).forEach(category => {
-        const amount = cur.categories[category]
+      cur.categories.forEach(({
+        category,
+        amount
+      }) => {
         if (amount > 0) {
           const existing = acc.find(cur => cur.category === category)
           if (existing) {
@@ -91,11 +93,6 @@ interface SectorProps {
 const activeSlice = (props: SectorProps) => {
   // expand radius by 20%, keep fill color
   return <Sector {...props} outerRadius={props.outerRadius * 1.2} />
-}
-
-interface CategoryBreakdown {
-  category: string
-  amount: number
 }
 
 export const CategoryCard = ({ insights }: CategoryCardProps) => {

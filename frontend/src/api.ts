@@ -47,8 +47,13 @@ export interface ActivityRow {
 }
 
 export interface Insight {
-  date: string
-  categories: Record<string, number>
+  date?: string
+  categories: CategoryBreakdown[]
+}
+
+export interface CategoryBreakdown {
+  category: string
+  amount: number
 }
 
 function postCall(
@@ -76,7 +81,7 @@ function postCall(
 function getCall(url: string, auth: string, params: any = {}): Promise<Response> {
   console.log('get call', awsLambdaAddr, process.env.NODE_ENV, process.env.API_GATEWAY_URL_DEV)
   try {
-    return fetch(awsLambdaAddr + url + new URLSearchParams(params), {
+    return fetch(`${awsLambdaAddr}/${url}${params? `?${new URLSearchParams(params)}`: ''}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -302,7 +307,7 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth)
+  return getCall('/insights', auth, { all_categories: true })
     .then(res => {
       if (res.ok) {
         return res.json()
@@ -312,19 +317,7 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     })
     .then(jsonResult => {
       const { data } = jsonResult
-      return data.map(
-        ({ date, categories }: { date: string; categories: Record<string, string> }) => {
-          return {
-            date,
-            categories: Object.keys(categories).reduce((acc, category) => {
-              return {
-                ...acc,
-                [category]: parseFloat(categories[category]),
-              }
-            }, {}),
-          }
-        }
-      ) as Array<Insight>
+      return data
     })
 }
 
