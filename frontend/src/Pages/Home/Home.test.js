@@ -17,9 +17,9 @@ beforeEach(() => {
 describe('Home, if not logged in', () => {
   beforeEach(() => {
     auth0Helper.useAuth0TokenSilent.mockReturnValue(null)
-    render(<Home />)
   })
   test('should redirect user to log in', async () => {
+    render(<Home />)
     expect(await screen.findByText(/not authenticated/i)).toBeInTheDocument()
     expect(await screen.findByText(/log in/i)).toBeInTheDocument()
   })
@@ -66,7 +66,6 @@ describe('if logged in', () => {
     expect(await screen.findByRole('status')).toBeInTheDocument()
     await waitFor(() => {
       const actTable = screen.getByTestId('activity-table')
-      expect(actTable).toBeInTheDocument()
       expect(actTable).toHaveTextContent('test activity')
     })
   })
@@ -74,7 +73,8 @@ describe('if logged in', () => {
   test("if logged in but activity request fails, shows failure message", async () => {
     API.getActivities.mockReturnValue(new Promise((resolve, reject) => reject('test error')))
     render(<Home />)
-    await waitFor(() => expect(screen.getByText(/failed to load activities/i)).toBeInTheDocument())
+    // await waitFor(() => expect(screen.getByText(/failed to load activities/i)).toBeInTheDocument())
+    expect(await screen.findByText(/failed to load activities/i)).toBeInTheDocument()
   })
 
   test("clicking on delete sends delete request to the server", async () => {

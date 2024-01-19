@@ -79,9 +79,8 @@ function postCall(
 }
 
 function getCall(url: string, auth: string, params: any = {}): Promise<Response> {
-  console.log('get call', awsLambdaAddr, process.env.NODE_ENV, process.env.API_GATEWAY_URL_DEV)
   try {
-    return fetch(`${awsLambdaAddr}/${url}${params? `?${new URLSearchParams(params)}`: ''}`, {
+    return fetch(`${awsLambdaAddr}/${url}${(params && Object.keys(params).length > 0)? `?${new URLSearchParams(params)}`: ''}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
