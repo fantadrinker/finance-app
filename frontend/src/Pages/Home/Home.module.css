@@ -17,3 +17,12 @@
 .errorMessage {
   color: #ff1707;
 }
+
+.categoryCell {
+  display: flex;
+  justify-content: space-between;
+}
+
+.categoryCell div.categoryName {
+  max-width: 120px;
+}
