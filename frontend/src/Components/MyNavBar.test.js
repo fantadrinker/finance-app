@@ -11,8 +11,8 @@ test('shows log in link only when not logged in', () => {
     loginWithRedirect: jest.fn(),
     user: {
       name: 'test user',
-      email: ''
-    }
+      email: '',
+    },
   })
 
   render(<MyNavBar />)
@@ -27,12 +27,11 @@ test('shows log out link only when logged in', () => {
     loginWithRedirect: jest.fn(),
     user: {
       name: 'test user',
-      email: 'test123@testemail.com'
-    }
+      email: 'test123@testemail.com',
+    },
   })
 
   render(<MyNavBar />)
   const linkElement = screen.getByText(/test user/i)
   expect(linkElement).toBeInTheDocument()
 })
-

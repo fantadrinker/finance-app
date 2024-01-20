@@ -12,13 +12,16 @@ import {
   postMappings,
   deleteActivity,
   ActivityRow,
-  CategoryMapping
+  CategoryMapping,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 
-const useFinanceDataFetcher = (token: string | null, setError: (e: string) => void) => {
+const useFinanceDataFetcher = (
+  token: string | null,
+  setError: (e: string) => void
+) => {
   const [financeData, setFinanceData] = useState<Array<ActivityRow>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
   const [fetchNextKey, setFetchNextKey] = useState<string | null>(null)
@@ -68,30 +71,31 @@ const useFinanceDataFetcher = (token: string | null, setError: (e: string) => vo
     fetchMore: () => {
       setFetchNextKey(nextKey)
     },
-    reFetch: fetchData
+    reFetch: fetchData,
   }
 }
 
 export function Home() {
   const token = useAuth0TokenSilent()
 
-  const [showUpdateMappingModal, setShowUpdateMappingModal] = useState<boolean>(false)
-  const [showRelatedActivitiesModal, setShowRelatedActivitiesModal] = useState<boolean>(false)
-  const [relatedActivityId, setRelatedActivitiesId] = useState<string | null>(null)
+  const [showUpdateMappingModal, setShowUpdateMappingModal] =
+    useState<boolean>(false)
+  const [showRelatedActivitiesModal, setShowRelatedActivitiesModal] =
+    useState<boolean>(false)
+  const [relatedActivityId, setRelatedActivitiesId] = useState<string | null>(
+    null
+  )
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const [categoryMappings, setCategoryMappings] = useState<Array<CategoryMapping>>([])
+  const [categoryMappings, setCategoryMappings] = useState<
+    Array<CategoryMapping>
+  >([])
 
-  const {
-    financeData,
-    loading,
-    hasMore,
-    fetchMore,
-    reFetch,
-  } = useFinanceDataFetcher(token, setErrorMessage)
+  const { financeData, loading, hasMore, fetchMore, reFetch } =
+    useFinanceDataFetcher(token, setErrorMessage)
 
   useEffect(() => {
     if (token) {
@@ -147,8 +151,8 @@ export function Home() {
   }
 
   const openUpdateMappingModalWithParams = (
-    desc: string = "",
-    cat: string = "",
+    desc: string = '',
+    cat: string = ''
   ) => {
     if (!desc || !cat) {
       return
@@ -198,7 +202,9 @@ export function Home() {
       {financeData.length === 0 && !loading && (
         <div className={styles.noData}>No data to display</div>
       )}
-      {financeData.length === 0 && loading && <Spinner animation="border" role='status' />}
+      {financeData.length === 0 && loading && (
+        <Spinner animation="border" role="status" />
+      )}
       {errorMessage && <div className={styles.error}>{errorMessage}</div>}
       {financeData.length > 0 && (
         <div className={styles.activityTable}>
@@ -221,14 +227,16 @@ export function Home() {
                     <td>{account}</td>
                     <td>{desc}</td>
                     <td style={{ display: 'flex' }}>
-                      <Form.Select onChange={() => { }}>
+                      <Form.Select onChange={() => {}}>
                         {category && (
                           <option value={category}>{category}</option>
                         )}
                         <option value="new category">new category</option>
                       </Form.Select>
                       <Button
-                        onClick={() => openUpdateMappingModalWithParams(desc, category)}
+                        onClick={() =>
+                          openUpdateMappingModalWithParams(desc, category)
+                        }
                       >
                         Update
                       </Button>
@@ -241,9 +249,7 @@ export function Home() {
                       >
                         Delete
                       </Button>
-                      <Button
-                        onClick={() => openRelatedActivitiesModal(id)}
-                      >
+                      <Button onClick={() => openRelatedActivitiesModal(id)}>
                         Related
                       </Button>
                     </td>
@@ -273,7 +279,7 @@ export function Home() {
         show={showRelatedActivitiesModal}
         closeModal={() => setShowRelatedActivitiesModal(false)}
         activityId={relatedActivityId}
-        submit={() => { }}
+        submit={() => {}}
       />
     </div>
   )

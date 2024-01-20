@@ -9,17 +9,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "es2019"
-    ]
+    "lib": ["dom", "dom.iterable", "es2019"]
   },
-  "include": [
-    "./src/**/*",
-    "./declaration.d.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["./src/**/*", "./declaration.d.ts"],
+  "exclude": ["node_modules"]
 }

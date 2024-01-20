@@ -38,10 +38,7 @@ function calculateCategoryBreakdown(
 ): Array<CategoryBreakdown> {
   const allCategories = insights
     .reduce((acc: Array<CategoryBreakdown>, cur: Insight) => {
-      cur.categories.forEach(({
-        category,
-        amount
-      }) => {
+      cur.categories.forEach(({ category, amount }) => {
         if (amount > 0) {
           const existing = acc.find(cur => cur.category === category)
           if (existing) {
@@ -134,15 +131,15 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
 
   const cardStyles = isExpanded
     ? {
-      flexGrow: 2,
-      maxWidth: '800px',
-      transition: 'all 0.2s linear 0s',
-    }
+        flexGrow: 2,
+        maxWidth: '800px',
+        transition: 'all 0.2s linear 0s',
+      }
     : {
-      flexGrow: 1,
-      maxWidth: '400px',
-      transition: 'all 0.2s linear 0s',
-    }
+        flexGrow: 1,
+        maxWidth: '400px',
+        transition: 'all 0.2s linear 0s',
+      }
 
   return (
     <Card style={cardStyles}>
@@ -181,8 +178,8 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
                   key={`cell-${index}`}
                   fill={
                     isExpanded &&
-                      category !== selectedCategory &&
-                      index !== hoveredIndex
+                    category !== selectedCategory &&
+                    index !== hoveredIndex
                       ? 'grey'
                       : COLORS_GPT[index % COLORS_GPT.length]
                   }

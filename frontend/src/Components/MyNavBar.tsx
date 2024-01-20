@@ -74,9 +74,7 @@ const MyNavBar = () => {
                 <Link
                   to="/wishlist"
                   style={
-                    isPathActive('/wishlist')
-                      ? {}
-                      : { textDecoration: 'none' }
+                    isPathActive('/wishlist') ? {} : { textDecoration: 'none' }
                   }
                 >
                   Wishlists

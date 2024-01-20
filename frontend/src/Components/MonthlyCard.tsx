@@ -70,15 +70,15 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
 
   const cardStyles = isExpanded
     ? {
-      flexGrow: 2,
-      maxWidth: '800px',
-      transition: 'all 0.2s linear 0s',
-    }
+        flexGrow: 2,
+        maxWidth: '800px',
+        transition: 'all 0.2s linear 0s',
+      }
     : {
-      flexGrow: 1,
-      maxWidth: '400px',
-      transition: 'all 0.2s linear 0s',
-    }
+        flexGrow: 1,
+        maxWidth: '400px',
+        transition: 'all 0.2s linear 0s',
+      }
 
   const selectedAllCategories = isExpanded
     ? insights[activeIndex].categories
@@ -86,10 +86,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
 
   const topCategories = isExpanded
     ? selectedAllCategories
-      .sort((a, b) => {
-        return b.amount - a.amount
-      })
-      .slice(0, 5)
+        .sort((a, b) => {
+          return b.amount - a.amount
+        })
+        .slice(0, 5)
     : []
 
   return (
@@ -123,8 +123,8 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                     index === activeIndex
                       ? '#82ca9d'
                       : index === hoveredIndex
-                        ? '#87a9b5'
-                        : '#8884d8'
+                      ? '#87a9b5'
+                      : '#8884d8'
                   }
                   key={`cell-${index}`}
                 />

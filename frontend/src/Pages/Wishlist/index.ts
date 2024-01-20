@@ -1,3 +1,3 @@
-import { Wishlist } from "./Wishlist";
+import { Wishlist } from './Wishlist'
 
 export default Wishlist
