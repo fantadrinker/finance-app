@@ -241,6 +241,24 @@ export function getActivities(
     .then(serializeActivitiesAPIResponse)
 }
 
+export function getActivitiesWithDescription(
+  auth: string,
+  description: string
+): Promise<GetActivitiesResponse> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return getCall(`/activities?description=${description}`, auth)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('get activities failed')
+      } else {
+        return res.json()
+      }
+    })
+    .then(serializeActivitiesAPIResponse)
+}
+
 export function getRelatedActivities(
   auth: string,
   id: string

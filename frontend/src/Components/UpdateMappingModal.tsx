@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
+import { ActivityRow, getActivitiesWithDescription } from '../api'
+import { useAuth0TokenSilent } from '../hooks'
+import { ActivitiesTable } from './ActivitiesTable'
 
 interface UpdateMappingModalProps {
   show: boolean
@@ -18,14 +21,19 @@ const UpdateMappingModal = ({
   currentCategory,
   currentDescription,
   allCategories,
-  submit,
+  submit, // TODO: remove this, call api directly
 }: UpdateMappingModalProps) => {
+  const auth = useAuth0TokenSilent()
   const [newCategory, setNewCategory] = useState<string>(currentCategory)
   const [selectedCategory, setSelectedCategory] = useState<string>(
     allCategories.length > 0 ? currentCategory : ''
   )
   const [newDescription, setNewDescription] =
     useState<string>(currentDescription)
+  
+  const [activitiesMatchingDesc, setActivitiesMatchingDesc] = useState<ActivityRow[]>([])
+  
+  const queuedActivityCall = useRef(null)
 
   // updates state when props change
   useEffect(() => {
@@ -33,6 +41,25 @@ const UpdateMappingModal = ({
     setSelectedCategory(currentCategory)
     setNewDescription(currentDescription)
   }, [currentCategory, currentDescription, allCategories])
+
+  function handleDescriptionChange(e: any) {
+    const desc = e.target.value
+    setNewDescription(desc)
+    if (queuedActivityCall.current) {
+      clearTimeout(queuedActivityCall.current)
+    }
+    if (!auth || desc.length === 0) {
+      setActivitiesMatchingDesc([])
+      return
+    }
+    queuedActivityCall.current = setTimeout(() => {
+      getActivitiesWithDescription(auth, desc).then(result => {
+        setActivitiesMatchingDesc(result.data)
+      }).catch(err => {
+        console.log(err)
+      })
+    }, 500)
+  }
 
   const selectCategories = allCategories.includes(currentCategory)
     ? allCategories
@@ -49,7 +76,7 @@ const UpdateMappingModal = ({
           type="text"
           placeholder={currentDescription}
           value={newDescription ?? ''}
-          onChange={e => setNewDescription(e.target.value)}
+          onChange={handleDescriptionChange}
         />
         <Form.Label>Existing Categories</Form.Label>
         <Form.Select
@@ -72,6 +99,12 @@ const UpdateMappingModal = ({
               value={newCategory ?? ''}
               onChange={e => setNewCategory(e.target.value)}
             />
+          </>
+        )}
+        {activitiesMatchingDesc.length > 0 && (
+          <>
+            <Form.Label>Activities with this description</Form.Label>
+            <ActivitiesTable activities={activitiesMatchingDesc} />
           </>
         )}
       </Modal.Body>
