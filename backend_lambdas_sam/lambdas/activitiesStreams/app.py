@@ -12,39 +12,8 @@ table = None
 # how does stream work? https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Streams.html
 
 
-# find all activities that contains the description and update the category
-def update_activity_category(user_id, category, description):
-    # first get all activities that contains the description
-    response = table.query(
-        KeyConditionExpression=Key("user").eq(
-            user_id) & Key("sk").begins_with("20"),
-        FilterExpression=Attr("description").contains(description)
-    )
-    # then update the category of each activity
-    for item in response.get("Items", []):
-        table.update_item(
-            Key={
-                "user": user_id,
-                "sk": item["sk"]
-            },
-            UpdateExpression="set category = :c",
-            ExpressionAttributeValues={
-                ":c": category
-            }
-        )
-
-# helpers to identify stream record type
-
-
 def check_record_type(record, event_type, sk_prefix):
     return record["eventName"] == event_type and record["dynamodb"]["Keys"]["sk"]["S"].startswith(sk_prefix)
-
-
-def process_new_mapping(record):
-    user_id = record["dynamodb"]["Keys"]["user"]["S"]
-    category = record["dynamodb"]["NewImage"]["category"]["S"]
-    description = record["dynamodb"]["NewImage"]["description"]["S"]
-    update_activity_category(user_id, category, description)
 
 
 def process_new_activity(record, existing_mapping):
@@ -127,22 +96,10 @@ def process_deleted_activity(record, existing_mapping):
     per_month_mapping[category] -= amount
 
 
-def process_deleted_mapping(record):
-    user_id = record["dynamodb"]["Keys"]["user"]["S"]
-    description = record["dynamodb"]["OldImage"]["description"]["S"]
-    update_activity_category(user_id, "others", description)
-
-
 def process_activity_insights(records):
     insights = {}
     for record in records:
-        if check_record_type(record, "INSERT", "mapping#"):
-            print("processing new mapping", record)
-            process_new_mapping(record)
-        elif check_record_type(record, "REMOVE", "mapping#"):
-            print("processing deleted mapping", record)
-            process_deleted_mapping(record)
-        elif check_record_type(record, "INSERT", "20"):
+        if check_record_type(record, "INSERT", "20"):
             print("processing new activity", record)
             process_new_activity(record, insights)
         elif check_record_type(record, "MODIFY", "20"):

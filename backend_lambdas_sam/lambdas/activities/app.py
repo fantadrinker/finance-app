@@ -95,6 +95,30 @@ def postActivities(user, file_format, body):
             "statusCode": 500,
             "body": "missing header or request params"
         }
+    
+def getMappings(user: str):
+    global activities_table
+    response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+    )
+    all_mappings = response.get("Items", [])
+    
+    while response.get("LastEvaluatedKey"):
+        response = activities_table.query(
+            KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+        all_mappings.extend(response.get("Items", []))
+    
+    return all_mappings
+
+def applyMappings(mappings: list, item: dict):
+    itemDesc = item.get("description", "")
+    itemCategory = item.get("category", itemDesc) # if category is not set, use description
+    return {
+        **item,
+        "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
+    }
 
 
 def getActivities(
@@ -169,11 +193,14 @@ def getActivities(
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
+
+        mappings = getMappings(user)
+
         return {
             "statusCode": 200,
             "body": json.dumps({
                 "data": [{
-                    **item,
+                    **applyMappings(mappings, item),
                     "amount": str(item["amount"]),
                 } for item in items if date_regex.match(item["sk"])],
                 "count": data.get("Count", 0),

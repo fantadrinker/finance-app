@@ -596,3 +596,39 @@ def test_get_activities_by_description(activities_table, apigw_event_get_base, m
     data = json.loads(resposne_match_exact["body"])
     assert data["count"] == 1
     assert data["data"][0]["sk"] == "2020-01-01#1"
+
+def test_get_activities_with_mappings(activities_table, apigw_event_get_base, mock_activities_with_descriptions):
+    for items in mock_activities_with_descriptions:
+        activities_table.put_item(Item=items)
+    
+    # add mappings
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#SAFEWAY",
+        "description": "SAFEWAY",
+        "category": "Grocery Safeway", # override the category
+    })
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#LONDON DRUGS #2345",
+        "description": "LONDON DRUGS #2345",
+        "category": "Groceries",
+    })
+
+    # first should match everything that starts with key
+    resposne_match_start = app.lambda_handler(apigw_event_get_base, "")
+    assert resposne_match_start["statusCode"] == 200
+    data = json.loads(resposne_match_start["body"])
+    assert data["count"] == 4
+
+    first_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#1"), None)
+    assert first_item_category == "Grocery Safeway" # mapped
+
+    second_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#2" ), None)
+    assert second_item_category == "Grocery Safeway" # mapped
+
+    third_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#3"), None)
+    assert third_item_category == "Groceries" # not mapped
+
+    fourth_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#4"), None)
+    assert fourth_item_category == "SAFEWAY" # not mapped 

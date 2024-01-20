@@ -473,22 +473,6 @@ def mock_insights(user_id):
     ]
 
 
-def test_new_mapping(activities_table, apigw_event_new_mapping, user_id, mock_activities):
-    # insert some activities with description names
-    # pass in new event
-    # check that the new mapping is in the table
-    for item in mock_activities:
-        activities_table.put_item(Item=item)
-
-    app.table = activities_table
-    ret = app.lambda_handler(apigw_event_new_mapping, "")
-    assert ret["statusCode"] == 200
-    # check that the activities category is updated
-    item = activities_table.get_item(
-        Key={"user": user_id, "sk": "2019-12-311"})
-    assert item["Item"]["category"] == "testCategory"
-
-
 def test_new_update_delete_activities(activities_table, apigw_event_new_activities, user_id, mock_insights):
     for item in mock_insights:
         activities_table.put_item(Item=item)
