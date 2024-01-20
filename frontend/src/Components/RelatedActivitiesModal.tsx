@@ -9,7 +9,7 @@ import { ActivitiesTable } from './ActivitiesTable'
 interface RelatedActivitiesModalProps {
   show: boolean
   closeModal: () => void
-  activityId: string
+  activityId?: string
   submit: (newCategory: string, newDescription: string) => void
 }
 

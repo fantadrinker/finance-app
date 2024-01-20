@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
-import Form from 'react-bootstrap/Form'
 import Spinner from 'react-bootstrap/Spinner'
 
 import styles from './Home.module.css'
@@ -12,7 +11,6 @@ import {
   postMappings,
   deleteActivity,
   ActivityRow,
-  CategoryMapping,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
@@ -90,9 +88,7 @@ export function Home() {
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const [categoryMappings, setCategoryMappings] = useState<
-    Array<CategoryMapping>
-  >([])
+  const [allCategories, setAllCategories] = useState<string[]>([])
 
   const { financeData, loading, hasMore, fetchMore, reFetch } =
     useFinanceDataFetcher(token, setErrorMessage)
@@ -101,7 +97,7 @@ export function Home() {
     if (token) {
       getMappings(token)
         .then(data => {
-          setCategoryMappings(data)
+          setAllCategories(data.map(({ category }) => category))
         })
         .catch(err => {
           console.log(err)
@@ -181,7 +177,7 @@ export function Home() {
           setShowUpdateMappingModal(false)
           getMappings(token)
             .then(data => {
-              setCategoryMappings(data)
+              setAllCategories(data.map(({ category }) => category))
             })
             .catch(err => {
               console.log(err)
@@ -226,13 +222,8 @@ export function Home() {
                     <td>{date}</td>
                     <td>{account}</td>
                     <td>{desc}</td>
-                    <td style={{ display: 'flex' }}>
-                      <Form.Select onChange={() => {}}>
-                        {category && (
-                          <option value={category}>{category}</option>
-                        )}
-                        <option value="new category">new category</option>
-                      </Form.Select>
+                    <td className={styles.categoryCell}>
+                      <div className={styles.categoryName}>{category}</div>
                       <Button
                         onClick={() =>
                           openUpdateMappingModalWithParams(desc, category)
@@ -272,13 +263,13 @@ export function Home() {
         closeModal={() => setShowUpdateMappingModal(false)}
         currentCategory={category}
         currentDescription={description}
-        allCategories={categoryMappings.map(({ category }) => category)}
+        allCategories={allCategories}
         submit={updateNewCategory}
       />
       <RelatedActivitiesModal
         show={showRelatedActivitiesModal}
         closeModal={() => setShowRelatedActivitiesModal(false)}
-        activityId={relatedActivityId}
+        activityId={relatedActivityId || undefined}
         submit={() => {}}
       />
     </div>
