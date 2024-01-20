@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import { Link } from 'react-router-dom'
-import { CategoryMapping, deleteMapping, getMappings, postMappings } from '../../api'
+import {
+  CategoryMapping,
+  deleteMapping,
+  getMappings,
+  postMappings,
+} from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 
@@ -13,15 +18,14 @@ interface Mapping {
 }
 
 function transformMappings(mappings: Array<CategoryMapping>) {
-  return mappings.reduce((acc, {category, descriptions}) => {
-    return acc.concat(descriptions.map(({
-      description,
-      sk,
-    }) => ({
-      category,
-      description,
-      sk
-    })))
+  return mappings.reduce((acc, { category, descriptions }) => {
+    return acc.concat(
+      descriptions.map(({ description, sk }) => ({
+        category,
+        description,
+        sk,
+      }))
+    )
   }, [])
 }
 

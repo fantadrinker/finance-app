@@ -18,21 +18,24 @@ const RelatedActivitiesModal = ({
   closeModal,
   activityId,
 }: RelatedActivitiesModalProps) => {
-
   const token = useAuth0TokenSilent()
-  const [relatedActivities, setRelatedActivities] = useState<Array<ActivityRow>>([])
+  const [relatedActivities, setRelatedActivities] = useState<
+    Array<ActivityRow>
+  >([])
 
   useEffect(() => {
     if (!token || !activityId) {
       return
     }
     // fetch related activities
-    getRelatedActivities(token, activityId).then(({ data }) => {
-      console.log(data)
-      setRelatedActivities(data)
-    }).catch(err => {
-      console.log(err)
-    })
+    getRelatedActivities(token, activityId)
+      .then(({ data }) => {
+        console.log(data)
+        setRelatedActivities(data)
+      })
+      .catch(err => {
+        console.log(err)
+      })
   }, [token, activityId])
 
   return (

@@ -91,56 +91,62 @@ export const Upload = () => {
     }
   }
 
-  return (<div style={{ display: 'flex', flexDirection: 'column' }}>
-    <Form className={styles.uploadForm}>
-      <h2>Upload a File</h2>
-      {warningMessage !== null && (
-        <Form.Text className={styles.warningMessage}>
-          {warningMessage}
-        </Form.Text>
-      )}
-      {errorMessage !== null && (
-        <Form.Text className={styles.errorMessage}>{errorMessage}</Form.Text>
-      )}
-      <Form.Group controlId="file" className="mb-3">
-        <Form.Label>Select File</Form.Label>
-        <Form.Control role="file" type="file" value={fileName} onChange={updateUserFile} />
-        <Form.Label>Choose Format</Form.Label>
-        <Form.Select
-          aria-label="select input type"
-          value={columnFormat}
-          onChange={e => setColumnFormat(e.target.value as ColumnFormat)}
-        >
-          {COLUMN_FORMATS.map(key => {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <Form className={styles.uploadForm}>
+        <h2>Upload a File</h2>
+        {warningMessage !== null && (
+          <Form.Text className={styles.warningMessage}>
+            {warningMessage}
+          </Form.Text>
+        )}
+        {errorMessage !== null && (
+          <Form.Text className={styles.errorMessage}>{errorMessage}</Form.Text>
+        )}
+        <Form.Group controlId="file" className="mb-3">
+          <Form.Label>Select File</Form.Label>
+          <Form.Control
+            role="file"
+            type="file"
+            value={fileName}
+            onChange={updateUserFile}
+          />
+          <Form.Label>Choose Format</Form.Label>
+          <Form.Select
+            aria-label="select input type"
+            value={columnFormat}
+            onChange={e => setColumnFormat(e.target.value as ColumnFormat)}
+          >
+            {COLUMN_FORMATS.map(key => {
+              return (
+                <option key={key} value={key}>
+                  {COLUMN_FORMAT_NAMES[key]}
+                </option>
+              )
+            })}
+          </Form.Select>
+          <Button
+            onClick={processUserFile}
+            type="submit"
+            role="submit"
+            disabled={fileContent === null}
+          >
+            Process File
+          </Button>
+        </Form.Group>
+      </Form>
+      <div>
+        <h2>Previous Uploads</h2>
+        <ul>
+          {uploads.map(({ checksum, start_date, end_date }) => {
             return (
-              <option key={key} value={key}>
-                {COLUMN_FORMAT_NAMES[key]}
-              </option>
+              <li key={checksum}>
+                {start_date} - {end_date}
+              </li>
             )
           })}
-        </Form.Select>
-        <Button
-          onClick={processUserFile}
-          type="submit"
-          role="submit"
-          disabled={fileContent === null}
-        >
-          Process File
-        </Button>
-      </Form.Group>
-    </Form>
-    <div>
-      <h2>Previous Uploads</h2>
-      <ul>
-        {uploads.map(({ checksum, start_date, end_date }) => {
-          return (
-            <li key={checksum}>
-              {start_date} - {end_date}
-            </li>
-          )
-        })}
-      </ul>
+        </ul>
+      </div>
     </div>
-  </div>
   )
 }

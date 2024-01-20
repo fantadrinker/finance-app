@@ -4,11 +4,12 @@ export const API_GATEWAY_URL_MAP: Record<string, string> = Object.freeze({
   test: '/test',
 })
 
-export const awsLambdaAddr: string = API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
+export const awsLambdaAddr: string =
+  API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
 
 interface CategoryMappingDescription {
-  description: string,
-  sk: string,
+  description: string
+  sk: string
 }
 
 export interface CategoryMapping {
@@ -78,16 +79,27 @@ function postCall(
   }
 }
 
-function getCall(url: string, auth: string, params: any = {}): Promise<Response> {
+function getCall(
+  url: string,
+  auth: string,
+  params: any = {}
+): Promise<Response> {
   try {
-    return fetch(`${awsLambdaAddr}/${url}${(params && Object.keys(params).length > 0)? `?${new URLSearchParams(params)}`: ''}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: auth,
-      },
-      mode: 'cors',
-    })
+    return fetch(
+      `${awsLambdaAddr}/${url}${
+        params && Object.keys(params).length > 0
+          ? `?${new URLSearchParams(params)}`
+          : ''
+      }`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: auth,
+        },
+        mode: 'cors',
+      }
+    )
   } catch (err) {
     console.log('get error', err)
     throw err
@@ -280,9 +292,9 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
 }
 
 export interface FileUpload {
-  checksum: string,
-  end_date: string,
-  start_date: string,
+  checksum: string
+  end_date: string
+  start_date: string
 }
 
 export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
@@ -346,9 +358,7 @@ export interface WishListItem {
   description: string
 }
 
-export function getWishlist(
-  auth: string | null = null,
-) {
+export function getWishlist(auth: string | null = null) {
   if (!auth) {
     throw new Error('no auth')
   }
@@ -365,10 +375,7 @@ export function getWishlist(
     })
 }
 
-export function deleteWishlistItem(
-  auth: string | null = null,
-  id: string,
-) {
+export function deleteWishlistItem(auth: string | null = null, id: string) {
   if (!auth) {
     throw new Error('no auth')
   }
@@ -377,7 +384,7 @@ export function deleteWishlistItem(
 
 export function addWishlistItem(
   auth: string | null = null,
-  item: WishListItem,
+  item: WishListItem
 ) {
   if (!auth) {
     throw new Error('no auth')
@@ -387,11 +394,10 @@ export function addWishlistItem(
 
 export function updateWishlistItem(
   auth: string | null = null,
-  item: WishListItem,
+  item: WishListItem
 ) {
   if (!auth) {
     throw new Error('no auth')
   }
   return putCall('/wishlist', JSON.stringify(item), auth)
 }
-

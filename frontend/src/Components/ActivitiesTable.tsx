@@ -6,9 +6,7 @@ interface ActivitiesTableProps {
   activities: Array<ActivityRow>
 }
 
-export function ActivitiesTable({
-  activities,
-}: ActivitiesTableProps) {
+export function ActivitiesTable({ activities }: ActivitiesTableProps) {
   return (
     <Table>
       <thead>
