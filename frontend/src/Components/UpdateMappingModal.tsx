@@ -33,7 +33,7 @@ const UpdateMappingModal = ({
   
   const [activitiesMatchingDesc, setActivitiesMatchingDesc] = useState<ActivityRow[]>([])
   
-  const queuedActivityCall = useRef(null)
+  const queuedActivityCall = useRef<number | null>(null)
 
   // updates state when props change
   useEffect(() => {
