@@ -18,14 +18,8 @@ interface Mapping {
 }
 
 function transformMappings(mappings: Array<CategoryMapping>) {
-  return mappings.reduce((acc, { category, descriptions }) => {
-    return acc.concat(
-      descriptions.map(({ description, sk }) => ({
-        category,
-        description,
-        sk,
-      }))
-    )
+  return mappings.reduce((acc: Mapping[], { category, descriptions }) => {
+    return [...acc, ...descriptions.map(({description, sk}) => ({ category, description, sk }))]
   }, [])
 }
 
