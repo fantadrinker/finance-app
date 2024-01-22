@@ -71,15 +71,19 @@ const UpdateMappingModal = ({
         <Modal.Title>Update Category Mapping</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Label>Description Text</Form.Label>
+        <Form.Label htmlFor='description'>Description Text</Form.Label>
         <Form.Control
           type="text"
+          role="textbox"
+          aria-label="description"
           placeholder={currentDescription}
           value={newDescription ?? ''}
           onChange={handleDescriptionChange}
         />
-        <Form.Label>Existing Categories</Form.Label>
+        <Form.Label htmlFor='category'>Existing Categories</Form.Label>
         <Form.Select
+          aria-label='category'
+          role='list'
           value={selectedCategory}
           onChange={e => setSelectedCategory(e.target.value)}
         >
@@ -95,9 +99,12 @@ const UpdateMappingModal = ({
             <Form.Label>New Category</Form.Label>
             <Form.Control
               type="text"
+              role='textbox'
+              aria-label='new category'
               placeholder="new category value"
               value={newCategory ?? ''}
               onChange={e => setNewCategory(e.target.value)}
+              data-testid="new-category-input"
             />
           </>
         )}
