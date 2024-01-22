@@ -30,9 +30,11 @@ const UpdateMappingModal = ({
   )
   const [newDescription, setNewDescription] =
     useState<string>(currentDescription)
-  
-  const [activitiesMatchingDesc, setActivitiesMatchingDesc] = useState<ActivityRow[]>([])
-  
+
+  const [activitiesMatchingDesc, setActivitiesMatchingDesc] = useState<
+    ActivityRow[]
+  >([])
+
   const queuedActivityCall = useRef<number | null>(null)
 
   // updates state when props change
@@ -53,11 +55,13 @@ const UpdateMappingModal = ({
       return
     }
     queuedActivityCall.current = setTimeout(() => {
-      getActivitiesWithDescription(auth, desc).then(result => {
-        setActivitiesMatchingDesc(result.data)
-      }).catch(err => {
-        console.log(err)
-      })
+      getActivitiesWithDescription(auth, desc)
+        .then(result => {
+          setActivitiesMatchingDesc(result.data)
+        })
+        .catch(err => {
+          console.log(err)
+        })
     }, 500)
   }
 
@@ -71,7 +75,7 @@ const UpdateMappingModal = ({
         <Modal.Title>Update Category Mapping</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Label htmlFor='description'>Description Text</Form.Label>
+        <Form.Label htmlFor="description">Description Text</Form.Label>
         <Form.Control
           type="text"
           role="textbox"
@@ -80,10 +84,10 @@ const UpdateMappingModal = ({
           value={newDescription ?? ''}
           onChange={handleDescriptionChange}
         />
-        <Form.Label htmlFor='category'>Existing Categories</Form.Label>
+        <Form.Label htmlFor="category">Existing Categories</Form.Label>
         <Form.Select
-          aria-label='category'
-          role='list'
+          aria-label="category"
+          role="list"
           value={selectedCategory}
           onChange={e => setSelectedCategory(e.target.value)}
         >
@@ -99,8 +103,8 @@ const UpdateMappingModal = ({
             <Form.Label>New Category</Form.Label>
             <Form.Control
               type="text"
-              role='textbox'
-              aria-label='new category'
+              role="textbox"
+              aria-label="new category"
               placeholder="new category value"
               value={newCategory ?? ''}
               onChange={e => setNewCategory(e.target.value)}

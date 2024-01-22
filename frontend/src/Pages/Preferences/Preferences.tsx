@@ -19,7 +19,14 @@ interface Mapping {
 
 function transformMappings(mappings: Array<CategoryMapping>) {
   return mappings.reduce((acc: Mapping[], { category, descriptions }) => {
-    return [...acc, ...descriptions.map(({description, sk}) => ({ category, description, sk }))]
+    return [
+      ...acc,
+      ...descriptions.map(({ description, sk }) => ({
+        category,
+        description,
+        sk,
+      })),
+    ]
   }, [])
 }
 
