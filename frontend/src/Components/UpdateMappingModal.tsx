@@ -54,7 +54,7 @@ const UpdateMappingModal = ({
       setActivitiesMatchingDesc([])
       return
     }
-    queuedActivityCall.current = setTimeout(() => {
+    queuedActivityCall.current = window.setTimeout(() => {
       getActivitiesWithDescription(auth, desc)
         .then(result => {
           setActivitiesMatchingDesc(result.data)
