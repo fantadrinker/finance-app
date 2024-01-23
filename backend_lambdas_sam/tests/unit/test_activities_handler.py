@@ -485,9 +485,10 @@ def test_delete_activities(
     )
     assert remaining_items["Count"] == 9
     deleted = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").eq("2019-12-266"),
+        KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("deleted"),
     )
-    assert deleted["Count"] == 0
+    assert deleted["Count"] == 1
+    assert deleted["Items"][0]["sk"] == "deleted#2019-12-266"
 
 def test_get_activities_by_category(
         activities_table,
