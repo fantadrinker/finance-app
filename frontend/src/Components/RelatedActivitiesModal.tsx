@@ -30,7 +30,6 @@ const RelatedActivitiesModal = ({
     setLoading(true)
     getRelatedActivities(token, activityId)
       .then(({ data }) => {
-        console.log(data)
         setRelatedActivities(data)
         setLoading(false)
       })
