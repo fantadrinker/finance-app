@@ -270,7 +270,6 @@ export function Home() {
         show={showRelatedActivitiesModal}
         closeModal={() => setShowRelatedActivitiesModal(false)}
         activityId={relatedActivityId || undefined}
-        submit={() => {}}
       />
     </div>
   )

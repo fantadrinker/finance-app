@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
-import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import { useAuth0TokenSilent } from '../hooks'
 import { ActivityRow, getRelatedActivities } from '../api'
@@ -10,7 +9,6 @@ interface RelatedActivitiesModalProps {
   show: boolean
   closeModal: () => void
   activityId?: string
-  submit: (newCategory: string, newDescription: string) => void
 }
 
 const RelatedActivitiesModal = ({
@@ -19,6 +17,7 @@ const RelatedActivitiesModal = ({
   activityId,
 }: RelatedActivitiesModalProps) => {
   const token = useAuth0TokenSilent()
+  const [loading, setLoading] = useState<boolean>(false)
   const [relatedActivities, setRelatedActivities] = useState<
     Array<ActivityRow>
   >([])
@@ -28,10 +27,11 @@ const RelatedActivitiesModal = ({
       return
     }
     // fetch related activities
+    setLoading(true)
     getRelatedActivities(token, activityId)
       .then(({ data }) => {
-        console.log(data)
         setRelatedActivities(data)
+        setLoading(false)
       })
       .catch(err => {
         console.log(err)
@@ -41,11 +41,12 @@ const RelatedActivitiesModal = ({
   return (
     <Modal show={show} onHide={closeModal}>
       <Modal.Header closeButton>
-        <Modal.Title>Update Category Mapping</Modal.Title>
+        <Modal.Title>Related Activities</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form.Label>Description Text</Form.Label>
-        <ActivitiesTable activities={relatedActivities} />
+        {loading && <p>Loading...</p>}
+        {!loading && relatedActivities.length > 0 && (<ActivitiesTable activities={relatedActivities} />)}
+        {!loading && relatedActivities.length === 0 && (<p>No related activities found</p>)}
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={closeModal}>Close</Button>

@@ -78,7 +78,6 @@ const UpdateMappingModal = ({
         <Form.Label htmlFor="description">Description Text</Form.Label>
         <Form.Control
           type="text"
-          role="textbox"
           aria-label="description"
           placeholder={currentDescription}
           value={newDescription ?? ''}
@@ -103,7 +102,6 @@ const UpdateMappingModal = ({
             <Form.Label>New Category</Form.Label>
             <Form.Control
               type="text"
-              role="textbox"
               aria-label="new category"
               placeholder="new category value"
               value={newCategory ?? ''}
