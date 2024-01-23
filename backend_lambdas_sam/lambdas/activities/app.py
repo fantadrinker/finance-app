@@ -312,14 +312,25 @@ def getEmptyDescriptionActivities(user_id, size):
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
     global activities_table
+    count = 0
     try:
         if sk:
-            activities_table.delete_item(
+            response = activities_table.delete_item(
                 Key={
                     "user": user,
                     "sk": sk
-                }
+                },
+                ReturnValues="ALL_OLD"
             )
+            row = response.get("Attributes", {})
+            
+            # now soft delete the row by adding 'deleted#' in front
+            # of it's sk
+            activities_table.put_item(Item={
+                **row,
+                "sk": f"deleted#{sk}"
+            })
+            count = 1
         else:
             print("deleting all activities")
             all_activities = activities_table.query(
@@ -335,6 +346,7 @@ def delete_activities(user: str, sk: str):
                                 'sk': each['sk']
                             }
                         )
+                        count += 1
                 if 'LastEvaluatedKey' in all_activities:
                     all_activities = activities_table.query(
                         KeyConditionExpression=Key('user').eq(user) & Key(
@@ -346,6 +358,7 @@ def delete_activities(user: str, sk: str):
         return {
             "statusCode": 200,
             "body": json.dumps({
+                "count": count,
                 "data": "success"
             })
         }
