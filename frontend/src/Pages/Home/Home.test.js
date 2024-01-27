@@ -16,6 +16,12 @@ beforeEach(() => {
     )
   )
   API.getMappings.mockReturnValue(new Promise(resolve => resolve([])))
+  API.getDeletedActivities.mockReturnValue(
+    new Promise(resolve => resolve({
+      data: [],
+      nextKey: '',
+    }))
+  )
 })
 
 describe('Home, if not logged in', () => {
