@@ -86,7 +86,7 @@ function getCall(
 ): Promise<Response> {
   try {
     return fetch(
-      `${awsLambdaAddr}/${url}${
+      `${awsLambdaAddr}${url}${
         params && Object.keys(params).length > 0
           ? `?${new URLSearchParams(params)}`
           : ''
@@ -270,6 +270,23 @@ export function getRelatedActivities(
     .then(res => {
       if (!res.ok) {
         throw new Error('get related activities failed')
+      } else {
+        return res.json()
+      }
+    })
+    .then(serializeActivitiesAPIResponse)
+}
+
+export function getDeletedActivities(
+  auth: string
+): Promise<GetActivitiesResponse> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return getCall('/deleted', auth)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('get deleted activities failed')
       } else {
         return res.json()
       }

@@ -67,7 +67,10 @@ def lambda_handler(event, context):
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": data.get("Items", []),
+                "data": [{
+                    **item,
+                    "amount": str(item.get("amount", 0)),
+                } for item in data.get("Items", [])],
                 "count": data.get("Count", 0),
                 "LastEvaluatedKey": data.get("LastEvaluatedKey", {})
             })
