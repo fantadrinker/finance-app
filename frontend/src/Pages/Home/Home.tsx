@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
+import Tabs from 'react-bootstrap/Tabs'
+import Tab from 'react-bootstrap/Tab'
 import Spinner from 'react-bootstrap/Spinner'
 
 import styles from './Home.module.css'
@@ -11,10 +13,12 @@ import {
   postMappings,
   deleteActivity,
   ActivityRow,
+  getDeletedActivities,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
+import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 
 const useFinanceDataFetcher = (
   token: string | null,
@@ -192,72 +196,90 @@ export function Home() {
       })
   }
 
+  function fetchDeletedActivities() {
+    return getDeletedActivities(token)
+      .then(({ data }) => data)
+      .catch(err => {
+        console.log(err)
+        setErrorMessage(`Error fetching deleted activities ${err.message}`)
+        return []
+      })
+  }
+
   return (
     <div className={styles.homeMain}>
-      <h3> All Activities </h3>
-      {financeData.length === 0 && !loading && (
-        <div className={styles.noData}>No data to display</div>
-      )}
-      {financeData.length === 0 && loading && (
-        <Spinner animation="border" role="status" />
-      )}
-      {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-      {financeData.length > 0 && (
-        <div className={styles.activityTable}>
-          <Table striped bordered hover data-testid="activity-table">
-            <thead>
-              <tr>
-                <td>date</td>
-                <td>account</td>
-                <td>description</td>
-                <td>category</td>
-                <td>amount</td>
-                <td>actions</td>
-              </tr>
-            </thead>
-            <tbody>
-              {financeData.map(
-                ({ id, date, account, desc, category, amount }, index) => (
-                  <tr key={index}>
-                    <td>{date}</td>
-                    <td>{account}</td>
-                    <td>{desc}</td>
-                    <td className={styles.categoryCell}>
-                      <div className={styles.categoryName}>{category}</div>
-                      <Button
-                        onClick={() =>
-                          openUpdateMappingModalWithParams(desc, category)
-                        }
-                      >
-                        Update
-                      </Button>
-                    </td>
-                    <td>{amount}</td>
-                    <td>
-                      <Button
-                        variant="danger"
-                        onClick={() => deleteAndFetch(id)}
-                      >
-                        Delete
-                      </Button>
-                      <Button onClick={() => openRelatedActivitiesModal(id)}>
-                        Related
-                      </Button>
-                    </td>
+      <Tabs defaultActiveKey="activities" id="uncontrolled-tab-example">
+        <Tab eventKey="activities" title="Activities">
+          <h3> All Activities </h3>
+          {financeData.length === 0 && !loading && (
+            <div className={styles.noData}>No data to display</div>
+          )}
+          {financeData.length === 0 && loading && (
+            <Spinner animation="border" role="status" />
+          )}
+          {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+          {financeData.length > 0 && (
+            <div className={styles.activityTable}>
+              <Table striped bordered hover data-testid="activity-table">
+                <thead>
+                  <tr>
+                    <td>date</td>
+                    <td>account</td>
+                    <td>description</td>
+                    <td>category</td>
+                    <td>amount</td>
+                    <td>actions</td>
                   </tr>
-                )
-              )}
-              {hasMore && (
-                <tr>
-                  <td colSpan={5}>
-                    {loading ? <Spinner animation="border" /> : null}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </div>
-      )}
+                </thead>
+                <tbody>
+                  {financeData.map(
+                    ({ id, date, account, desc, category, amount }, index) => (
+                      <tr key={index}>
+                        <td>{date}</td>
+                        <td>{account}</td>
+                        <td>{desc}</td>
+                        <td className={styles.categoryCell}>
+                          <div className={styles.categoryName}>{category}</div>
+                          <Button
+                            onClick={() =>
+                              openUpdateMappingModalWithParams(desc, category)
+                            }
+                          >
+                            Update
+                          </Button>
+                        </td>
+                        <td>{amount}</td>
+                        <td>
+                          <Button
+                            variant="danger"
+                            onClick={() => deleteAndFetch(id)}
+                          >
+                            Delete
+                          </Button>
+                          <Button onClick={() => openRelatedActivitiesModal(id)}>
+                            Related
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                  {hasMore && (
+                    <tr>
+                      <td colSpan={5}>
+                        {loading ? <Spinner animation="border" /> : null}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          )}
+
+        </Tab>
+        <Tab eventKey="deletedActivities" title="Deleted Activities">
+          <DeletedActivitiesTable loadData={fetchDeletedActivities} />
+        </Tab>
+      </Tabs>
       <UpdateMappingModal
         show={showUpdateMappingModal}
         closeModal={() => setShowUpdateMappingModal(false)}
