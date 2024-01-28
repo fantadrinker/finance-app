@@ -85,7 +85,6 @@ def test_get_activities_insights(activities_table, apigw_event_get_2022_01, mock
         activities_table.put_item(Item=item)
     ret = app.lambda_handler(apigw_event_get_2022_01, "")
     data = json.loads(ret["body"])
-    print(111, data)
     assert ret["statusCode"] == 200
     assert len(data["data"]) == 1
     categories = data["data"][0]['categories']
@@ -99,7 +98,7 @@ def test_get_activities_insights_by_category(activities_table, apigw_event_get_b
         activities_table.put_item(Item=item)
     ret = app.lambda_handler(apigw_event_get_by_category, "")
     data = json.loads(ret["body"])
-    print(222, data)
+
     assert ret["statusCode"] == 200
     assert len(data["data"][0]["categories"]) == 2
 
