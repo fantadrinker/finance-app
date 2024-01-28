@@ -3,7 +3,7 @@ boto3
 requests
 pyjwt
 cryptography
-moto[dynamodb,s3]
+moto[all]
 requests-mock
 pytest-env
 simplejson
