@@ -2,7 +2,6 @@ import os
 import pytest
 from moto import mock_dynamodb, mock_s3
 import boto3
-import functools
 
 # All shared fixtures for unit tests
 
