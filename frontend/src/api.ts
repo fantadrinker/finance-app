@@ -353,7 +353,7 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth, { all_categories: true })
+  return getCall('/insights', auth, { all_categories: true, exclude_negative: true })
     .then(res => {
       if (res.ok) {
         return res.json()
