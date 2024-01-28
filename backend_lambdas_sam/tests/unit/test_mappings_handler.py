@@ -1,6 +1,7 @@
 import pytest
 import json
 from lambdas.mappings import app
+from tests.helpers import TestHelpers
 """
     Tests mapping handler's get, post, and delete methods
 """
@@ -70,8 +71,8 @@ def apigw_event_post(user_id):
     }
 
 @pytest.fixture()
-def apigw_event_get(user_id, helpers):
-    return helpers.get_base_event(
+def apigw_event_get(user_id):
+    return TestHelpers.get_base_event(
         user_id,
         "GET",
         "/mappings",

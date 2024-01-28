@@ -1,15 +1,15 @@
 import pytest
 import json
 from lambdas.deleted import app
-from datetime import datetime
+from tests.helpers import TestHelpers
 
 @pytest.fixture()
 def user_id():
     return "test-user-id"
 
 @pytest.fixture()
-def apigw_event_get(user_id, helpers):
-    return helpers.get_base_event(
+def apigw_event_get(user_id):
+    return TestHelpers.get_base_event(
         user_id,
         "GET",
         "/deleted",

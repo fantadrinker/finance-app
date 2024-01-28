@@ -3,6 +3,7 @@ import json
 from lambdas.activities import app
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
+from tests.helpers import TestHelpers
 
 @pytest.fixture()
 def user_id():
@@ -68,22 +69,22 @@ def apigw_event_post(user_id):
 
 
 @pytest.fixture()
-def apigw_get_activities_base(user_id, helpers):
-    return helpers.get_base_event(user_id, "GET", "/activity", "")
+def apigw_get_activities_base(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "")
 
 
 @pytest.fixture()
-def apigw_event_get_max_5(user_id, helpers):
-    return helpers.get_base_event(user_id, "GET", "/activity", "size=5")
+def apigw_event_get_max_5(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "size=5")
 
 
 @pytest.fixture()
-def apigw_event_get_by_category(user_id, helpers):
-    return helpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&orderByAmount=true")
+def apigw_event_get_by_category(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&orderByAmount=true")
 
 @pytest.fixture()
-def apigw_event_get_by_account(user_id, helpers):
-    return helpers.get_base_event(user_id, "GET", "/activity", "account=acct_1_visa")
+def apigw_event_get_by_account(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "account=acct_1_visa")
 
 
 @pytest.fixture()

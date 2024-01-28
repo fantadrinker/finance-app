@@ -1,6 +1,7 @@
 import pytest
 import simplejson as json
 from lambdas.activityInsights import app
+from tests.helpers import TestHelpers
 
 @pytest.fixture()
 def user_id():
@@ -8,8 +9,8 @@ def user_id():
 
 
 @pytest.fixture()
-def apigw_event_get_2022_01(user_id, helpers):
-    return helpers.get_base_event(
+def apigw_event_get_2022_01(user_id):
+    return TestHelpers.get_base_event(
         user_id,
         "GET",
         "/activityInsights",
@@ -18,8 +19,8 @@ def apigw_event_get_2022_01(user_id, helpers):
 
 
 @pytest.fixture()
-def apigw_event_get_by_category(user_id, helpers):
-    return helpers.get_base_event(
+def apigw_event_get_by_category(user_id):
+    return TestHelpers.get_base_event(
         user_id,
         "GET",
         "/activityInsights",
