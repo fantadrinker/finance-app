@@ -3,6 +3,7 @@ import json
 from lambdas.activities import app
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
+from tests.helpers import TestHelpers
 
 @pytest.fixture()
 def user_id():
@@ -68,237 +69,22 @@ def apigw_event_post(user_id):
 
 
 @pytest.fixture()
-def apigw_event_get_base(user_id):
-    """ Generates API GW Event"""
-
-    return {
-        "body": "",
-        "resource": "/{proxy+}",
-        "requestContext": {
-            "resourceId": "123456",
-            "apiId": "1234567890",
-            "resourcePath": "/{proxy+}",
-            "httpMethod": "POST",
-            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "123456789012",
-            "identity": {
-                "apiKey": "",
-                "userArn": "",
-                "cognitoAuthenticationType": "",
-                "caller": "",
-                "userAgent": "Custom User Agent String",
-                "user": "",
-                "cognitoIdentityPoolId": "",
-                "cognitoIdentityId": "",
-                "cognitoAuthenticationProvider": "",
-                "sourceIp": "127.0.0.1",
-                "accountId": "",
-            },
-            "stage": "prod",
-        },
-        "routeKey": "GET /activity",
-        "headers": {
-            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
-            "Accept-Language": "en-US,en;q=0.8",
-            "CloudFront-Is-Desktop-Viewer": "true",
-            "CloudFront-Is-SmartTV-Viewer": "false",
-            "CloudFront-Is-Mobile-Viewer": "false",
-            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
-            "CloudFront-Viewer-Country": "US",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Upgrade-Insecure-Requests": "1",
-            "X-Forwarded-Port": "443",
-            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
-            "authorization": user_id
-        },
-        "pathParameters": {"proxy": "/examplepath"},
-        "httpMethod": "GET",
-        "stageVariables": {"baz": "qux"},
-        "path": "/examplepath",
-    }
+def apigw_get_activities_base(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "")
 
 
 @pytest.fixture()
 def apigw_event_get_max_5(user_id):
-    """ Generates API GW Event"""
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "size=5")
 
-    return {
-        "body": "",
-        "resource": "/{proxy+}",
-        "requestContext": {
-            "resourceId": "123456",
-            "apiId": "1234567890",
-            "resourcePath": "/{proxy+}",
-            "httpMethod": "POST",
-            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "123456789012",
-            "identity": {
-                "apiKey": "",
-                "userArn": "",
-                "cognitoAuthenticationType": "",
-                "caller": "",
-                "userAgent": "Custom User Agent String",
-                "user": "",
-                "cognitoIdentityPoolId": "",
-                "cognitoIdentityId": "",
-                "cognitoAuthenticationProvider": "",
-                "sourceIp": "127.0.0.1",
-                "accountId": "",
-            },
-            "stage": "prod",
-        },
-        "routeKey": "GET /activity",
-        "queryStringParameters": {"size": "5"},
-        "headers": {
-            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
-            "Accept-Language": "en-US,en;q=0.8",
-            "CloudFront-Is-Desktop-Viewer": "true",
-            "CloudFront-Is-SmartTV-Viewer": "false",
-            "CloudFront-Is-Mobile-Viewer": "false",
-            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
-            "CloudFront-Viewer-Country": "US",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Upgrade-Insecure-Requests": "1",
-            "X-Forwarded-Port": "443",
-            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
-            "authorization": user_id
-        },
-        "pathParameters": {"proxy": "/examplepath"},
-        "httpMethod": "GET",
-        "stageVariables": {"baz": "qux"},
-        "path": "/examplepath",
-    }
 
 @pytest.fixture()
 def apigw_event_get_by_category(user_id):
-    """ Generates API GW Event"""
-
-    return {
-        "body": "",
-        "resource": "/{proxy+}",
-        "requestContext": {
-            "resourceId": "123456",
-            "apiId": "1234567890",
-            "resourcePath": "/{proxy+}",
-            "httpMethod": "GET",
-            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "123456789012",
-            "identity": {
-                "apiKey": "",
-                "userArn": "",
-                "cognitoAuthenticationType": "",
-                "caller": "",
-                "userAgent": "Custom User Agent String",
-                "user": "",
-                "cognitoIdentityPoolId": "",
-                "cognitoIdentityId": "",
-                "cognitoAuthenticationProvider": "",
-                "sourceIp": "127.0.0.1",
-                "accountId": "",
-            },
-            "stage": "prod",
-        },
-        "routeKey": "GET /activity",
-        "queryStringParameters": {"size": "5", "category": "test_odd", "orderByAmount": "true"},
-        "headers": {
-            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
-            "Accept-Language": "en-US,en;q=0.8",
-            "CloudFront-Is-Desktop-Viewer": "true",
-            "CloudFront-Is-SmartTV-Viewer": "false",
-            "CloudFront-Is-Mobile-Viewer": "false",
-            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
-            "CloudFront-Viewer-Country": "US",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Upgrade-Insecure-Requests": "1",
-            "X-Forwarded-Port": "443",
-            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
-            "authorization": user_id
-        },
-        "pathParameters": {"proxy": "/examplepath"},
-        "httpMethod": "GET",
-        "stageVariables": {"baz": "qux"},
-        "path": "/examplepath",
-    }
-
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&orderByAmount=true")
 
 @pytest.fixture()
 def apigw_event_get_by_account(user_id):
-    """ Generates API GW Event"""
-
-    return {
-        "body": "",
-        "resource": "/{proxy+}",
-        "requestContext": {
-            "resourceId": "123456",
-            "apiId": "1234567890",
-            "resourcePath": "/{proxy+}",
-            "httpMethod": "GET",
-            "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",
-            "accountId": "123456789012",
-            "identity": {
-                "apiKey": "",
-                "userArn": "",
-                "cognitoAuthenticationType": "",
-                "caller": "",
-                "userAgent": "Custom User Agent String",
-                "user": "",
-                "cognitoIdentityPoolId": "",
-                "cognitoIdentityId": "",
-                "cognitoAuthenticationProvider": "",
-                "sourceIp": "127.0.0.1",
-                "accountId": "",
-            },
-            "stage": "prod",
-        },
-        "routeKey": "GET /activity",
-        "queryStringParameters": {"account": "acct_1_visa"},
-        "headers": {
-            "Via": "1.1 08f323deadbeefa7af34d5feb414ce27.cloudfront.net (CloudFront)",
-            "Accept-Language": "en-US,en;q=0.8",
-            "CloudFront-Is-Desktop-Viewer": "true",
-            "CloudFront-Is-SmartTV-Viewer": "false",
-            "CloudFront-Is-Mobile-Viewer": "false",
-            "X-Forwarded-For": "127.0.0.1, 127.0.0.2",
-            "CloudFront-Viewer-Country": "US",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-            "Upgrade-Insecure-Requests": "1",
-            "X-Forwarded-Port": "443",
-            "Host": "1234567890.execute-api.us-east-1.amazonaws.com",
-            "X-Forwarded-Proto": "https",
-            "X-Amz-Cf-Id": "aaaaaaaaaae3VYQb9jd-nvCd-de396Uhbp027Y2JvkCPNLmGJHqlaA==",
-            "CloudFront-Is-Tablet-Viewer": "false",
-            "Cache-Control": "max-age=0",
-            "User-Agent": "Custom User Agent String",
-            "CloudFront-Forwarded-Proto": "https",
-            "Accept-Encoding": "gzip, deflate, sdch",
-            "authorization": user_id
-        },
-        "pathParameters": {"proxy": "/examplepath"},
-        "httpMethod": "GET",
-        "stageVariables": {"baz": "qux"},
-        "path": "/examplepath",
-    }
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "account=acct_1_visa")
 
 
 @pytest.fixture()
@@ -522,14 +308,14 @@ def test_get_activities_by_account(activities_table, apigw_event_get_by_account,
     assert all([item["account"] == "acct_1_visa" for item in data["data"]])
 
 
-def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_base, mock_activities_with_different_amount):
+def test_get_activities_by_amount_upper_lower(activities_table, apigw_get_activities_base, mock_activities_with_different_amount):
 
     for items in mock_activities_with_different_amount:
         activities_table.put_item(Item=items)
     
     # max 30
     ret = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"amountMax": "30"},
     }, "")
     assert ret["statusCode"] == 200
@@ -539,7 +325,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_
 
     # min 20
     ret = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"amountMin": "20"},
     }, "")
     assert ret["statusCode"] == 200
@@ -549,7 +335,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_
 
     # min 20 max 40
     ret = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"amountMin": "20", "amountMax": "40"},
     }, "")
     assert ret["statusCode"] == 200
@@ -558,13 +344,13 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_event_get_
     assert all([int(item["amount"]) >= 20 and int(item["amount"]) <= 40 for item in data["data"]])
 
 
-def test_get_activities_by_description(activities_table, apigw_event_get_base, mock_activities_with_descriptions):
+def test_get_activities_by_description(activities_table, apigw_get_activities_base, mock_activities_with_descriptions):
     for items in mock_activities_with_descriptions:
         activities_table.put_item(Item=items)
 
     # first should match everything that starts with key
     resposne_match_start = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"description": "SAFEWAY"},
     }, "")
     assert resposne_match_start["statusCode"] == 200
@@ -578,7 +364,7 @@ def test_get_activities_by_description(activities_table, apigw_event_get_base, m
 
     # second should match everything that ends with key
     resposne_match_end = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"description": "2345"},
     }, "")
     assert resposne_match_end["statusCode"] == 200
@@ -590,7 +376,7 @@ def test_get_activities_by_description(activities_table, apigw_event_get_base, m
 
     # third should match everything that exactly matches the key
     resposne_match_exact = app.lambda_handler({
-        **apigw_event_get_base,
+        **apigw_get_activities_base,
         "queryStringParameters": {"description": "SAFEWAY #2345"},
     }, "")
     assert resposne_match_exact["statusCode"] == 200
@@ -598,7 +384,7 @@ def test_get_activities_by_description(activities_table, apigw_event_get_base, m
     assert data["count"] == 1
     assert data["data"][0]["sk"] == "2020-01-01#1"
 
-def test_get_activities_with_mappings(activities_table, apigw_event_get_base, mock_activities_with_descriptions):
+def test_get_activities_with_mappings(activities_table, apigw_get_activities_base, mock_activities_with_descriptions):
     for items in mock_activities_with_descriptions:
         activities_table.put_item(Item=items)
     
@@ -617,7 +403,7 @@ def test_get_activities_with_mappings(activities_table, apigw_event_get_base, mo
     })
 
     # first should match everything that starts with key
-    resposne_match_start = app.lambda_handler(apigw_event_get_base, "")
+    resposne_match_start = app.lambda_handler(apigw_get_activities_base, "")
     assert resposne_match_start["statusCode"] == 200
     data = json.loads(resposne_match_start["body"])
     assert data["count"] == 4
