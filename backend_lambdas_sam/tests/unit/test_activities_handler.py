@@ -1,9 +1,9 @@
-import pytest
 import json
-from lambdas.activities import app
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Key
+from lambdas.activities import app
 from tests.helpers import TestHelpers
+import pytest
 
 @pytest.fixture()
 def user_id():

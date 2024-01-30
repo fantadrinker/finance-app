@@ -1,3 +1,6 @@
+"""
+    Handler for get, post and delete activities
+"""
 import os
 from functools import reduce
 import json
