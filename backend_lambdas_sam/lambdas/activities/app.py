@@ -6,6 +6,7 @@ import re
 from datetime import date, datetime, timedelta
 import hashlib
 import csv
+from decimal import Decimal
 
 import requests
 import boto3
@@ -61,7 +62,7 @@ def serialize_rbc_activity(row):
         return None
 
     if not row[6] or row[6] == "0":
-        print(SKIPPING_ROW)
+        print("skipping row")
         return None
 
     date_str = datetime.strptime(
@@ -159,7 +160,7 @@ def postActivities(user, file_format, body):
             batch.put_item(
                 Item={
                     'sk': f"chksum#{chksum}",
-                    'user': user_id,
+                    'user': user,
                     'date': datetime.now().strftime("%Y-%m-%d"),
                     'checksum': chksum,
                     'file': s3_key,
