@@ -30,12 +30,13 @@ const useFinanceDataFetcher = (
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  function fetchData() {
+  function fetchData(fromStart: boolean) {
     if (token) {
       setLoading(true)
-      getActivities(token, fetchNextKey)
+      getActivities(token, fromStart? null: fetchNextKey)
         .then(({ data, nextKey }) => {
-          setFinanceData(data)
+          const newData = fromStart? data: [...financeData, ...data]
+          setFinanceData(newData)
           setNextKey(nextKey)
         })
         .catch(err => {
@@ -73,7 +74,7 @@ const useFinanceDataFetcher = (
     fetchMore: () => {
       setFetchNextKey(nextKey)
     },
-    reFetch: fetchData,
+    reFetch: (fromStart: boolean = false) => fetchData(fromStart),
   }
 }
 
@@ -94,6 +95,8 @@ export function Home() {
 
   const [allCategories, setAllCategories] = useState<string[]>([])
 
+  const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
+
   const { financeData, loading, hasMore, fetchMore, reFetch } =
     useFinanceDataFetcher(token, setErrorMessage)
 
@@ -107,6 +110,15 @@ export function Home() {
           console.log(err)
           setErrorMessage(`Error fetching activity mappings ${err.message}`)
         })
+      getDeletedActivities(token).then(({
+        data,
+        nextKey
+      }) => {
+        setDeletedActivities(data)
+      }).catch(err => {
+        console.log(err)
+        setErrorMessage(`Error fetching deleted activities ${err.message}`)
+      })
     }
   }, [token])
 
@@ -142,7 +154,7 @@ export function Home() {
     try {
       const response = await deleteActivity(token, id)
       if (response.ok) {
-        reFetch()
+        reFetch(true)
       }
     } catch (err) {
       console.log(err)
@@ -187,22 +199,12 @@ export function Home() {
               console.log(err)
               setErrorMessage(`Error fetching activity mappings ${err.message}`)
             })
-          reFetch()
+          reFetch(true)
         }
       })
       .catch(err => {
         console.log(err)
         setErrorMessage(`Error updating category mapping${err.message}`)
-      })
-  }
-
-  function fetchDeletedActivities() {
-    return getDeletedActivities(token)
-      .then(({ data }) => data)
-      .catch(err => {
-        console.log(err)
-        setErrorMessage(`Error fetching deleted activities ${err.message}`)
-        return []
       })
   }
 
@@ -277,7 +279,7 @@ export function Home() {
 
         </Tab>
         <Tab eventKey="deletedActivities" title="Deleted Activities">
-          <DeletedActivitiesTable loadData={fetchDeletedActivities} />
+          <DeletedActivitiesTable activities={deletedActivities} />
         </Tab>
       </Tabs>
       <UpdateMappingModal
