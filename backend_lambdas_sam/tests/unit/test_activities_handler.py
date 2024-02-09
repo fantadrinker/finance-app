@@ -11,12 +11,12 @@ def user_id():
 
 @pytest.fixture()
 def cap1_file_raw():
-    return b'Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2023-02-25,2023-02-27,0733,RAMEN DANBO ROBSON,Dining,20.47,\n2023-02-24,2023-02-27,0733,SAFEWAY #4931,Merchandise,26.73,\n'
+    return 'Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit\n2023-02-25,2023-02-27,0733,RAMEN DANBO ROBSON,Dining,20.47,\n2023-02-24,2023-02-27,0733,SAFEWAY #4931,Merchandise,26.73,\n'
 
 
 @pytest.fixture()
 def rbc_file_raw():
-    return b'"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA",,69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n'
+    return '"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA",,69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n'
 
 
 @pytest.fixture()

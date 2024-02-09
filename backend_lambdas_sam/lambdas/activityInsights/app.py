@@ -84,6 +84,30 @@ def get_grouped_by_categories(items, all_categories, categories):
         })
     return results
 
+def getAllMappings(user: str):
+    global activities_table
+    response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+    )
+    all_mappings = response.get("Items", [])
+    
+    while response.get("LastEvaluatedKey"):
+        response = activities_table.query(
+            KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+        all_mappings.extend(response.get("Items", []))
+    
+    return all_mappings
+
+def applyMappings(mappings: list, item: dict):
+    itemDesc = item.get("description", "")
+    itemCategory = item.get("category", itemDesc) # if category is not set, use description
+    return {
+        **item,
+        "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
+    }    
+
 # starting_date and ending_date are in the format YYYY-MM-DD
 # all_categories is a boolean, if true we return all categories, else we only return what's 
 # in the 'categories' param
@@ -123,7 +147,13 @@ def get_new(
             )
             items.extend(more_response.get("Items", []))
         
-        grouped_by_categories = get_grouped_by_categories(items, all_categories, categories)
+        # then get all mappings
+        response = activities_table.query(
+            KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("mapping#"),
+        )
+        mappings = getAllMappings(user_id)
+        
+        grouped_by_categories = get_grouped_by_categories([applyMappings(mappings, item) for item in items], all_categories, categories)
         return {
             "statusCode": 200,
             "body": json.dumps({
