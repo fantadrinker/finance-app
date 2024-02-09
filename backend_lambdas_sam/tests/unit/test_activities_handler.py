@@ -43,6 +43,12 @@ def apigw_event_get_max_5(user_id):
 def apigw_event_get_by_category(user_id):
     return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&orderByAmount=true")
 
+
+@pytest.fixture()
+def apigw_event_get_by_category_mapped(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd_mapped&orderByAmount=true")
+
+
 @pytest.fixture()
 def apigw_event_get_by_account(user_id):
     return TestHelpers.get_base_event(user_id, "GET", "/activity", "account=acct_1_visa")
@@ -303,13 +309,31 @@ def test_get_activities_by_category(
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5
-    assert data["data"][0]["category"] == "test_odd"
-    assert data["data"][1]["category"] == "test_odd"
-    assert data["data"][2]["category"] == "test_odd"
-    assert data["data"][3]["category"] == "test_odd"
-    assert data["data"][4]["category"] == "test_odd"
+    assert all([item["category"] == "test_odd" for item in data["data"]])
     # TODO: assert ordering by amount
     
+def test_get_activities_by_category_with_mappings(
+        activities_table,
+        apigw_event_get_by_category_mapped,
+        mock_activities):
+    # setup table and insert some activities data in there
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    
+    # add mappings
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#test_odd",
+        "description": "test_odd",
+        "category": "test_odd_mapped",
+    })
+    
+    ret = app.lambda_handler(apigw_event_get_by_category_mapped, "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 5
+    assert all([item["category"] == "test_odd_mapped" for item in data["data"]])
+
 
 def test_get_activities_by_account(activities_table, apigw_event_get_by_account, mock_activities):
 

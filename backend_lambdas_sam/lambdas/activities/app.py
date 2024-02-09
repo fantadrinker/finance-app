@@ -247,10 +247,8 @@ def getActivities(
             }
         filter_exps = []
         noLimit = False
-        if category:
-            # TODO: implement sort by amount DESC. this needs an LSI
-            filter_exps.append(Attr('category').eq(category))
-            noLimit = True
+
+        mappings = getMappings(user)
         
         if description:
             filter_exps.append(Attr('description').contains(description))
@@ -291,8 +289,6 @@ def getActivities(
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
-
-        mappings = getMappings(user)
 
         return {
             "statusCode": 200,
@@ -406,6 +402,30 @@ def getEmptyDescriptionActivities(user_id, size):
         })
     }
 
+def getActivitiesForCategory(user_id, category):
+    global activities_table
+    mappings = getMappings(user_id)
+    descs = [x["description"] for x in mappings if x["category"] == category]
+    print(111, descs)
+    filterExps = Attr('category').eq(category)
+    if descs:
+        filterExps = filterExps | Attr('description').is_in(descs)
+    print(222, filterExps)
+    category_activities = activities_table.query(
+        KeyConditionExpression=Key('user').eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99"),
+        FilterExpression=filterExps,
+    )
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "data": [{
+                **applyMappings(mappings, item),
+                "amount": str(item["amount"]),
+            } for item in category_activities["Items"]],
+            "count": category_activities.get("Count", 0),
+        })
+    }
 
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
@@ -522,6 +542,8 @@ def lambda_handler(event, context):
         if checkEmpty:
             return getEmptyDescriptionActivities(user_id, size)
 
+        if category:
+            return getActivitiesForCategory(user_id, category)
         return getActivities(
             user_id,
             size,
