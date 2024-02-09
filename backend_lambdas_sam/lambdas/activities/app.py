@@ -111,8 +111,7 @@ def postActivities(user, file_format, body):
             s3_key
         ).put(Body=body)
 
-        chksum = hashlib.md5(body).hexdigest()
-        body_decoded = body.decode('utf-8')
+        chksum = hashlib.md5(body.encode('utf-8')).hexdigest()
         chksum_entry = activities_table.get_item(
             Key={'user': user, 'sk': f"chksum#{chksum}"})
         if 'Item' in chksum_entry:
@@ -122,7 +121,7 @@ def postActivities(user, file_format, body):
                 'body': json.dumps('skipping duplicate file')
             }
         # parse the csv
-        csv_reader = csv.reader(body_decoded.splitlines(), delimiter=',')
+        csv_reader = csv.reader(body.splitlines(), delimiter=',')
         firstRow = True
         with activities_table.batch_writer() as batch:
             # these two to keep track of the earliest and latest dates in the file
