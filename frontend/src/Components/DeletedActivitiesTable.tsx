@@ -3,21 +3,12 @@ import { ActivityRow } from '../api';
 import { ActivitiesTable } from './ActivitiesTable';
 
 interface DeletedActivitiesTableProps {
-  loadData: () => Promise<ActivityRow[]>
+  activities: ActivityRow[]
 }
 
 export const DeletedActivitiesTable = ({
-  loadData
+  activities
 }: DeletedActivitiesTableProps) => {
-  const [activities, setActivities] = React.useState<ActivityRow[]>([])
-
-  React.useEffect(() => {
-    loadData()
-      .then(setActivities)
-      .catch(err => {
-        console.log(`error fetching deleted activities: ${err}`)
-      })
-  }, [loadData])
 
   return (
     <div>

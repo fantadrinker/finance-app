@@ -3,7 +3,10 @@ from functools import reduce
 import json
 import uuid
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+import hashlib
+import csv
+from decimal import Decimal
 
 import requests
 import boto3
@@ -54,6 +57,43 @@ def get_user_id(event):
     except:
         return ""
 
+def serialize_rbc_activity(row):
+    if len(row) < 7:
+        return None
+
+    if not row[6] or row[6] == "0":
+        print("skipping row")
+        return None
+
+    date_str = datetime.strptime(
+        row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
+    amount = 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        'account': f"{row[1]}-{row[0]}",
+        'date': date_str,
+        'description': row[5],
+        'category': row[4],  # in the future we should get this
+        'amount': amount  # need to flip sign, rbc uses negative val for expense
+    }
+
+
+def serialize_cap1_activity(row):
+    if len(row) < 6:
+        return None
+
+    date_str = datetime.strptime(
+        row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
+    amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        # concat uuid with date to make unique keys but also keep date ordering
+        'date': date_str,
+        'account': row[2],
+        'description': row[3],
+        'category': row[4],
+        'amount': amount
+    }
 
 def postActivities(user, file_format, body):
     global s3
@@ -70,6 +110,64 @@ def postActivities(user, file_format, body):
             os.environ.get("ACTIVITIES_BUCKET", ""),
             s3_key
         ).put(Body=body)
+
+        chksum = hashlib.md5(body.encode('utf-8')).hexdigest()
+        chksum_entry = activities_table.get_item(
+            Key={'user': user, 'sk': f"chksum#{chksum}"})
+        if 'Item' in chksum_entry:
+            print('skipping duplicate file')
+            return {
+                'statusCode': 200,
+                'body': json.dumps('skipping duplicate file')
+            }
+        # parse the csv
+        csv_reader = csv.reader(body.splitlines(), delimiter=',')
+        firstRow = True
+        with activities_table.batch_writer() as batch:
+            # these two to keep track of the earliest and latest dates in the file
+
+            start_date = date.max.strftime("%Y-%m-%d")
+            end_date = date.min.strftime("%Y-%m-%d")
+
+            for row in csv_reader:
+                # skips first header row
+                if firstRow:
+                    firstRow = False
+                    continue
+                # format and store them in dynamodb
+                item = {}
+                if file_format == "cap1":
+                    item = serialize_cap1_activity(row)
+                elif file_format == "rbc":
+                    item = serialize_rbc_activity(row)
+                if item:
+                    # first update first and last dates
+                    if item['date'] < start_date:
+                        start_date = item['date']
+                    if item['date'] > end_date:
+                        end_date = item['date']
+                    # iterate through mappings and override category if there is a match
+                    batch.put_item(
+                        Item={
+                            **item,
+                            'description': item['category'] if not item['description'] else item['description'],
+                            'user': user,
+                            'chksum': chksum,
+                        }
+                    )
+            # store the checksum
+            batch.put_item(
+                Item={
+                    'sk': f"chksum#{chksum}",
+                    'user': user,
+                    'date': datetime.now().strftime("%Y-%m-%d"),
+                    'checksum': chksum,
+                    'file': s3_key,
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+            )
+            # TODO: also put in a notification item for the user, so they can see the file was processed
         return {
             "statusCode": 200,
             'headers': {

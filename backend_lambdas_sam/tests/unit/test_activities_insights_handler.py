@@ -110,3 +110,31 @@ def test_get_activities_insights_exclude_negative(activities_table, apigw_event_
     assert ret["statusCode"] == 200
     assert len(data["data"][0]["categories"]) == 2
     assert "Income" not in [c["category"] for c in data["data"][0]["categories"]]
+
+def test_get_insights_with_existing_mappings(activities_table, apigw_event_get_2022_01, mock_activities):
+    # setup table and insert some activities data in there
+    # also test pagination
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#MCDONALDS",
+        "description": "MCDONALDS",
+        "category": "Food"
+    }) 
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#RAMEN",
+        "description": "RAMEN DANBO",
+        "category": "Food" # should not match
+    })
+
+    ret = app.lambda_handler(apigw_event_get_2022_01, "")
+    data = json.loads(ret["body"])
+    assert ret["statusCode"] == 200
+    assert len(data["data"]) == 1
+    categories = data["data"][0]['categories']
+    assert len(categories) == 2
+    assert "Transit" in [c["category"] for c in categories]
+    assert "Food" in [c["category"] for c in categories]

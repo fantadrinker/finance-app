@@ -6,8 +6,9 @@ def _query_string_to_dict(query_string):
 
 class TestHelpers:
     @staticmethod
-    def get_base_event(user_id, method, path, queryString):
+    def get_base_event(user_id, method, path, queryString, body=None):
         return {
+            "body": body,
             "version": "2.0",
             "routeKey": f"{method} {path}",
             "rawPath": f"/Test{path}",
