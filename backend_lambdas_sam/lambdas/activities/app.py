@@ -194,10 +194,15 @@ def postActivities(user, file_format, body):
             "body": "missing header or request params"
         }
     
-def getMappings(user: str):
+def getMappings(user: str, category = None):
     global activities_table
+    params = {
+        "KeyConditionExpression": Key('user').eq(user) & Key('sk').begins_with("mapping#")
+    }
+    if category:
+        params["FilterExpression"] = Attr('category').eq(category)
     response = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+        **params
     )
     all_mappings = response.get("Items", [])
     
@@ -404,13 +409,13 @@ def getEmptyDescriptionActivities(user_id, size):
 
 def getActivitiesForCategory(user_id, category):
     global activities_table
-    mappings = getMappings(user_id)
+    mappings = getMappings(user_id, category)
     descs = [x["description"] for x in mappings if x["category"] == category]
     print(111, descs)
     filterExps = Attr('category').eq(category)
     if descs:
         filterExps = filterExps | Attr('description').is_in(descs)
-    print(222, filterExps)
+    
     category_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
             'sk').between("0000-00-00", "9999-99-99"),
