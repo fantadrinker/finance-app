@@ -342,6 +342,19 @@ def test_get_activities_by_category_with_mappings(
     assert "test activity 1" in [item["description"] for item in data["data"]]
     assert "test activity 7" in [item["description"] for item in data["data"]]
 
+def test_get_activities_exclude_categories(user_id, activities_table, mock_activities):
+    # setup table and insert some activities data in there
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    event = TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd")
+
+    ret = app.lambda_handler(event, "")
+
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 5
+    assert all([item["category"] == "test_odd" for item in data["data"]])
+    
 
 def test_get_activities_by_account(activities_table, apigw_event_get_by_account, mock_activities):
 
