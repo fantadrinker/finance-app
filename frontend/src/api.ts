@@ -369,12 +369,17 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
 
 export function getActivitiesByCategory(
   auth: string,
-  category: string
+  categories: string[],
+  exclude: boolean = false
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities?category=${category}&size=5`, auth)
+  return getCall(`/activities`, auth, {
+    category: categories,
+    size: 5,
+    ...(exclude ? { exclude: true } : {}),
+  })
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')

@@ -194,10 +194,15 @@ def postActivities(user, file_format, body):
             "body": "missing header or request params"
         }
     
-def getMappings(user: str):
+def getMappings(user: str, categories = None):
     global activities_table
+    params = {
+        "KeyConditionExpression": Key('user').eq(user) & Key('sk').begins_with("mapping#")
+    }
+    if categories:
+        params["FilterExpression"] = Attr('category').is_in(categories)
     response = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+        **params
     )
     all_mappings = response.get("Items", [])
     
@@ -223,7 +228,6 @@ def getActivities(
         user: str,
         size: int,
         startKey: str = None,
-        category: str = None,
         description: str = None,
         orderByAmount: bool = False,
         account: str = None,
@@ -235,11 +239,6 @@ def getActivities(
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
             "ScanIndexForward": False
         }
-        if startKey and category:
-            return {
-                "statusCode": 400,
-                "body": "cannot have both startKey and category"
-            }
         if startKey:
             query_params["ExclusiveStartKey"] = {
                 "user": user,
@@ -247,10 +246,8 @@ def getActivities(
             }
         filter_exps = []
         noLimit = False
-        if category:
-            # TODO: implement sort by amount DESC. this needs an LSI
-            filter_exps.append(Attr('category').eq(category))
-            noLimit = True
+
+        mappings = getMappings(user)
         
         if description:
             filter_exps.append(Attr('description').contains(description))
@@ -291,8 +288,6 @@ def getActivities(
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
-
-        mappings = getMappings(user)
 
         return {
             "statusCode": 200,
@@ -406,6 +401,35 @@ def getEmptyDescriptionActivities(user_id, size):
         })
     }
 
+def getActivitiesForCategory(user_id, categories, exclude = None):
+    global activities_table
+    mappings = getMappings(user_id, categories)
+    descs = [x["description"] for x in mappings]
+    filterExps = None
+    if exclude:
+        filterExps = ~Attr('category').is_in(categories)
+        if mappings:
+            filterExps = filterExps & ~Attr('description').is_in(descs)
+    else:
+        filterExps = Attr('category').is_in(categories)
+        if mappings:
+            filterExps = filterExps | Attr('description').is_in(descs)
+    
+    category_activities = activities_table.query(
+        KeyConditionExpression=Key('user').eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99"),
+        FilterExpression=filterExps,
+    )
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "data": [{
+                **applyMappings(mappings, item),
+                "amount": str(item["amount"]),
+            } for item in category_activities["Items"][:5]],
+            "count": category_activities.get("Count", 0),
+        })
+    }
 
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
@@ -503,6 +527,7 @@ def lambda_handler(event, context):
         return postActivities(user_id, file_format, body)
     elif method == "GET":
         params = event.get("queryStringParameters", {})
+        multiValueParams = event.get("multiValueQueryStringParameters", {})
         print("processing GET request")
 
         checkRelated = params.get("related", False)
@@ -511,7 +536,6 @@ def lambda_handler(event, context):
 
         size = int(params.get("size", 0))
         nextDate = params.get("nextDate", "")
-        category = params.get("category", "")
         description = params.get("description", "")
         orderByAmount = params.get("orderByAmount", False)
         account = params.get("account", "")
@@ -522,11 +546,18 @@ def lambda_handler(event, context):
         if checkEmpty:
             return getEmptyDescriptionActivities(user_id, size)
 
+        category = params.get("category", "")
+        if category:
+            category = [category]
+        else:
+            category = multiValueParams.get("category", [])
+        if category:
+            exclude = params.get("exclude", None)
+            return getActivitiesForCategory(user_id, category, exclude)
         return getActivities(
             user_id,
             size,
             nextDate,
-            category,
             description,
             orderByAmount,
             account,
