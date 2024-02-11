@@ -121,7 +121,7 @@ def mock_activities(user_id):
             "sk": (base_date - timedelta(days=i)).strftime("%Y-%m-%d") + str(i),
             "description": f"test activity {i}",
             "category": "test_odd" if i % 2 != 0 else "test_even",
-            "amount": 10,
+            "amount": 10 + i,
             "account": "acct_1_visa" if i % 2 != 0 else "acct_2_visa",
         }
         for i in range(10)
@@ -310,7 +310,7 @@ def test_get_activities_by_category(
     data = json.loads(ret["body"])
     assert data["count"] == 5
     assert all([item["category"] == "test_odd" for item in data["data"]])
-    # TODO: assert ordering by amount
+    assert int(data["data"][0]["amount"]) == 19
     
 def test_get_activities_by_category_with_mappings(
         activities_table,

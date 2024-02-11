@@ -405,7 +405,6 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
     global activities_table
     mappings = getMappings(user_id, categories)
     descs = [x["description"] for x in mappings]
-    print(f'descriptions for category {categories}: {descs}')
     filterExps = None
     if exclude:
         filterExps = ~Attr('category').is_in(categories)
@@ -423,14 +422,25 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
             'sk').between("0000-00-00", "9999-99-99"),
         FilterExpression=filterExps,
     )
+    allItems = category_activities.get("Items", [])
+    while category_activities.get("LastEvaluatedKey"):
+        category_activities = activities_table.query(
+            KeyConditionExpression=Key('user').eq(user_id) & Key(
+                'sk').between("0000-00-00", "9999-99-99"),
+            FilterExpression=filterExps,
+            ExclusiveStartKey=category_activities["LastEvaluatedKey"]
+        )
+        allItems.extend(category_activities.get("Items", []))
+    
+    sortedItems = sorted(allItems, key=lambda x: x["amount"], reverse=True)
     return {
         "statusCode": 200,
         "body": json.dumps({
             "data": [{
                 **applyMappings(mappings, item),
                 "amount": str(item["amount"]),
-            } for item in category_activities["Items"][:5]],
-            "count": category_activities.get("Count", 0),
+            } for item in sortedItems[:5]],
+            "count": len(allItems)
         })
     }
 
