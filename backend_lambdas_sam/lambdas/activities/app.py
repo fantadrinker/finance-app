@@ -405,15 +405,18 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
     global activities_table
     mappings = getMappings(user_id, categories)
     descs = [x["description"] for x in mappings]
+    print(f'descriptions for category {categories}: {descs}')
     filterExps = None
     if exclude:
         filterExps = ~Attr('category').is_in(categories)
         if mappings:
-            filterExps = filterExps & ~Attr('description').is_in(descs)
+            for desc in descs:
+                filterExps = filterExps & ~Attr('description').contains(desc)
     else:
         filterExps = Attr('category').is_in(categories)
         if mappings:
-            filterExps = filterExps | Attr('description').is_in(descs)
+            for desc in descs:
+                filterExps = filterExps | Attr('description').contains(desc)
     
     category_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
