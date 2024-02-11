@@ -342,6 +342,28 @@ def test_get_activities_by_category_with_mappings(
     assert "test activity 1" in [item["description"] for item in data["data"]]
     assert "test activity 7" in [item["description"] for item in data["data"]]
 
+def test_get_activities_by_category_with_mappings_partial(
+        activities_table,
+        user_id,
+        mock_activities):
+    # setup table and insert some activities data in there
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    
+    # add mappings that matches all
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#test activity",
+        "description": "test activity",
+        "category": "test_category_mapped",
+    })
+    
+    ret = app.lambda_handler(TestHelpers.get_base_event(user_id, "GET", "/activities", "category=test_category_mapped"), "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 10
+
+
 def test_get_activities_exclude_categories(user_id, activities_table, mock_activities):
     # setup table and insert some activities data in there
     for item in mock_activities:
