@@ -4,6 +4,7 @@ on:
   pull_request:
     paths: 
       - 'backend-lambdas-sam/*'
+      - '.github/*'
 
 jobs:
   auto-comment:
