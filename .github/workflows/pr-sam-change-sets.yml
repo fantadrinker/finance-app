@@ -6,6 +6,7 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: post-comment
         run: |
