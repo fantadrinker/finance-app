@@ -2,7 +2,7 @@ import os
 import requests
 import json
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 import botocore
 import jwt
 from jwt.exceptions import InvalidSignatureError
@@ -10,22 +10,25 @@ from jwt.exceptions import InvalidSignatureError
 activities_table = None
 # handle auth tokens
 
+
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
-    
+
     # Extract the public key from the JSON Web Key Set
     key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
-    
+
     try:
         # Verify the token using the extracted public key
-        decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
-        
+        decoded_token = jwt.decode(token, key=key, algorithms=[
+                                   "RS256"], audience=audiences)
+
         # If the token was successfully verified, return the decoded token
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
         raise ValueError("Token verification failed.")
+
 
 def get_user_id(event):
     if os.environ.get("SKIP_AUTH", "") == "1":
@@ -44,12 +47,12 @@ def get_user_id(event):
         return decoded.get("sub", "")
     except:
         return ""
-    
+
 
 def lambda_handler(event, context):
     global activities_table
     user_id = get_user_id(event)
-    
+
     if not user_id:
         return {
             "statusCode": 400,
