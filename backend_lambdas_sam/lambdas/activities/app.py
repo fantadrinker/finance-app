@@ -57,6 +57,7 @@ def get_user_id(event):
     except:
         return ""
 
+
 def serialize_rbc_activity(row):
     if len(row) < 7:
         return None
@@ -94,6 +95,7 @@ def serialize_cap1_activity(row):
         'category': row[4],
         'amount': amount
     }
+
 
 def postActivities(user, file_format, body):
     global s3
@@ -193,8 +195,9 @@ def postActivities(user, file_format, body):
             "statusCode": 500,
             "body": "missing header or request params"
         }
-    
-def getMappings(user: str, categories = None):
+
+
+def getMappings(user: str, categories=None):
     global activities_table
     params = {
         "KeyConditionExpression": Key('user').eq(user) & Key('sk').begins_with("mapping#")
@@ -205,19 +208,22 @@ def getMappings(user: str, categories = None):
         **params
     )
     all_mappings = response.get("Items", [])
-    
+
     while response.get("LastEvaluatedKey"):
         response = activities_table.query(
-            KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+            KeyConditionExpression=Key("user").eq(
+                user) & Key("sk").begins_with("mapping#"),
             ExclusiveStartKey=response["LastEvaluatedKey"]
         )
         all_mappings.extend(response.get("Items", []))
-    
+
     return all_mappings
+
 
 def applyMappings(mappings: list, item: dict):
     itemDesc = item.get("description", "")
-    itemCategory = item.get("category", itemDesc) # if category is not set, use description
+    # if category is not set, use description
+    itemCategory = item.get("category", itemDesc)
     return {
         **item,
         "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
@@ -248,7 +254,7 @@ def getActivities(
         noLimit = False
 
         mappings = getMappings(user)
-        
+
         if description:
             filter_exps.append(Attr('description').contains(description))
             noLimit = True
@@ -256,28 +262,29 @@ def getActivities(
         if account:
             filter_exps.append(Attr('account').eq(account))
             noLimit = True
-        
+
         if amountMax:
             filter_exps.append(Attr('amount').lte(int(amountMax)))
             noLimit = True
-        
+
         if amountMin:
             filter_exps.append(Attr('amount').gte(int(amountMin)))
             noLimit = True
 
         if filter_exps:
-            query_params["FilterExpression"] = reduce(lambda x, y: x & y, filter_exps)
-        
+            query_params["FilterExpression"] = reduce(
+                lambda x, y: x & y, filter_exps)
+
         if not noLimit and size > 0:
             query_params["Limit"] = size
-        
+
         data = activities_table.query(
             **query_params
         )
         # should also fetch total count for page numbers
         items = data.get("Items", [])
         lastKey = data.get("LastEvaluatedKey", {})
-        
+
         while lastKey and noLimit:
             data = activities_table.query(
                 **query_params,
@@ -401,7 +408,8 @@ def getEmptyDescriptionActivities(user_id, size):
         })
     }
 
-def getActivitiesForCategory(user_id, categories, exclude = None):
+
+def getActivitiesForCategory(user_id, categories, exclude=None):
     global activities_table
     mappings = getMappings(user_id, categories)
     descs = [x["description"] for x in mappings]
@@ -416,7 +424,7 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
         if mappings:
             for desc in descs:
                 filterExps = filterExps | Attr('description').contains(desc)
-    
+
     category_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
             'sk').between("0000-00-00", "9999-99-99"),
@@ -431,7 +439,7 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
             ExclusiveStartKey=category_activities["LastEvaluatedKey"]
         )
         allItems.extend(category_activities.get("Items", []))
-    
+
     sortedItems = sorted(allItems, key=lambda x: x["amount"], reverse=True)
     return {
         "statusCode": 200,
@@ -443,6 +451,7 @@ def getActivitiesForCategory(user_id, categories, exclude = None):
             "count": len(allItems)
         })
     }
+
 
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
@@ -458,7 +467,7 @@ def delete_activities(user: str, sk: str):
                 ReturnValues="ALL_OLD"
             )
             row = response.get("Attributes", {})
-            
+
             # now soft delete the row by adding 'deleted#' in front
             # of it's sk
             activities_table.put_item(Item={
