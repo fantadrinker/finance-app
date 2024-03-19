@@ -30,10 +30,10 @@ const useFinanceDataFetcher = (
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  function fetchData(fromStart: boolean) {
+  function fetchData(fromStart: boolean, limit: number = 20) {
     if (token) {
       setLoading(true)
-      getActivities(token, fromStart? null: fetchNextKey)
+      getActivities(token, fromStart? null: fetchNextKey, limit)
         .then(({ data, nextKey }) => {
           const newData = fromStart? data: [...financeData, ...data]
           setFinanceData(newData)
@@ -74,7 +74,7 @@ const useFinanceDataFetcher = (
     fetchMore: () => {
       setFetchNextKey(nextKey)
     },
-    reFetch: (fromStart: boolean = false) => fetchData(fromStart),
+    reFetch: (fromStart: boolean = false, limit: number = 20) => fetchData(fromStart, limit),
   }
 }
 
@@ -152,9 +152,10 @@ export function Home() {
       return
     }
     try {
+      const sizeToFetch = financeData.length
       const response = await deleteActivity(token, id)
       if (response.ok) {
-        reFetch(true)
+        reFetch(true, sizeToFetch)
       }
     } catch (err) {
       console.log(err)
@@ -183,6 +184,7 @@ export function Home() {
   }
 
   function updateNewCategory(desc: string, newCategory: string): void {
+    const sizeToRefetch = financeData.length
     postMappings(token, {
       description: desc,
       category: newCategory,
@@ -199,7 +201,7 @@ export function Home() {
               console.log(err)
               setErrorMessage(`Error fetching activity mappings ${err.message}`)
             })
-          reFetch(true)
+          reFetch(true, sizeToRefetch)
         }
       })
       .catch(err => {

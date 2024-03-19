@@ -221,14 +221,15 @@ export function deleteMapping(
 
 export function getActivities(
   auth: string,
-  nextKey: string | null
+  nextKey: string | null,
+  size: number = 20
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth)
     throw new Error('no auth')
   }
   return getCall(
-    `/activities?size=20${nextKey ? `&nextDate=${nextKey}` : ''}`,
+    `/activities?size=${size}${nextKey ? `&nextDate=${nextKey}` : ''}`,
     auth
   )
     .then(res => {
