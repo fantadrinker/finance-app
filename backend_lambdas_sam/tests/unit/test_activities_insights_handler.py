@@ -44,6 +44,7 @@ def mock_activities(user_id):
     return [{
         "user": user_id,
         "sk": f"2021-01-10#12344",
+        "date": "2021-01-10",
         "description": "SAFEWAY #2345",
         "category": "Groceries",
         "amount": Decimal("98.4"),
@@ -51,6 +52,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-01-10#12344",
+        "date": "2022-01-10",
         "description": "PAY PARKING #2345",
         "category": "Transit",
         "amount": Decimal("3.5"),
@@ -58,6 +60,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-01-31#12344",
+        "date": "2022-01-31",
         "description": "MCDONALDS #4342",
         "category": "Dining",
         "amount": Decimal("32.4"),
@@ -65,6 +68,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-02-02#12344",
+        "date": "2022-02-02",
         "description": "RAMEN DANBO",
         "category": "Dining",
         "amount": Decimal("13"),
@@ -72,6 +76,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2023-01-01#12344",
+        "date": "2023-01-01",
         "description": "PAYROLL MSFT",
         "category": "Income",
         "amount": Decimal("-4000"),
@@ -138,3 +143,15 @@ def test_get_insights_with_existing_mappings(activities_table, apigw_event_get_2
     assert len(categories) == 2
     assert "Transit" in [c["category"] for c in categories]
     assert "Food" in [c["category"] for c in categories]
+
+def test_get_insights_broken_down_by_month(activities_table, apigw_event_get_2022_01, mock_activities):
+    # TODO: this is auto generated, fix test
+    # setup table and insert some activities data in there
+    # also test pagination
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    ret = app.lambda_handler(apigw_event_get_2022_01, "")
+    data = json.loads(ret["body"])
+    assert ret["statusCode"] == 200
+    assert len(data["data"]) == 1
+    assert len(data["data"][0]["categories"]) == 2
