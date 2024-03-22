@@ -128,7 +128,7 @@ def get_new(
         ending_date = datetime.strptime(ending_date, "%Y-%m-%d")
     
     if not starting_date:
-        starting_date = datetime.strptime(ending_date, "%Y-%m-%d") - timedelta(days=30)
+        starting_date = ending_date - timedelta(days=30)
     else:
         starting_date = datetime.strptime(starting_date, "%Y-%m-%d")
 

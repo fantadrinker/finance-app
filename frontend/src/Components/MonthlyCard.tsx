@@ -26,9 +26,9 @@ function calculateMonthlyBreakdown(
   numMonths: number | null
 ): Array<MonthlyBreakdown> {
   const allMonths = insights
-    .map(({ date, categories }) => {
+    .map(({ start_date, categories }) => {
       return {
-        month: date,
+        month: start_date,
         amount: categories.reduce((acc, cur) => {
           const amount = cur.amount
           return acc + (amount > 0 ? amount : 0)
