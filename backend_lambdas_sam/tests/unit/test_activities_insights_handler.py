@@ -36,6 +36,15 @@ def apigw_event_get_exclude_negative(user_id):
         "/activityInsights",
         "starting_date=2022-01-01&ending_date=2023-02-10&all_categories=false&exclude_negative=true"
     )
+
+@pytest.fixture()
+def apigw_event_get_by_month(user_id):
+    return TestHelpers.get_base_event(
+        user_id,
+        "GET",
+        "/activityInsights",
+        "starting_date=2021-01-01&ending_date=2022-02-01&all_categories=false&by_month=true"
+    )
     
 
 @pytest.fixture()
@@ -44,6 +53,7 @@ def mock_activities(user_id):
     return [{
         "user": user_id,
         "sk": f"2021-01-10#12344",
+        "date": "2021-01-10",
         "description": "SAFEWAY #2345",
         "category": "Groceries",
         "amount": Decimal("98.4"),
@@ -51,6 +61,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-01-10#12344",
+        "date": "2022-01-10",
         "description": "PAY PARKING #2345",
         "category": "Transit",
         "amount": Decimal("3.5"),
@@ -58,6 +69,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-01-31#12344",
+        "date": "2022-01-31",
         "description": "MCDONALDS #4342",
         "category": "Dining",
         "amount": Decimal("32.4"),
@@ -65,6 +77,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2022-02-02#12344",
+        "date": "2022-02-02",
         "description": "RAMEN DANBO",
         "category": "Dining",
         "amount": Decimal("13"),
@@ -72,6 +85,7 @@ def mock_activities(user_id):
     }, {
         "user": user_id,
         "sk": f"2023-01-01#12344",
+        "date": "2023-01-01",
         "description": "PAYROLL MSFT",
         "category": "Income",
         "amount": Decimal("-4000"),
@@ -138,3 +152,16 @@ def test_get_insights_with_existing_mappings(activities_table, apigw_event_get_2
     assert len(categories) == 2
     assert "Transit" in [c["category"] for c in categories]
     assert "Food" in [c["category"] for c in categories]
+
+def test_get_insights_broken_down_by_month(activities_table, apigw_event_get_by_month, mock_activities):
+    # setup table and insert some activities data in there
+    # also test pagination
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    ret = app.lambda_handler(apigw_event_get_by_month, "")
+    data = json.loads(ret["body"])
+    assert ret["statusCode"] == 200
+    assert len(data["data"]) == 13
+    assert len(data["data"][0]["categories"]) == 1
+    # TODO: fix time range, so each time range is from first day to the last day of the month.
+    assert len(data["data"][12]["categories"]) == 2 # transit, dining

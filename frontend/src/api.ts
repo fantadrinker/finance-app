@@ -48,7 +48,8 @@ export interface ActivityRow {
 }
 
 export interface Insight {
-  date?: string
+  start_date?: string
+  end_date?: string
   categories: CategoryBreakdown[]
 }
 
@@ -354,7 +355,12 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth, { all_categories: true, exclude_negative: true })
+  return getCall('/insights', auth, { 
+    all_categories: true,
+    exclude_negative: true, 
+    by_month: true, 
+    starting_date: '2023-01-01' // change this
+  })
     .then(res => {
       if (res.ok) {
         return res.json()
@@ -364,7 +370,22 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     })
     .then(jsonResult => {
       const { data } = jsonResult
-      return data
+      return data.map((insight: {
+        categories: {
+          category: string
+          amount: string
+        }[]
+      }) => {
+        return {
+          ...insight,
+          categories: insight.categories.map(({ category, amount }) => {
+            return {
+              category,
+              amount: parseFloat(amount),
+            }
+          }),
+        }
+      })
     })
 }
 
