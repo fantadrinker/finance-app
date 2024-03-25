@@ -65,30 +65,6 @@ const UpdateMappingModal = ({
 
   }, [show, auth, newDescription])
 
-  function handleDescriptionChange(e: any) {
-    const desc = e.target.value
-    setNewDescription(desc)
-    return
-    /*
-    if (queuedActivityCall.current) {
-      clearTimeout(queuedActivityCall.current)
-    }
-    if (!auth || desc.length === 0) {
-      setActivitiesMatchingDesc([])
-      return
-    }
-    queuedActivityCall.current = window.setTimeout(() => {
-      getActivitiesWithDescription(auth, desc)
-        .then(result => {
-          setActivitiesMatchingDesc(result.data)
-        })
-        .catch(err => {
-          console.log(err)
-        })
-    }, 500)
-    */
-  }
-
   const selectCategories = allCategories.includes(currentCategory)
     ? allCategories
     : allCategories.concat([currentCategory])
@@ -105,7 +81,7 @@ const UpdateMappingModal = ({
           aria-label="description"
           placeholder={currentDescription}
           value={newDescription ?? ''}
-          onChange={handleDescriptionChange}
+          onChange={(e) => setNewDescription(e.target.value)}
         />
         <Form.Label htmlFor="category">Existing Categories</Form.Label>
         <Form.Select
