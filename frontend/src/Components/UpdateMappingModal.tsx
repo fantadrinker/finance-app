@@ -44,9 +44,32 @@ const UpdateMappingModal = ({
     setNewDescription(currentDescription)
   }, [currentCategory, currentDescription, allCategories])
 
+  useEffect(() => {
+    if (!show || !auth || newDescription.length === 0) {
+      return
+    }
+    setActivitiesMatchingDesc([])
+    if (queuedActivityCall.current) {
+      clearTimeout(queuedActivityCall.current)
+    }
+    // fetch activities with description
+    queuedActivityCall.current = window.setTimeout(() => {
+      getActivitiesWithDescription(auth, newDescription)
+        .then(result => {
+          setActivitiesMatchingDesc(result.data)
+        })
+        .catch(err => {
+          console.log(err)
+        })
+      }, 500)
+
+  }, [show, auth, newDescription])
+
   function handleDescriptionChange(e: any) {
     const desc = e.target.value
     setNewDescription(desc)
+    return
+    /*
     if (queuedActivityCall.current) {
       clearTimeout(queuedActivityCall.current)
     }
@@ -63,6 +86,7 @@ const UpdateMappingModal = ({
           console.log(err)
         })
     }, 500)
+    */
   }
 
   const selectCategories = allCategories.includes(currentCategory)
