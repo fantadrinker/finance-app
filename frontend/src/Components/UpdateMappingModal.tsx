@@ -35,6 +35,8 @@ const UpdateMappingModal = ({
     ActivityRow[]
   >([])
 
+  const [isLoadingActivities, setIsLoadingActivities] = useState<boolean>(false)
+
   const queuedActivityCall = useRef<number | null>(null)
 
   // updates state when props change
@@ -48,18 +50,22 @@ const UpdateMappingModal = ({
     if (!show || !auth || newDescription.length === 0) {
       return
     }
-    setActivitiesMatchingDesc([])
     if (queuedActivityCall.current) {
       clearTimeout(queuedActivityCall.current)
     }
     // fetch activities with description
     queuedActivityCall.current = window.setTimeout(() => {
+      setActivitiesMatchingDesc([])
+      setIsLoadingActivities(true)
       getActivitiesWithDescription(auth, newDescription)
         .then(result => {
           setActivitiesMatchingDesc(result.data)
         })
         .catch(err => {
           console.log(err)
+        })
+        .finally(() => {
+          setIsLoadingActivities(false)
         })
       }, 500)
 
@@ -110,6 +116,7 @@ const UpdateMappingModal = ({
             />
           </>
         )}
+        {isLoadingActivities && <p>Loading activities...</p>}
         {activitiesMatchingDesc.length > 0 && (
           <>
             <Form.Label>Activities with this description</Form.Label>
