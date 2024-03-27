@@ -229,9 +229,19 @@ export function getActivities(
     console.log(auth)
     throw new Error('no auth')
   }
+  const urlParams: {
+    size: number
+    nextDate?: string
+  } = {
+    size,
+  }
+  if (nextKey) {
+    urlParams['nextDate'] = nextKey
+  }
   return getCall(
-    `/activities?size=${size}${nextKey ? `&nextDate=${nextKey}` : ''}`,
-    auth
+    '/activities',
+    auth,
+    urlParams
   )
     .then(res => {
       if (!res.ok) {
@@ -270,7 +280,9 @@ export function getRelatedActivities(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities?related=${id}`, auth)
+  return getCall(`/activities`, auth, {
+    related: id,
+  })
     .then(res => {
       if (!res.ok) {
         throw new Error('get related activities failed')
