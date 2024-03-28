@@ -231,7 +231,7 @@ export function getActivities(
   }
   const urlParams: [string, string][] = [['size', size.toString()]]
   if (nextKey) {
-    urlParams.push(['nextKey', nextKey])
+    urlParams.push(['nextDate', nextKey])
   }
   return getCall(
     '/activities',
