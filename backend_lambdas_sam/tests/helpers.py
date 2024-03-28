@@ -1,7 +1,14 @@
 
 def _query_string_to_dict(query_string):
     all_params = [paramStr for paramStr in query_string.split("&") if len(paramStr.split("=")) > 1]
-    return dict(map(lambda x: x.split("="), all_params))
+    qs_dict = {}
+    for param in all_params:
+        key, value = param.split("=")
+        if not key in qs_dict:
+            qs_dict[key] = value
+        else:
+            qs_dict[key] += f",{value}"
+    return qs_dict
 
 
 class TestHelpers:
