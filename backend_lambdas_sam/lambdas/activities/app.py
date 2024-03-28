@@ -570,12 +570,12 @@ def lambda_handler(event, context):
 
         category = params.get("category", "")
         if category:
-            category = [category]
-        else:
-            category = multiValueParams.get("category", [])
-        if category:
             exclude = params.get("exclude", None)
-            return getActivitiesForCategory(user_id, category, exclude)
+            return getActivitiesForCategory(
+                user_id, 
+                category.split(","),
+                exclude
+            )
         return getActivities(
             user_id,
             size,

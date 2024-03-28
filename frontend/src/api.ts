@@ -83,7 +83,7 @@ function postCall(
 function getCall(
   url: string,
   auth: string,
-  params: any = {}
+  params: string[][] = []
 ): Promise<Response> {
   try {
     return fetch(
@@ -229,14 +229,9 @@ export function getActivities(
     console.log(auth)
     throw new Error('no auth')
   }
-  const urlParams: {
-    size: number
-    nextDate?: string
-  } = {
-    size,
-  }
+  const urlParams: [string, string][] = [['size', size.toString()]]
   if (nextKey) {
-    urlParams['nextDate'] = nextKey
+    urlParams.push(['nextKey', nextKey])
   }
   return getCall(
     '/activities',
@@ -260,9 +255,7 @@ export function getActivitiesWithDescription(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities`, auth, {
-    description,
-  })
+  return getCall(`/activities`, auth, [['description', description]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
@@ -280,9 +273,7 @@ export function getRelatedActivities(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities`, auth, {
-    related: id,
-  })
+  return getCall(`/activities`, auth, [['related', id]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get related activities failed')
@@ -369,12 +360,12 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth, { 
-    all_categories: true,
-    exclude_negative: true, 
-    by_month: true, 
-    starting_date: '2023-01-01' // change this
-  })
+  return getCall('/insights', auth, [
+    ['all_categories', 'true'], 
+    ['exclude_negative', 'true'], 
+    ['by_month', 'true'], 
+    ['starting_date', '2023-01-01'] // fix this
+  ])
     .then(res => {
       if (res.ok) {
         return res.json()
@@ -411,11 +402,11 @@ export function getActivitiesByCategory(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities`, auth, {
-    category: categories,
-    size: 5,
-    ...(exclude ? { exclude: true } : {}),
-  })
+  const urlParams = [...categories.map(cat => ['category', cat]), ['size', '5']]
+  if (exclude) {
+    urlParams.push(['exclude', 'true'])
+  }
+  return getCall(`/activities`, auth, urlParams)
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
