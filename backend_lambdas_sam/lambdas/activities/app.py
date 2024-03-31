@@ -148,11 +148,12 @@ def postActivities(user, file_format, body):
                         start_date = item['date']
                     if item['date'] > end_date:
                         end_date = item['date']
+                    item['description'] = item['category'] if not item['description'] else item['description']
+                    item['search_term'] = item['description'].lower() if item['description'] else 'Other'
                     # iterate through mappings and override category if there is a match
                     batch.put_item(
                         Item={
                             **item,
-                            'description': item['category'] if not item['description'] else item['description'],
                             'user': user,
                             'chksum': chksum,
                         }
@@ -256,7 +257,7 @@ def getActivities(
         mappings = getMappings(user)
 
         if description:
-            filter_exps.append(Attr('description').contains(description))
+            filter_exps.append(Attr('search_term').contains(description.lower()))
             noLimit = True
 
         if account:
@@ -418,12 +419,12 @@ def getActivitiesForCategory(user_id, categories, exclude=None):
         filterExps = ~Attr('category').is_in(categories)
         if mappings:
             for desc in descs:
-                filterExps = filterExps & ~Attr('description').contains(desc)
+                filterExps = filterExps & ~Attr('search_term').contains(desc)
     else:
         filterExps = Attr('category').is_in(categories)
         if mappings:
             for desc in descs:
-                filterExps = filterExps | Attr('description').contains(desc)
+                filterExps = filterExps | Attr('search_term').contains(desc)
 
     category_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
