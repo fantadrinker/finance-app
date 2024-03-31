@@ -74,6 +74,7 @@ def mock_activities(user_id):
             "category": "test_odd" if i % 2 != 0 else "test_even",
             "amount": 10 + i,
             "account": "acct_1_visa" if i % 2 != 0 else "acct_2_visa",
+            "search_term": f"test activity {i}"
         }
         for i in range(10)
     ]
@@ -87,6 +88,7 @@ def mock_activities_with_different_amount(user_id):
         "description": "test activity",
         "category": "test_cat",
         "amount": value,
+        "search_term": "test activity"
     } for value in amounts]
 
 @pytest.fixture()
@@ -95,24 +97,28 @@ def mock_activities_with_descriptions(user_id):
         "user": user_id,
         "sk": f"2020-01-01#1",
         "description": "SAFEWAY #2345",
+        "search_term": "safeway #2345",
         "category": "SAFEWAY",
         "amount": 10,
     }, {
         "user": user_id,
         "sk": f"2020-01-01#2",
         "description": "SAFEWAY #3456",
+        "search_term": "safeway #3456",
         "category": "SAFEWAY1",
         "amount": 20,
     }, {
         "user": user_id,
         "sk": f"2020-01-01#4",
         "description": "safeway #3456",
+        "search_term": "safeway #3456",
         "category": "SAFEWAY",
         "amount": 20,
     },{
         "user": user_id,
         "sk": f"2020-01-01#3",
         "description": "LONDON DRUGS #2345",
+        "search_term": "london drugs #2345",
         "category": "Groceries",
         "amount": 30,
     }]
@@ -142,6 +148,7 @@ def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_ca
     assert len(activities_response["Items"]) == 2
     print(activities_response)
     assert activities_response["Items"][0]["description"] == "SAFEWAY #4931"
+    assert activities_response["Items"][0]["search_term"] == "safeway #4931"
     assert activities_response["Items"][0]["category"] == "Merchandise"
     assert activities_response["Items"][1]["description"] == "RAMEN DANBO ROBSON"
     assert activities_response["Items"][1]["category"] == "Dining"
@@ -175,6 +182,7 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     )
     assert len(activities_response["Items"]) == 2
     assert activities_response["Items"][0]["description"] == "FIND&SAVE FROM PDA"
+    assert activities_response["Items"][0]["search_term"] == "find&save from pda"
     assert len(chksum_response["Items"]) == 1
     chksum_item = chksum_response["Items"][0]
     # TODO: check start end date
@@ -397,12 +405,11 @@ def test_get_activities_by_description(activities_table, apigw_get_activities_ba
     }, "")
     assert resposne_match_start["statusCode"] == 200
     data = json.loads(resposne_match_start["body"])
-    assert data["count"] == 2
+    assert data["count"] == 3
     keys = [item["sk"] for item in data["data"]]
     assert "2020-01-01#1" in keys
     assert "2020-01-01#2" in keys
-    # below line fails b/c of case sensitivity
-    assert "2020-01-01#4" not in keys
+    assert "2020-01-01#4" in keys
 
     # second should match everything that ends with key
     resposne_match_end = app.lambda_handler({
