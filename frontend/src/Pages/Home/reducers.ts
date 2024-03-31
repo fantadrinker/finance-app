@@ -1,23 +1,3 @@
-
-/**
- * const [showUpdateMappingModal, setShowUpdateMappingModal] =
-    useState<boolean>(false)
-  const [showRelatedActivitiesModal, setShowRelatedActivitiesModal] =
-    useState<boolean>(false)
-  const [relatedActivityId, setRelatedActivitiesId] = useState<string | null>(
-    null
-  )
-  const [description, setDescription] = useState<string>('')
-  const [category, setCategory] = useState<string>('')
-
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  const [allCategories, setAllCategories] = useState<string[]>([])
-
-  const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
- */
-
-
 interface HomeState {
   showUpdateMappingModal: boolean
   showRelatedActivitiesModal: boolean
