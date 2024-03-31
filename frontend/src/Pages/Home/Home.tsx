@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
@@ -19,6 +19,7 @@ import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
+import { reducer } from './reducers'
 
 const useFinanceDataFetcher = (
   token: string | null,
@@ -81,19 +82,16 @@ const useFinanceDataFetcher = (
 export function Home() {
   const token = useAuth0TokenSilent()
 
-  const [showUpdateMappingModal, setShowUpdateMappingModal] =
-    useState<boolean>(false)
-  const [showRelatedActivitiesModal, setShowRelatedActivitiesModal] =
-    useState<boolean>(false)
-  const [relatedActivityId, setRelatedActivitiesId] = useState<string | null>(
-    null
-  )
-  const [description, setDescription] = useState<string>('')
-  const [category, setCategory] = useState<string>('')
+  const [state, dispatch] = useReducer(reducer, {
+    showUpdateMappingModal: false,
+    showRelatedActivitiesModal: false,
+    relatedActivityId: null,
+    description: '',
+    category: '',
+    allCategories: [],
+  })
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  const [allCategories, setAllCategories] = useState<string[]>([])
 
   const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
 
@@ -104,7 +102,10 @@ export function Home() {
     if (token) {
       getMappings(token)
         .then(data => {
-          setAllCategories(data.map(({ category }) => category))
+          dispatch({
+            type: 'updateAllCategories',
+            payload: data.map(({ category }) => category),
+          })
         })
         .catch(err => {
           console.log(err)
@@ -163,26 +164,6 @@ export function Home() {
     }
   }
 
-  const openUpdateMappingModalWithParams = (
-    desc: string = '',
-    cat: string = ''
-  ) => {
-    if (!desc || !cat) {
-      return
-    }
-    setDescription(desc)
-    setCategory(cat)
-    setShowUpdateMappingModal(true)
-  }
-
-  function openRelatedActivitiesModal(id: string) {
-    if (!id) {
-      return
-    }
-    setRelatedActivitiesId(id)
-    setShowRelatedActivitiesModal(true)
-  }
-
   function updateNewCategory(desc: string, newCategory: string): void {
     const sizeToRefetch = financeData.length
     postMappings(token, {
@@ -192,10 +173,12 @@ export function Home() {
       .then(apiResponse => {
         if (apiResponse.ok) {
           console.log('mapping updated, updated informations should come later')
-          setShowUpdateMappingModal(false)
           getMappings(token)
             .then(data => {
-              setAllCategories(data.map(({ category }) => category))
+              dispatch({ 
+                type: 'updateCategory', 
+                payload: data.map(({ category }) => category )
+              })
             })
             .catch(err => {
               console.log(err)
@@ -246,7 +229,13 @@ export function Home() {
                           <div className={styles.categoryName}>{category}</div>
                           <Button
                             onClick={() =>
-                              openUpdateMappingModalWithParams(desc, category)
+                              dispatch({
+                                type: 'openUpdateMappingModal',
+                                payload: {
+                                  description: desc,
+                                  category,
+                                }
+                              })
                             }
                           >
                             Update
@@ -260,7 +249,10 @@ export function Home() {
                           >
                             Delete
                           </Button>
-                          <Button onClick={() => openRelatedActivitiesModal(id)}>
+                          <Button onClick={() => dispatch({
+                            type: 'openRelatedActivitiesModal',
+                            payload: id
+                          })}>
                             Related
                           </Button>
                         </td>
@@ -285,17 +277,19 @@ export function Home() {
         </Tab>
       </Tabs>
       <UpdateMappingModal
-        show={showUpdateMappingModal}
-        closeModal={() => setShowUpdateMappingModal(false)}
-        currentCategory={category}
-        currentDescription={description}
-        allCategories={allCategories}
+        show={state.showUpdateMappingModal}
+        closeModal={() => dispatch({ type: 'closeUpdateMappingModal' })}
+        currentCategory={state.category}
+        currentDescription={state.description}
+        allCategories={state.allCategories}
         submit={updateNewCategory}
       />
       <RelatedActivitiesModal
-        show={showRelatedActivitiesModal}
-        closeModal={() => setShowRelatedActivitiesModal(false)}
-        activityId={relatedActivityId || undefined}
+        show={state.showRelatedActivitiesModal}
+        closeModal={() => dispatch({
+          type: 'closeRelatedActivitiesModal'
+        })}
+        activityId={state.relatedActivityId || undefined}
       />
     </div>
   )
