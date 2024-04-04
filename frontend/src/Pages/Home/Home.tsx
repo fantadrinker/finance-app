@@ -1,12 +1,10 @@
 import React, { useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
 import Spinner from 'react-bootstrap/Spinner'
 
-import styles from './Home.module.css'
 import {
   getMappings,
   postMappings,
@@ -136,7 +134,7 @@ export function Home() {
   }
 
   return (
-    <div className="p-10">
+    <div className="p-10 w-4/5">
       <Tabs defaultActiveKey="activities" id="uncontrolled-tab-example">
         <Tab eventKey="activities" title="Activities">
           <h3> All Activities </h3>
@@ -146,29 +144,29 @@ export function Home() {
           {financeData.length === 0 && loading && (
             <Spinner animation="border" role="status" />
           )}
-          {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+          {errorMessage && <div>{errorMessage}</div>}
           {financeData.length > 0 && (
-            <div className="mb-11 w-2/3">
+            <div className="mb-11 w-full">
               <Table striped bordered hover width="100%" data-testid="activity-table">
                 <thead>
                   <tr>
-                    <td className="w-24">date</td>
-                    <td className="w-24">account</td>
+                    <td className="w-32">Date</td>
+                    <td className="w-40">Account</td>
                     <td>description</td>
-                    <td>category</td>
-                    <td>amount</td>
-                    <td>actions</td>
+                    <td className="w-20">Category</td>
+                    <td className="w-20">Amount</td>
+                    <td>Actions</td>
                   </tr>
                 </thead>
                 <tbody>
                   {financeData.map(
                     ({ id, date, account, desc, category, amount }, index) => (
                       <tr key={index}>
-                        <td className="w-24">{date}</td>
-                        <td className="w-24">{account}</td>
-                        <td className="w-40">{desc}</td>
-                        <td className="w-24">
-                          <div>{category}</div>
+                        <td >{date}</td>
+                        <td className="overflow-hidden">{account}</td>
+                        <td>{desc}</td>
+                        <td>
+                          {category}
                         </td>
                         <td>{amount}</td>
                         <td>
