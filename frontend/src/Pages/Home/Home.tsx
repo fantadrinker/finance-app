@@ -20,6 +20,7 @@ import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
+import { Dropdown } from 'react-bootstrap'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -116,9 +117,9 @@ export function Home() {
         if (apiResponse.ok) {
           getMappings(token)
             .then(data => {
-              dispatch({ 
-                type: 'updateCategory', 
-                payload: data.map(({ category }) => category )
+              dispatch({
+                type: 'updateCategory',
+                payload: data.map(({ category }) => category)
               })
             })
             .catch(err => {
@@ -135,24 +136,24 @@ export function Home() {
   }
 
   return (
-    <div className={styles.homeMain}>
+    <div className="p-10">
       <Tabs defaultActiveKey="activities" id="uncontrolled-tab-example">
         <Tab eventKey="activities" title="Activities">
           <h3> All Activities </h3>
           {financeData.length === 0 && !loading && (
-            <div className={styles.noData}>No data to display</div>
+            <div>No data to display</div>
           )}
           {financeData.length === 0 && loading && (
             <Spinner animation="border" role="status" />
           )}
           {errorMessage && <div className={styles.error}>{errorMessage}</div>}
           {financeData.length > 0 && (
-            <div className={styles.activityTable}>
-              <Table striped bordered hover data-testid="activity-table">
+            <div className="mb-11 w-2/3">
+              <Table striped bordered hover width="100%" data-testid="activity-table">
                 <thead>
                   <tr>
-                    <td>date</td>
-                    <td>account</td>
+                    <td className="w-24">date</td>
+                    <td className="w-24">account</td>
                     <td>description</td>
                     <td>category</td>
                     <td>amount</td>
@@ -163,39 +164,33 @@ export function Home() {
                   {financeData.map(
                     ({ id, date, account, desc, category, amount }, index) => (
                       <tr key={index}>
-                        <td>{date}</td>
-                        <td>{account}</td>
-                        <td>{desc}</td>
-                        <td className={styles.categoryCell}>
-                          <div className={styles.categoryName}>{category}</div>
-                          <Button
-                            onClick={() =>
-                              dispatch({
+                        <td className="w-24">{date}</td>
+                        <td className="w-24">{account}</td>
+                        <td className="w-40">{desc}</td>
+                        <td className="w-24">
+                          <div>{category}</div>
+                        </td>
+                        <td>{amount}</td>
+                        <td>
+                          <Dropdown>
+                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                              Actions
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                              <Dropdown.Item onClick={() => dispatch({
                                 type: 'openUpdateMappingModal',
                                 payload: {
                                   description: desc,
                                   category,
                                 }
-                              })
-                            }
-                          >
-                            Update
-                          </Button>
-                        </td>
-                        <td>{amount}</td>
-                        <td>
-                          <Button
-                            variant="danger"
-                            onClick={() => deleteAndFetch(id)}
-                          >
-                            Delete
-                          </Button>
-                          <Button onClick={() => dispatch({
-                            type: 'openRelatedActivitiesModal',
-                            payload: id
-                          })}>
-                            Related
-                          </Button>
+                              })}>Update Mapping</Dropdown.Item>
+                              <Dropdown.Item onClick={() => deleteAndFetch(id)}>Delete</Dropdown.Item>
+                              <Dropdown.Item onClick={() => dispatch({
+                                type: 'openRelatedActivitiesModal',
+                                payload: id
+                              })}>Related</Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
                         </td>
                       </tr>
                     )
