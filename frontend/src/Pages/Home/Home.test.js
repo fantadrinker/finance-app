@@ -131,8 +131,10 @@ describe('if logged in', () => {
     render(<Home />)
     const actTable = await screen.findByTestId('activity-table')
     expect(actTable).toBeInTheDocument()
-    const deleteButtons = await within(actTable).findAllByText(/delete/i)
-    deleteButtons[0].click()
+    const actionButton = await within(actTable).findAllByTestId('activity-action-dropdown')
+    actionButton[0].click()
+    const deleteButton = await screen.findByRole('button', { name: /delete/i })
+    deleteButton.click()
     await waitFor(() =>
       expect(API.deleteActivity).toHaveBeenCalledWith('test token', '1')
     )

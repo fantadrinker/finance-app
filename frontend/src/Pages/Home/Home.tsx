@@ -171,19 +171,23 @@ export function Home() {
                         <td>{amount}</td>
                         <td>
                           <Dropdown>
-                            <Dropdown.Toggle variant="success" id="dropdown-basic">
+                            <Dropdown.Toggle variant="success" id="dropdown-basic" data-testid="activity-action-dropdown">
                               Actions
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
-                              <Dropdown.Item onClick={() => dispatch({
-                                type: 'openUpdateMappingModal',
-                                payload: {
-                                  description: desc,
-                                  category,
-                                }
-                              })}>Update Mapping</Dropdown.Item>
-                              <Dropdown.Item onClick={() => deleteAndFetch(id)}>Delete</Dropdown.Item>
-                              <Dropdown.Item onClick={() => dispatch({
+                              <Dropdown.Item
+                                role="button"
+                                onClick={() => dispatch({
+                                  type: 'openUpdateMappingModal',
+                                  payload: {
+                                    description: desc,
+                                    category,
+                                  }
+                                })}>
+                                  Update Mapping
+                              </Dropdown.Item>
+                              <Dropdown.Item role="button" onClick={() => deleteAndFetch(id)}>Delete</Dropdown.Item>
+                              <Dropdown.Item role="button" onClick={() => dispatch({
                                 type: 'openRelatedActivitiesModal',
                                 payload: id
                               })}>Related</Dropdown.Item>
