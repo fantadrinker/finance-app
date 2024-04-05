@@ -150,6 +150,7 @@ def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_ca
     assert activities_response["Items"][0]["description"] == "SAFEWAY #4931"
     assert activities_response["Items"][0]["search_term"] == "safeway #4931"
     assert activities_response["Items"][0]["category"] == "Merchandise"
+    assert activities_response["Items"][0]["account"] == "0733"
     assert activities_response["Items"][1]["description"] == "RAMEN DANBO ROBSON"
     assert activities_response["Items"][1]["category"] == "Dining"
     assert len(chksum_response["Items"]) == 1
@@ -183,6 +184,7 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     assert len(activities_response["Items"]) == 2
     assert activities_response["Items"][0]["description"] == "FIND&SAVE FROM PDA"
     assert activities_response["Items"][0]["search_term"] == "find&save from pda"
+    assert activities_response["Items"][0]["account"] == "4629-Savings"
     assert len(chksum_response["Items"]) == 1
     chksum_item = chksum_response["Items"][0]
     # TODO: check start end date
