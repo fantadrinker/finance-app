@@ -116,7 +116,10 @@ export function Home() {
           getMappings(token)
             .then(data => {
               dispatch({
-                type: 'updateCategory',
+                type: 'closeUpdateMappingModal'
+              })
+              dispatch({
+                type: 'updateAllCategory',
                 payload: data.map(({ category }) => category)
               })
             })
@@ -151,7 +154,7 @@ export function Home() {
                 <thead>
                   <tr>
                     <td className="w-32">Date</td>
-                    <td className="w-40">Account</td>
+                    <td className="max-w-40">Account</td>
                     <td>description</td>
                     <td className="w-20">Category</td>
                     <td className="w-20">Amount</td>
@@ -163,7 +166,7 @@ export function Home() {
                     ({ id, date, account, desc, category, amount }, index) => (
                       <tr key={index}>
                         <td >{date}</td>
-                        <td className="overflow-hidden">{account}</td>
+                        <td className="max-w-40">{account}</td>
                         <td>{desc}</td>
                         <td>
                           {category}
