@@ -71,13 +71,16 @@ def serialize_rbc_activity(row):
     amount = 0 - Decimal(row[6])
     return {
         'sk': date_str + str(uuid.uuid4()),
-        'account': f"{row[1]}-{row[0]}",
+        'account': f"{mask_account_number(row[1])}-{row[0]}",
         'date': date_str,
         'description': row[5],
         'category': row[4],  # in the future we should get this
         'amount': amount  # need to flip sign, rbc uses negative val for expense
     }
 
+def mask_account_number(account: str):
+    # only return the last 4 digits
+    return account[-4:] if len(account) > 4 else account
 
 def serialize_cap1_activity(row):
     if len(row) < 6:
