@@ -128,7 +128,7 @@ export function Home() {
             <ActivitiesTable 
               activities={financeData}
               loading={loading}
-              onScrollToEnd={fetchMore}
+              onScrollToEnd={hasMore? fetchMore: () => {}}
               options={{
                 showCategories: true,
                 actions: [
