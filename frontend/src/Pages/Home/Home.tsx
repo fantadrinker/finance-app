@@ -1,9 +1,7 @@
 import React, { useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Table from 'react-bootstrap/Table'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
-import Spinner from 'react-bootstrap/Spinner'
 
 import {
   getMappings,
@@ -18,7 +16,7 @@ import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
-import { Dropdown } from 'react-bootstrap'
+import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -63,23 +61,6 @@ export function Home() {
       })
     }
   }, [token])
-
-  // set up scroll listener
-  useEffect(() => {
-    window.onscroll = () => {
-      if (
-        !loading &&
-        token &&
-        hasMore &&
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
-      ) {
-        fetchMore()
-      }
-    }
-    return () => {
-      window.onscroll = null
-    }
-  }, [loading, token, hasMore, fetchMore])
 
   if (!token) {
     return (
@@ -141,74 +122,46 @@ export function Home() {
           {financeData.length === 0 && !loading && (
             <div>No data to display</div>
           )}
-          {financeData.length === 0 && loading && (
-            <Spinner animation="border" role="status" />
-          )}
           {errorMessage && <div>{errorMessage}</div>}
-          {financeData.length > 0 && (
-            <div className="mb-11 w-full">
-              <Table striped bordered hover width="100%" data-testid="activity-table">
-                <thead>
-                  <tr>
-                    <td className="w-32">Date</td>
-                    <td className="w-40">Account</td>
-                    <td>description</td>
-                    <td className="w-20">Category</td>
-                    <td className="w-20">Amount</td>
-                    <td>Actions</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {financeData.map(
-                    ({ id, date, account, desc, category, amount }, index) => (
-                      <tr key={index}>
-                        <td >{date}</td>
-                        <td className="overflow-hidden">{account}</td>
-                        <td>{desc}</td>
-                        <td>
-                          {category}
-                        </td>
-                        <td>{amount}</td>
-                        <td>
-                          <Dropdown>
-                            <Dropdown.Toggle variant="success" id="dropdown-basic" data-testid="activity-action-dropdown">
-                              Actions
-                            </Dropdown.Toggle>
-                            <Dropdown.Menu>
-                              <Dropdown.Item
-                                role="button"
-                                onClick={() => dispatch({
-                                  type: 'openUpdateMappingModal',
-                                  payload: {
-                                    description: desc,
-                                    category,
-                                  }
-                                })}>
-                                  Update Mapping
-                              </Dropdown.Item>
-                              <Dropdown.Item role="button" onClick={() => deleteAndFetch(id)}>Delete</Dropdown.Item>
-                              <Dropdown.Item role="button" onClick={() => dispatch({
-                                type: 'openRelatedActivitiesModal',
-                                payload: id
-                              })}>Related</Dropdown.Item>
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        </td>
-                      </tr>
-                    )
-                  )}
-                  {hasMore && (
-                    <tr>
-                      <td colSpan={5}>
-                        {loading ? <Spinner animation="border" /> : null}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </Table>
-            </div>
-          )}
 
+          <div className="mb-11 w-full">
+            <ActivitiesTable 
+              activities={financeData}
+              loading={loading}
+              onScrollToEnd={hasMore? fetchMore: () => {}}
+              options={{
+                showCategories: true,
+                actions: [
+                  {
+                    type: ActivityActionType.UPDATE,
+                    text: 'Update Mapping',
+                    onClick: (activity) => {
+                      dispatch({
+                        type: 'openUpdateMappingModal',
+                        payload: {
+                          description: activity.desc || '',
+                          category: activity.category
+                        }
+                      })
+                    }
+                  },
+                  {
+                    type: ActivityActionType.DELETE,
+                    text: 'Delete',
+                    onClick: ({id}) => deleteAndFetch(id)
+                  },
+                  {
+                    type: ActivityActionType.SEE_RELATED,
+                    text: 'Related',
+                    onClick: ({id}) => dispatch({
+                      type: 'openRelatedActivitiesModal',
+                      payload: id
+                    })
+                  }
+                ]
+              }}
+            />
+          </div>
         </Tab>
         <Tab eventKey="deletedActivities" title="Deleted Activities">
           <DeletedActivitiesTable activities={deletedActivities} />
