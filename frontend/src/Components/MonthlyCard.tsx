@@ -23,25 +23,17 @@ interface MonthlyCardProps {
 
 function calculateMonthlyBreakdown(
   insights: Array<Insight>,
-  numMonths: number | null
 ): Array<MonthlyBreakdown> {
-  const allMonths = insights
-    .map(({ date, categories }) => {
+  return insights
+    .map(({ start_date, categories }) => {
       return {
-        month: date,
+        month: start_date,
         amount: categories.reduce((acc, cur) => {
           const amount = cur.amount
           return acc + (amount > 0 ? amount : 0)
         }, 0),
       }
     })
-    .sort((a, b) => {
-      return new Date(b.month).getTime() - new Date(a.month).getTime()
-    })
-  if (!numMonths) {
-    return allMonths
-  }
-  return allMonths.slice(0, numMonths)
 }
 
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
@@ -53,7 +45,11 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     setHoveredIndex(index)
   }, [])
 
-  const data = calculateMonthlyBreakdown(insights, 6)
+  const slicedInsights = insights.sort((a, b) => {
+    return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+  }).slice(0, 6)
+
+  const data = calculateMonthlyBreakdown(slicedInsights)
 
   const isExpanded = activeIndex !== -1
 

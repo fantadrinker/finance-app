@@ -48,7 +48,8 @@ export interface ActivityRow {
 }
 
 export interface Insight {
-  date?: string
+  start_date?: string
+  end_date?: string
   categories: CategoryBreakdown[]
 }
 
@@ -82,7 +83,7 @@ function postCall(
 function getCall(
   url: string,
   auth: string,
-  params: any = {}
+  params: string[][] = []
 ): Promise<Response> {
   try {
     return fetch(
@@ -221,15 +222,21 @@ export function deleteMapping(
 
 export function getActivities(
   auth: string,
-  nextKey: string | null
+  nextKey: string | null,
+  size: number = 20
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth)
     throw new Error('no auth')
   }
+  const urlParams: [string, string][] = [['size', size.toString()]]
+  if (nextKey) {
+    urlParams.push(['nextDate', nextKey])
+  }
   return getCall(
-    `/activities?size=20${nextKey ? `&nextDate=${nextKey}` : ''}`,
-    auth
+    '/activities',
+    auth,
+    urlParams
   )
     .then(res => {
       if (!res.ok) {
@@ -248,7 +255,7 @@ export function getActivitiesWithDescription(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities?description=${description}`, auth)
+  return getCall(`/activities`, auth, [['description', description]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
@@ -266,7 +273,7 @@ export function getRelatedActivities(
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities?related=${id}`, auth)
+  return getCall(`/activities`, auth, [['related', id]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get related activities failed')
@@ -353,7 +360,12 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth, { all_categories: true, exclude_negative: true })
+  return getCall('/insights', auth, [
+    ['all_categories', 'true'], 
+    ['exclude_negative', 'true'], 
+    ['by_month', 'true'], 
+    ['starting_date', '2023-01-01'] // fix this
+  ])
     .then(res => {
       if (res.ok) {
         return res.json()
@@ -363,18 +375,38 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     })
     .then(jsonResult => {
       const { data } = jsonResult
-      return data
+      return data.map((insight: {
+        categories: {
+          category: string
+          amount: string
+        }[]
+      }) => {
+        return {
+          ...insight,
+          categories: insight.categories.map(({ category, amount }) => {
+            return {
+              category,
+              amount: parseFloat(amount),
+            }
+          }),
+        }
+      })
     })
 }
 
 export function getActivitiesByCategory(
   auth: string,
-  category: string
+  categories: string[],
+  exclude: boolean = false
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities?category=${category}&size=5`, auth)
+  const urlParams = [...categories.map(cat => ['category', cat]), ['size', '5']]
+  if (exclude) {
+    urlParams.push(['exclude', 'true'])
+  }
+  return getCall(`/activities`, auth, urlParams)
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')

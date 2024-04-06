@@ -84,6 +84,30 @@ def get_grouped_by_categories(items, all_categories, categories):
         })
     return results
 
+def getAllMappings(user: str):
+    global activities_table
+    response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+    )
+    all_mappings = response.get("Items", [])
+    
+    while response.get("LastEvaluatedKey"):
+        response = activities_table.query(
+            KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+        all_mappings.extend(response.get("Items", []))
+    
+    return all_mappings
+
+def applyMappings(mappings: list, item: dict):
+    itemDesc = item.get("description", "")
+    itemCategory = item.get("category", itemDesc) # if category is not set, use description
+    return {
+        **item,
+        "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
+    }    
+
 # starting_date and ending_date are in the format YYYY-MM-DD
 # all_categories is a boolean, if true we return all categories, else we only return what's 
 # in the 'categories' param
@@ -93,20 +117,39 @@ def get_new(
     ending_date, 
     all_categories = False, 
     categories = [],
-    exclude_negative = False
+    exclude_negative = False,
+    monthlyBreakdown = False
 ): 
     global activities_table
 
     if not ending_date:
-        ending_date = datetime.now().strftime("%Y-%m-%d")
+        ending_date = datetime.now()
+    else:
+        ending_date = datetime.strptime(ending_date, "%Y-%m-%d")
     
     if not starting_date:
-        starting_date = (datetime.strptime(ending_date, "%Y-%m-%d") - timedelta(days=30)).strftime("%Y-%m-%d")
+        starting_date = ending_date - timedelta(days=30)
+    else:
+        starting_date = datetime.strptime(starting_date, "%Y-%m-%d")
 
+    breakdownPeriods = []
+    if monthlyBreakdown:
+        # get all the months in the range
+        curr_date = starting_date
+        while curr_date < ending_date:
+            curr_month = curr_date.month
+            next_month = curr_date.replace(year=curr_date.year+1, month=1) if curr_month == 12 else curr_date.replace(month=curr_month+1)
+            breakdownPeriods.append((curr_date, next_month))
+            curr_date = next_month
+    else:
+        breakdownPeriods = [(starting_date, ending_date)]
     try:
         # first get all transactions for the time period
         params = {
-            "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").between(starting_date, ending_date),
+            "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").between(
+                starting_date.strftime("%Y-%m-%d"), 
+                ending_date.strftime("%Y-%m-%d")
+            ),
         }
         if exclude_negative:
             params["FilterExpression"] = Attr("amount").gt(0)
@@ -123,15 +166,24 @@ def get_new(
             )
             items.extend(more_response.get("Items", []))
         
-        grouped_by_categories = get_grouped_by_categories(items, all_categories, categories)
+        # then get all mappings
+        response = activities_table.query(
+            KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("mapping#"),
+        )
+        mappings = getAllMappings(user_id)
+        
         return {
             "statusCode": 200,
             "body": json.dumps({
                 "data": [{
-                    # TODO: add date
-                    "categories": grouped_by_categories
-                }, #TODO: add data grouped by month
-                ]
+                    "start_date": period_start.strftime("%Y-%m-%d"),
+                    "end_date": period_end.strftime("%Y-%m-%d"),
+                    "categories": get_grouped_by_categories(
+                        [applyMappings(mappings, item) for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")], 
+                        all_categories,
+                        categories,
+                    )
+                } for period_start, period_end in breakdownPeriods]
             })
         }
     except botocore.exceptions.ClientError as error:
@@ -164,7 +216,8 @@ def lambda_handler(event, context):
             query_params.get("ending_date", None),
             all_categories=query_params.get("all_categories", False),
             categories=query_params.get("categories", []),
-            exclude_negative=query_params.get("exclude_negative", False)
+            exclude_negative=query_params.get("exclude_negative", False),
+            monthlyBreakdown=query_params.get("by_month", False)
         )  # need to get from multivalue query params
     else:
         return {

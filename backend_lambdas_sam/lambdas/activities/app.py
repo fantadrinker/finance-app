@@ -6,7 +6,10 @@ from functools import reduce
 import json
 import uuid
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+import hashlib
+import csv
+from decimal import Decimal
 
 import requests
 import boto3
@@ -58,6 +61,48 @@ def get_user_id(event):
         return ""
 
 
+def serialize_rbc_activity(row):
+    if len(row) < 7:
+        return None
+
+    if not row[6] or row[6] == "0":
+        print("skipping row")
+        return None
+
+    date_str = datetime.strptime(
+        row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
+    amount = 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        'account': f"{mask_account_number(row[1])}-{row[0]}",
+        'date': date_str,
+        'description': row[5],
+        'category': row[4],  # in the future we should get this
+        'amount': amount  # need to flip sign, rbc uses negative val for expense
+    }
+
+def mask_account_number(account: str):
+    # only return the last 4 digits
+    return account[-4:] if len(account) > 4 else account
+
+def serialize_cap1_activity(row):
+    if len(row) < 6:
+        return None
+
+    date_str = datetime.strptime(
+        row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
+    amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
+    return {
+        'sk': date_str + str(uuid.uuid4()),
+        # concat uuid with date to make unique keys but also keep date ordering
+        'date': date_str,
+        'account': row[2],
+        'description': row[3],
+        'category': row[4],
+        'amount': amount
+    }
+
+
 def postActivities(user, file_format, body):
     global s3
     try:
@@ -73,6 +118,65 @@ def postActivities(user, file_format, body):
             os.environ.get("ACTIVITIES_BUCKET", ""),
             s3_key
         ).put(Body=body)
+
+        chksum = hashlib.md5(body.encode('utf-8')).hexdigest()
+        chksum_entry = activities_table.get_item(
+            Key={'user': user, 'sk': f"chksum#{chksum}"})
+        if 'Item' in chksum_entry:
+            print('skipping duplicate file')
+            return {
+                'statusCode': 200,
+                'body': json.dumps('skipping duplicate file')
+            }
+        # parse the csv
+        csv_reader = csv.reader(body.splitlines(), delimiter=',')
+        firstRow = True
+        with activities_table.batch_writer() as batch:
+            # these two to keep track of the earliest and latest dates in the file
+
+            start_date = date.max.strftime("%Y-%m-%d")
+            end_date = date.min.strftime("%Y-%m-%d")
+
+            for row in csv_reader:
+                # skips first header row
+                if firstRow:
+                    firstRow = False
+                    continue
+                # format and store them in dynamodb
+                item = {}
+                if file_format == "cap1":
+                    item = serialize_cap1_activity(row)
+                elif file_format == "rbc":
+                    item = serialize_rbc_activity(row)
+                if item:
+                    # first update first and last dates
+                    if item['date'] < start_date:
+                        start_date = item['date']
+                    if item['date'] > end_date:
+                        end_date = item['date']
+                    item['description'] = item['category'] if not item['description'] else item['description']
+                    item['search_term'] = item['description'].lower() if item['description'] else 'Other'
+                    # iterate through mappings and override category if there is a match
+                    batch.put_item(
+                        Item={
+                            **item,
+                            'user': user,
+                            'chksum': chksum,
+                        }
+                    )
+            # store the checksum
+            batch.put_item(
+                Item={
+                    'sk': f"chksum#{chksum}",
+                    'user': user,
+                    'date': datetime.now().strftime("%Y-%m-%d"),
+                    'checksum': chksum,
+                    'file': s3_key,
+                    'start_date': start_date,
+                    'end_date': end_date
+                }
+            )
+            # TODO: also put in a notification item for the user, so they can see the file was processed
         return {
             "statusCode": 200,
             'headers': {
@@ -98,26 +202,35 @@ def postActivities(user, file_format, body):
             "statusCode": 500,
             "body": "missing header or request params"
         }
-    
-def getMappings(user: str):
+
+
+def getMappings(user: str, categories=None):
     global activities_table
+    params = {
+        "KeyConditionExpression": Key('user').eq(user) & Key('sk').begins_with("mapping#")
+    }
+    if categories:
+        params["FilterExpression"] = Attr('category').is_in(categories)
     response = activities_table.query(
-        KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+        **params
     )
     all_mappings = response.get("Items", [])
-    
+
     while response.get("LastEvaluatedKey"):
         response = activities_table.query(
-            KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
+            KeyConditionExpression=Key("user").eq(
+                user) & Key("sk").begins_with("mapping#"),
             ExclusiveStartKey=response["LastEvaluatedKey"]
         )
         all_mappings.extend(response.get("Items", []))
-    
+
     return all_mappings
+
 
 def applyMappings(mappings: list, item: dict):
     itemDesc = item.get("description", "")
-    itemCategory = item.get("category", itemDesc) # if category is not set, use description
+    # if category is not set, use description
+    itemCategory = item.get("category", itemDesc)
     return {
         **item,
         "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
@@ -128,7 +241,6 @@ def getActivities(
         user: str,
         size: int,
         startKey: str = None,
-        category: str = None,
         description: str = None,
         orderByAmount: bool = False,
         account: str = None,
@@ -140,11 +252,6 @@ def getActivities(
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
             "ScanIndexForward": False
         }
-        if startKey and category:
-            return {
-                "statusCode": 400,
-                "body": "cannot have both startKey and category"
-            }
         if startKey:
             query_params["ExclusiveStartKey"] = {
                 "user": user,
@@ -152,40 +259,39 @@ def getActivities(
             }
         filter_exps = []
         noLimit = False
-        if category:
-            # TODO: implement sort by amount DESC. this needs an LSI
-            filter_exps.append(Attr('category').eq(category))
-            noLimit = True
-        
+
+        mappings = getMappings(user)
+
         if description:
-            filter_exps.append(Attr('description').contains(description))
+            filter_exps.append(Attr('search_term').contains(description.lower()))
             noLimit = True
 
         if account:
             filter_exps.append(Attr('account').eq(account))
             noLimit = True
-        
+
         if amountMax:
             filter_exps.append(Attr('amount').lte(int(amountMax)))
             noLimit = True
-        
+
         if amountMin:
             filter_exps.append(Attr('amount').gte(int(amountMin)))
             noLimit = True
 
         if filter_exps:
-            query_params["FilterExpression"] = reduce(lambda x, y: x & y, filter_exps)
-        
+            query_params["FilterExpression"] = reduce(
+                lambda x, y: x & y, filter_exps)
+
         if not noLimit and size > 0:
             query_params["Limit"] = size
-        
+
         data = activities_table.query(
             **query_params
         )
         # should also fetch total count for page numbers
         items = data.get("Items", [])
         lastKey = data.get("LastEvaluatedKey", {})
-        
+
         while lastKey and noLimit:
             data = activities_table.query(
                 **query_params,
@@ -196,8 +302,6 @@ def getActivities(
         # filter items to only include sk that starts with date
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
-
-        mappings = getMappings(user)
 
         return {
             "statusCode": 200,
@@ -312,6 +416,50 @@ def getEmptyDescriptionActivities(user_id, size):
     }
 
 
+def getActivitiesForCategory(user_id, categories, exclude=None):
+    global activities_table
+    mappings = getMappings(user_id, categories)
+    descs = [x["description"] for x in mappings]
+    filterExps = None
+    if exclude:
+        filterExps = ~Attr('category').is_in(categories)
+        if mappings:
+            for desc in descs:
+                filterExps = filterExps & ~Attr('search_term').contains(desc)
+    else:
+        filterExps = Attr('category').is_in(categories)
+        if mappings:
+            for desc in descs:
+                filterExps = filterExps | Attr('search_term').contains(desc)
+
+    category_activities = activities_table.query(
+        KeyConditionExpression=Key('user').eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99"),
+        FilterExpression=filterExps,
+    )
+    allItems = category_activities.get("Items", [])
+    while category_activities.get("LastEvaluatedKey"):
+        category_activities = activities_table.query(
+            KeyConditionExpression=Key('user').eq(user_id) & Key(
+                'sk').between("0000-00-00", "9999-99-99"),
+            FilterExpression=filterExps,
+            ExclusiveStartKey=category_activities["LastEvaluatedKey"]
+        )
+        allItems.extend(category_activities.get("Items", []))
+
+    sortedItems = sorted(allItems, key=lambda x: x["amount"], reverse=True)
+    return {
+        "statusCode": 200,
+        "body": json.dumps({
+            "data": [{
+                **applyMappings(mappings, item),
+                "amount": str(item["amount"]),
+            } for item in sortedItems[:5]],
+            "count": len(allItems)
+        })
+    }
+
+
 def delete_activities(user: str, sk: str):
     # deletes all activites for a user, or a specific activity if sk is provided
     global activities_table
@@ -326,7 +474,7 @@ def delete_activities(user: str, sk: str):
                 ReturnValues="ALL_OLD"
             )
             row = response.get("Attributes", {})
-            
+
             # now soft delete the row by adding 'deleted#' in front
             # of it's sk
             activities_table.put_item(Item={
@@ -408,6 +556,7 @@ def lambda_handler(event, context):
         return postActivities(user_id, file_format, body)
     elif method == "GET":
         params = event.get("queryStringParameters", {})
+        multiValueParams = event.get("multiValueQueryStringParameters", {})
         print("processing GET request")
 
         checkRelated = params.get("related", False)
@@ -416,7 +565,6 @@ def lambda_handler(event, context):
 
         size = int(params.get("size", 0))
         nextDate = params.get("nextDate", "")
-        category = params.get("category", "")
         description = params.get("description", "")
         orderByAmount = params.get("orderByAmount", False)
         account = params.get("account", "")
@@ -427,11 +575,18 @@ def lambda_handler(event, context):
         if checkEmpty:
             return getEmptyDescriptionActivities(user_id, size)
 
+        category = params.get("category", "")
+        if category:
+            exclude = params.get("exclude", None)
+            return getActivitiesForCategory(
+                user_id, 
+                category.split(","),
+                exclude
+            )
         return getActivities(
             user_id,
             size,
             nextDate,
-            category,
             description,
             orderByAmount,
             account,
