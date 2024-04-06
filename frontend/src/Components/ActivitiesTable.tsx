@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Dropdown, Spinner } from 'react-bootstrap'
@@ -17,13 +17,31 @@ interface ActivityAction {
 interface ActivitiesTableProps {
   activities: ActivityRow[]
   loading?: boolean
+  onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
     actions: ActivityAction[]
   }
 }
 
-export function ActivitiesTable({ activities, options, loading }: ActivitiesTableProps) {
+export function ActivitiesTable({ activities, options, loading, onScrollToEnd }: ActivitiesTableProps) {
+  useEffect(() => {
+    if (!onScrollToEnd) {
+      return
+    }
+    
+    window.onscroll = () => {
+      if (
+        !loading &&
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
+      ) {
+        onScrollToEnd()
+      }
+    }
+    return () => {
+      window.onscroll = null
+    }
+  }, [loading, onScrollToEnd])
   return (
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>

@@ -62,26 +62,6 @@ export function Home() {
     }
   }, [token])
 
-  // set up scroll listener
-  useEffect(() => {
-    /**
-     * window.onscroll = () => {
-      if (
-        !loading &&
-        token &&
-        hasMore &&
-        window.innerHeight + window.scrollY >= document.body.offsetHeight - 1
-      ) {
-        fetchMore()
-      }
-    }
-    return () => {
-      window.onscroll = null
-    }
-     */
-    
-  }, [loading, token, hasMore, fetchMore])
-
   if (!token) {
     return (
       <div>
@@ -148,6 +128,7 @@ export function Home() {
             <ActivitiesTable 
               activities={financeData}
               loading={loading}
+              onScrollToEnd={fetchMore}
               options={{
                 showCategories: true,
                 actions: [
@@ -155,7 +136,6 @@ export function Home() {
                     type: ActivityActionType.UPDATE,
                     text: 'Update Mapping',
                     onClick: (activity) => {
-                      console.log('update mapping', activity)
                       dispatch({
                         type: 'openUpdateMappingModal',
                         payload: {
@@ -182,7 +162,6 @@ export function Home() {
               }}
             />
           </div>
-
         </Tab>
         <Tab eventKey="deletedActivities" title="Deleted Activities">
           <DeletedActivitiesTable activities={deletedActivities} />
