@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import {
   Tooltip,
@@ -27,7 +27,7 @@ function calculateMonthlyBreakdown(
   return insights
     .map(({ start_date, categories }) => {
       return {
-        month: start_date,
+        month: start_date || '00-00-00',
         amount: categories.reduce((acc, cur) => {
           const amount = cur.amount
           return acc + (amount > 0 ? amount : 0)
@@ -46,6 +46,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   }, [])
 
   const slicedInsights = insights.sort((a, b) => {
+    if (!a.start_date || !b.start_date) return 0
     return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
   }).slice(0, 6)
 
@@ -80,7 +81,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     ? insights[activeIndex].categories
     : null
 
-  const topCategories = isExpanded
+  const topCategories = (isExpanded && selectedAllCategories)
     ? selectedAllCategories
         .sort((a, b) => {
           return b.amount - a.amount

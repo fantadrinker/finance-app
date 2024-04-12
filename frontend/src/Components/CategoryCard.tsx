@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
 import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'

@@ -1,4 +1,3 @@
-import React from 'react';
 import { ActivityRow } from '../api';
 import { ActivitiesTable } from './ActivitiesTable';
 

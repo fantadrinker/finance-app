@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
 import { getInsights, Insight } from '../../api'

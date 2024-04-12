@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Dropdown, Spinner } from 'react-bootstrap'
@@ -42,6 +42,15 @@ export function ActivitiesTable({ activities, options, loading, onScrollToEnd }:
       window.onscroll = null
     }
   }, [loading, onScrollToEnd])
+
+  let colCount = 4
+  if (options?.showCategories) {
+    colCount++
+  }
+  if (options?.actions) {
+    colCount++
+  }
+
   return (
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
@@ -83,7 +92,7 @@ export function ActivitiesTable({ activities, options, loading, onScrollToEnd }:
         ))}
         {loading && (
           <tr>
-            <td colSpan={5}>
+            <td colSpan={colCount}>
               <Spinner role="status" animation="border" />
             </td>
           </tr>

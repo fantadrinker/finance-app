@@ -76,6 +76,10 @@ export const Upload = () => {
 
   const processUserFile = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (!token) {
+      setErrorMessage('not authenticated')
+      return
+    }
     try {
       // processes user file, store in financeData state var
       const response = await postActivities(
