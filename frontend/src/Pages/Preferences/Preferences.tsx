@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
 import { Link } from 'react-router-dom'
@@ -78,14 +78,9 @@ export const Preferences = () => {
         if (!result.ok) {
           return []
         }
-        getMappings(token ?? '')
-          .then(data => {
-            setMappings(transformMappings(data))
-          })
-          .catch(err => {
-            console.log(err)
-          })
+        return getMappings(token ?? '')
       })
+      .then(data => setMappings(transformMappings(data)))
       .catch(err => {
         console.log(err)
       })

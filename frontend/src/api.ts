@@ -1,11 +1,11 @@
-export const API_GATEWAY_URL_MAP: Record<string, string> = Object.freeze({
+export const API_GATEWAY_URL_MAP: Record<string, string | undefined> = Object.freeze({
   development: process.env.REACT_APP_API_GATEWAY_URL_DEV,
   production: process.env.REACT_APP_API_GATEWAY_URL_PROD,
   test: '/test',
 })
 
-export const awsLambdaAddr: string =
-  API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
+export const awsLambdaAddr: string = process.env.NODE_ENV?
+  API_GATEWAY_URL_MAP[process.env.NODE_ENV] || '' : ''
 
 interface CategoryMappingDescription {
   description: string
