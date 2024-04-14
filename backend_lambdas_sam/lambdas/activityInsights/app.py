@@ -139,7 +139,8 @@ def get_new(
         while curr_date < ending_date:
             curr_month = curr_date.month
             next_month = curr_date.replace(year=curr_date.year+1, month=1) if curr_month == 12 else curr_date.replace(month=curr_month+1)
-            breakdownPeriods.append((curr_date, next_month))
+            curr_month_end = next_month - timedelta(days=1)
+            breakdownPeriods.append((curr_date, curr_month_end))
             curr_date = next_month
     else:
         breakdownPeriods = [(starting_date, ending_date)]

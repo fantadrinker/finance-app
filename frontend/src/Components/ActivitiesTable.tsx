@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
-import { Dropdown, Spinner } from 'react-bootstrap'
+import { Button, Dropdown, Spinner } from 'react-bootstrap'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -16,6 +16,7 @@ interface ActivityAction {
 
 interface ActivitiesTableProps {
   activities: ActivityRow[]
+  hasMore?: boolean
   loading?: boolean
   onScrollToEnd?: () => void
   options?: {
@@ -24,7 +25,7 @@ interface ActivitiesTableProps {
   }
 }
 
-export function ActivitiesTable({ activities, options, loading, onScrollToEnd }: ActivitiesTableProps) {
+export function ActivitiesTable({ activities, hasMore, options, loading, onScrollToEnd }: ActivitiesTableProps) {
   useEffect(() => {
     if (!onScrollToEnd) {
       return
@@ -94,6 +95,13 @@ export function ActivitiesTable({ activities, options, loading, onScrollToEnd }:
           <tr>
             <td colSpan={colCount}>
               <Spinner role="status" animation="border" />
+            </td>
+          </tr>
+        )}
+        {hasMore && !loading && (
+          <tr>
+            <td colSpan={colCount}>
+              <Button onClick={onScrollToEnd}>Load More</Button>
             </td>
           </tr>
         )}
