@@ -62,15 +62,15 @@ resource "aws_ecs_task_definition" "finance_app" {
         }
       ]
 
-      /*logConfiguration = {
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
           "awslogs-create-group" = "true"
-          "awslogs-group" = "finance-app-tf-ecs-logs"
+          "awslogs-group" = "/ecs/finance-app-tf-ecs-logs"
           "awslogs-region" = "us-east-1"
           "awslogs-stream-prefix" = "ecs"
         }
-      }*/
+      }
     }
   ])
 
@@ -102,12 +102,15 @@ resource "aws_ecs_service" "finance_app_service" {
   force_new_deployment = true
   wait_for_steady_state = true
 
+  triggers = {
+    redeployment = plantimestamp()
+  }
+
   load_balancer {
     target_group_arn = aws_alb_target_group.finance_app_alb_target_group.arn
     container_name   = "finance-app-tf-backend"
     container_port   = 3123
   }
-
   network_configuration {
     subnets          = var.vpc_info.private_subnet_ids
     security_groups  = [aws_security_group.ecs_sg.id]
