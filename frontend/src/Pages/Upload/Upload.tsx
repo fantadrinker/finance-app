@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/Button'
 import styles from './Upload.module.css'
 import { FileUpload, getUploads, postActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
+import { parse } from 'csv-parse'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -16,6 +17,15 @@ const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.cap1]: 'Capital One',
   [ColumnFormat.rbc]: 'RBC',
 })
+
+async function processFileContent(fileContent: File): Promise<{ columnFormat: ColumnFormat, result: any }> {
+  console.log('processing file content', fileContent)
+  const result = parse(await fileContent.text(), {
+    columns: true,
+  })
+  console.log('parsed file content', result)
+  return { columnFormat: ColumnFormat.cap1, result }
+}
 
 function useFetchPrevUploads(token: string | null): Array<FileUpload> {
   const [uploads, setUploads] = useState<Array<FileUpload>>([])
@@ -48,7 +58,7 @@ export const Upload = () => {
   const token = useAuth0TokenSilent()
   const uploads = useFetchPrevUploads(token)
 
-  const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
+  const updateUserFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement
     if (!target.files || target.files.length === 0) {
       return
@@ -57,6 +67,9 @@ export const Upload = () => {
     const fileContent = target.files[0]
     setFileName(fileName)
     setFileContent(fileContent)
+
+    const { columnFormat } = await processFileContent(fileContent)
+    setColumnFormat(columnFormat)
 
     fileContent
       .text()
@@ -115,20 +128,23 @@ export const Upload = () => {
             value={fileName}
             onChange={updateUserFile}
           />
-          <Form.Label>Choose Format</Form.Label>
-          <Form.Select
-            aria-label="select input type"
-            value={columnFormat}
-            onChange={e => setColumnFormat(e.target.value as ColumnFormat)}
-          >
-            {COLUMN_FORMATS.map(key => {
-              return (
-                <option key={key} value={key}>
-                  {COLUMN_FORMAT_NAMES[key]}
-                </option>
-              )
-            })}
-          </Form.Select>
+
+          {fileContent && (<>
+            <Form.Label>Choose Format</Form.Label>
+            <Form.Select
+              aria-label="select input type"
+              value={columnFormat}
+              onChange={e => setColumnFormat(e.target.value as ColumnFormat)}
+            >
+              {COLUMN_FORMATS.map(key => {
+                return (
+                  <option key={key} value={key}>
+                    {COLUMN_FORMAT_NAMES[key]}
+                  </option>
+                )
+              })}
+            </Form.Select>
+          </>)}
           <Button
             onClick={processUserFile}
             type="submit"
