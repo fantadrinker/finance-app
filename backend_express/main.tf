@@ -34,6 +34,10 @@ resource "aws_ecs_cluster" "ecs_cluster" {
   name = "finance-app-tf-ecs"
 }
 
+resource "aws_cloudwatch_log_group" "ecs-finance-app" {
+  name = "/ecs/finance-app-tf-ecs-logs"
+}
+
 resource "aws_ecs_task_definition" "finance_app" {
   family                   = "finance-app-tf-rd"
   network_mode             = "awsvpc"
@@ -62,10 +66,10 @@ resource "aws_ecs_task_definition" "finance_app" {
         }
       ]
 
+      
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-create-group" = "true"
           "awslogs-group" = "/ecs/finance-app-tf-ecs-logs"
           "awslogs-region" = "us-east-1"
           "awslogs-stream-prefix" = "ecs"
