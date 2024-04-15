@@ -114,6 +114,18 @@ Resources:
               Ref: FinanceAPI
             Path: /multiply
             Method: GET
+  
+  AuthLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: AuthLayer
+      ContentUri: lambdas/AuthLayer
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+      BuildArchitecture: x86_64
+
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -218,6 +230,8 @@ Resources:
       CodeUri: lambdas/activityInsights/
       Handler: app.lambda_handler
       Runtime: python3.9
+      Layers:
+        - !Ref AuthLayer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
