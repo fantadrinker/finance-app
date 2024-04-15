@@ -1,3 +1,6 @@
+"""
+    shared mocks for unit tests
+"""
 import os
 import pytest
 from moto import mock_dynamodb, mock_s3
@@ -14,7 +17,7 @@ def aws_credentials():
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 @pytest.fixture(scope="function")
-def activities_table(aws_credentials):
+def activities_table(aws_credentials): # pylint: disable=redefined-outer-name, unused-argument
     """ Creates a dynamodb table for testing purposes"""
     with mock_dynamodb():
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
@@ -35,8 +38,9 @@ def activities_table(aws_credentials):
 
 
 @pytest.fixture(scope="function")
-def s3(aws_credentials):
+def s3(aws_credentials): # pylint: disable=redefined-outer-name, unused-argument
+    """ Creates a s3 bucket for testing purposes"""
     with mock_s3():
-        s3 = boto3.resource('s3', region_name="us-east-1")
-        s3.create_bucket(Bucket="test-bucket")
-        yield s3
+        s3_man = boto3.resource('s3', region_name="us-east-1")
+        s3_man.create_bucket(Bucket="test-bucket")
+        yield s3_man
