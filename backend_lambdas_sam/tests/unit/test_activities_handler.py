@@ -41,7 +41,7 @@ def apigw_event_get_max_5(user_id):
 
 @pytest.fixture()
 def apigw_event_get_by_category(user_id):
-    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&orderByAmount=true")
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&size=5")
 
 @pytest.fixture()
 def apigw_event_get_by_category_multiple(user_id):
