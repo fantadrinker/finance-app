@@ -2,54 +2,11 @@ import json
 import os
 import boto3
 import datetime
-import requests
-import jwt
-from jwt.exceptions import InvalidSignatureError
 from boto3.dynamodb.conditions import Key
 import botocore
+from AuthLayer import get_user_id
 
 table = None
-# handle auth tokens
-
-
-def verify_token_with_jwks(token, jwks_url, audiences):
-    # Get the JSON Web Key Set from the provided URL
-    jwks = requests.get(jwks_url).json()
-
-    # Extract the public key from the JSON Web Key Set
-    key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
-
-    try:
-        # Verify the token using the extracted public key
-        decoded_token = jwt.decode(token, key=key, algorithms=[
-                                   "RS256"], audience=audiences)
-
-        # If the token was successfully verified, return the decoded token
-        return decoded_token
-    except InvalidSignatureError:
-        # If the token could not be verified, raise an exception
-        raise ValueError("Token verification failed.")
-
-
-def get_user_id(event):
-    if os.environ.get("SKIP_AUTH", "") == "1":
-        # for local testing
-        return event.get("headers", {}).get("authorization", "")
-    try:
-        url_base = os.environ.get("BASE_URL", "")
-        jwks_url = f"{url_base}/.well-known/jwks.json"
-        audiences = [
-            f"{url_base}/api/v2/",
-            f"{url_base}/userinfo"
-        ]
-        token = event.get("headers", {}).get("authorization", "")
-
-        decoded = verify_token_with_jwks(token, jwks_url, audiences)
-        return decoded.get("sub", "")
-    except Exception as e:
-        print("error decoding user id", e)
-        return ""
-
 
 def _deserialize_item(body):
     name = body.get("name", "")
@@ -99,14 +56,6 @@ def get(user_id):
             "statusCode": 500,
             "body": "unable to retrive wishlist",
         }
-
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "data": response.get("Items", []),
-        })
-    }
-
 
 def post(user_id, event):
     # gets item from body, generates sk with timestamp, adds to table

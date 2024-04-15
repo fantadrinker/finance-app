@@ -22,6 +22,17 @@ Globals:
     Timeout: 3
     MemorySize: 640
     Tracing: Active
+    Handler: app.lambda_handler
+    Runtime: python3.9
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        ACTIVITIES_TABLE: !Ref ActivitiesTable
+        BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
+        SKIP_AUTH: !Ref SkipAuth
+    Layers:
+      - !Ref AuthLayer
   Api:
     TracingEnabled: true
 
@@ -68,11 +79,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/financeAuthorizer/
-      Handler: app.lambda_handler
-      Runtime: python3.9
-      Environment:
-        Variables:
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
   
   # required permissions
   MyAuthRole:
@@ -98,28 +104,21 @@ Resources:
                   - lambda:InvokeFunction
                 Resource: !GetAtt MyAuthFunction.Arn
 
-  MultiplyFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  AuthLayer:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: lambdas/multiply/
-      Handler: app.lambda_handler
-      Runtime: python3.9
-      Architectures:
-      - x86_64
-      Events:
-        Multiply:
-          Type: HttpApi 
-          Properties:
-            ApiId:
-              Ref: FinanceAPI
-            Path: /multiply
-            Method: GET
+      LayerName: AuthLayer
+      ContentUri: lambdas/AuthLayer
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+      BuildArchitecture: x86_64
+
   ActivitiesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/activities/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
@@ -127,16 +126,11 @@ Resources:
             BucketName: !Sub 
               - "${AWS::AccountId}-${Branch}-activities-files"
               - Branch: !Ref BranchPrefix
-      Architectures:
-      - x86_64
       Environment:
         Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
           ACTIVITIES_BUCKET: !Sub 
             - "${AWS::AccountId}-${Branch}-activities-files"
             - Branch: !Ref BranchPrefix
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         PostActivities:
           Type: HttpApi 
@@ -165,18 +159,9 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/fileCheck/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetFileChecks:
           Type: HttpApi 
@@ -190,18 +175,9 @@ Resources:
     Type: AWS::Serverless::Function 
     Properties:
       CodeUri: lambdas/deleted/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetDeleted:
           Type: HttpApi 
@@ -216,18 +192,9 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/activityInsights/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetInsights:
           Type: HttpApi 
@@ -241,18 +208,9 @@ Resources:
     Type: AWS::Serverless::Function 
     Properties:
       CodeUri: lambdas/mappings/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetMappings:
           Type: HttpApi 
@@ -280,19 +238,12 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/activitiesStreams/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies: 
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - DynamoDBStreamReadPolicy:
             TableName: !Ref ActivitiesTable
             StreamName: !GetAtt ActivitiesTable.StreamArn
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
       Events:
         ProcessNewActivitiesOrMappings:
           Type: DynamoDB
@@ -308,33 +259,17 @@ Resources:
     Type: AWS::Serverless::Function 
     Properties:
       CodeUri: lambdas/monthlyCheck/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
   
   WishListFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/wishlist/
-      Handler: app.lambda_handler
-      Runtime: python3.9
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-      Architectures:
-      - x86_64
-      Environment:
-        Variables:
-          ACTIVITIES_TABLE: !Ref ActivitiesTable
-          BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-          SKIP_AUTH: !Ref SkipAuth
       Events:
         GetWishList:
           Type: HttpApi 
@@ -403,10 +338,7 @@ Outputs:
   ApiUrl:
     Description: API Gateway endpoint URL
     Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/Test"
-  MultiplyFunction:
-    Description: Multiply Lambda Function ARN
-    Value: !GetAtt MultiplyFunction.Arn
-  MultiplyFunctionIamRole:
-    Description: Implicit IAM Role created for Multiply function
-    Value: !GetAtt MultiplyFunctionRole.Arn
+  Function:
+    Description: Activities Lambda Function ARN
+    Value: !GetAtt ActivitiesFunction.Arn
   
