@@ -375,7 +375,7 @@ def getEmptyDescriptionActivities(user_id, size):
     }
 
 
-def getActivitiesForCategory(user_id, categories, exclude=None):
+def getActivitiesForCategory(user_id, categories, exclude: bool, startDate: str, endDate: str):
     global activities_table
     mappings = getMappings(user_id, categories)
     descs = [x["description"] for x in mappings]
@@ -393,14 +393,14 @@ def getActivitiesForCategory(user_id, categories, exclude=None):
 
     category_activities = activities_table.query(
         KeyConditionExpression=Key('user').eq(user_id) & Key(
-            'sk').between("0000-00-00", "9999-99-99"),
+            'sk').between(startDate, endDate),
         FilterExpression=filterExps,
     )
     allItems = category_activities.get("Items", [])
     while category_activities.get("LastEvaluatedKey"):
         category_activities = activities_table.query(
             KeyConditionExpression=Key('user').eq(user_id) & Key(
-                'sk').between("0000-00-00", "9999-99-99"),
+                'sk').between(startDate, endDate),
             FilterExpression=filterExps,
             ExclusiveStartKey=category_activities["LastEvaluatedKey"]
         )
@@ -515,7 +515,6 @@ def lambda_handler(event, context):
         return postActivities(user_id, file_format, body)
     elif method == "GET":
         params = event.get("queryStringParameters", {})
-        multiValueParams = event.get("multiValueQueryStringParameters", {})
         print("processing GET request")
 
         checkRelated = params.get("related", False)
@@ -529,6 +528,8 @@ def lambda_handler(event, context):
         account = params.get("account", "")
         amountMax = params.get("amountMax", None)
         amountMin = params.get("amountMin", None)
+        startDate = params.get("startDate", "0000-00-00")
+        endDate = params.get("endDate", "9999-99-99")
 
         checkEmpty = params.get("emptyDescription", False)
         if checkEmpty:
@@ -536,11 +537,13 @@ def lambda_handler(event, context):
 
         category = params.get("category", "")
         if category:
-            exclude = params.get("exclude", None)
+            exclude = params.get("exclude", False)
             return getActivitiesForCategory(
                 user_id, 
                 category.split(","),
-                exclude
+                exclude,
+                startDate,
+                endDate
             )
         return getActivities(
             user_id,
