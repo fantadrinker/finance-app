@@ -69,6 +69,7 @@ def mock_activities(user_id):
     return [
         {
             "user": user_id,
+            # ranging from 2019-12-23 to 2020-01-01
             "sk": (base_date - timedelta(days=i)).strftime("%Y-%m-%d") + str(i),
             "description": f"test activity {i}",
             "category": "test_odd" if i % 2 != 0 else "test_even",
@@ -333,6 +334,21 @@ def test_get_activities_by_category_with_mappings_partial(
     data = json.loads(ret["body"])
     assert data["count"] == 10
 
+def test_get_activities_by_category_with_start_end_date(
+        user_id,
+        activities_table,
+        mock_activities):
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    
+    event = TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&startDate=2019-12-28&endDate=2020-01-01")
+    ret = app.lambda_handler(event, "")
+
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 2
+    assert all([item["category"] == "test_odd" for item in data["data"]])
+    assert all([item["sk"] == "2019-12-293" or item["sk"] == "2019-12-311" for item in data["data"]])
 
 def test_get_activities_exclude_categories(user_id, activities_table, mock_activities):
     # setup table and insert some activities data in there

@@ -3,7 +3,16 @@ import { ActivityRow, getActivities } from "../../api"
 
 export const useFinanceDataFetcher = (
   token: string | null,
-  setError: (e: string) => void
+  setError: (e: string) => void,
+  options: {
+    refetchOnChange?: boolean,
+    limit: number,
+    category?: string,
+    startDate?: string,
+    endDate?: string
+  } = {
+    limit: 20
+  }
 ) => {
   const [financeData, setFinanceData] = useState<Array<ActivityRow>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
@@ -14,7 +23,7 @@ export const useFinanceDataFetcher = (
   function fetchData(fromStart: boolean, limit: number = 20) {
     if (token) {
       setLoading(true)
-      getActivities(token, fromStart? null: fetchNextKey, limit)
+      getActivities(token, fromStart? null: fetchNextKey, { size: limit})
         .then(({ data, nextKey }) => {
           const newData = fromStart? data: [...financeData, ...data]
           setFinanceData(newData)
@@ -31,11 +40,19 @@ export const useFinanceDataFetcher = (
   }
 
   useEffect(() => {
-    if (token) {
+    if (token && options.limit > 0) {
+      if (options.refetchOnChange) {
+        setFinanceData([])
+      }
       setLoading(true)
-      getActivities(token, fetchNextKey)
+      getActivities(token, fetchNextKey, { 
+        size: options.limit, 
+        category: options.category, 
+        startDate: options.startDate, 
+        endDate: options.endDate
+      })
         .then(({ data, nextKey }) => {
-          setFinanceData(existingData => [...existingData, ...data])
+          setFinanceData(existingData => options.refetchOnChange? data: [...existingData, ...data])
           setNextKey(nextKey)
         })
         .catch(err => {
@@ -45,8 +62,11 @@ export const useFinanceDataFetcher = (
         .finally(() => {
           setLoading(false)
         })
+    } else {
+      // setFinanceData([])
+      setNextKey(null)
     }
-  }, [token, fetchNextKey, setError])
+  }, [token, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
 
   return {
     financeData,
