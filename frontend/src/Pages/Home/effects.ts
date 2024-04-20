@@ -23,7 +23,12 @@ export const useFinanceDataFetcher = (
   function fetchData(fromStart: boolean, limit: number = 20) {
     if (token) {
       setLoading(true)
-      getActivities(token, fromStart? null: fetchNextKey, { size: limit}) // todo: add category, start and end date
+      getActivities(token, fromStart? null: fetchNextKey, { 
+        size: limit,
+        category: options.category,
+        startDate: options.startDate,
+        endDate: options.endDate
+      }) 
         .then(({ data, nextKey }) => {
           const newData = fromStart? data: [...financeData, ...data]
           setFinanceData(newData)
