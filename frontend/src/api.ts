@@ -223,16 +223,34 @@ export function deleteMapping(
 export function getActivities(
   auth: string,
   nextKey: string | null,
-  size: number = 20
+  options: { 
+    size: number 
+    category?: string
+    startDate?: string
+    endDate?: string
+  } = {
+    size: 20,
+  },
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth)
     throw new Error('no auth')
   }
-  const urlParams: [string, string][] = [['size', size.toString()]]
+  const urlParams: [string, string][] = [['size', options.size.toString()]]
+
   if (nextKey) {
     urlParams.push(['nextDate', nextKey])
   }
+  if (options.category) {
+    urlParams.push(['category', options.category])
+  }
+  if (options.startDate) {
+    urlParams.push(['startDate', options.startDate])
+  }
+  if (options.endDate) {
+    urlParams.push(['endDate', options.endDate])
+  }
+
   return getCall(
     '/activities',
     auth,

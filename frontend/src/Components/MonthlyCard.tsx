@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import {
   Tooltip,
@@ -10,7 +10,10 @@ import {
   Cell,
 } from 'recharts'
 import { Insight } from '../api'
-import { Table } from 'react-bootstrap'
+import { Modal, Table } from 'react-bootstrap'
+import { ActivitiesTable } from './ActivitiesTable'
+import { useFinanceDataFetcher } from '../Pages/Home/effects'
+import { useAuth0TokenSilent } from '../hooks'
 
 interface MonthlyBreakdown {
   month: string
@@ -36,14 +39,53 @@ function calculateMonthlyBreakdown(
     })
 }
 
+interface ExpandCategoryActivityProps {
+  category: string
+  month: string
+  expanded: boolean
+}
+
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
+  const token = useAuth0TokenSilent()
   const [activeIndex, setActiveIndex] = useState(-1)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
+  const [expandCategoryActivity, setExpandCategoryActivity] = useState<ExpandCategoryActivityProps>({
+    category: '',
+    month: '',
+    expanded: false,
+  })
+
+  const {
+    monthStart: expandCategoryMonthStart,
+    monthEnd: expandCategoryMonthEnd,
+  } = useMemo(() => {
+    if (!expandCategoryActivity.month) return { monthStart: new Date(), monthEnd: new Date() }
+    const date = new Date(expandCategoryActivity.month)
+    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1)
+    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+    return {
+      monthStart,
+      monthEnd,
+    }
+  }, [expandCategoryActivity.month])
 
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setHoveredIndex(index)
   }, [])
+
+  const serError = useMemo(() => (e: string) => {
+    console.log(e)
+  }, [])
+
+  const { financeData, loading: loadingActivities } = useFinanceDataFetcher(token, serError, {
+    refetchOnChange: true,
+    limit: expandCategoryActivity.expanded? 20: 0,
+    category: expandCategoryActivity.category,
+    // todo: calculate start and end date for the month
+    startDate: expandCategoryMonthStart.toISOString().split('T')[0],
+    endDate: expandCategoryMonthEnd.toISOString().split('T')[0],
+  })
 
   const slicedInsights = insights.sort((a, b) => {
     if (!a.start_date || !b.start_date) return 0
@@ -65,6 +107,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     }
   }
 
+  function showMoreInModal(category: string, month: string) {
+    console.log(`show more for ${category} in ${month}`)
+    setExpandCategoryActivity({ category, month, expanded: true })
+  }
   const cardStyles = isExpanded
     ? {
         flexGrow: 2,
@@ -130,10 +176,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           </BarChart>
           {isExpanded && (
             <div
+              className="mx-4 w-[300px] h-[300px]"
               style={{ maxWidth: '360px', maxHeight: '360px' }}
-              onClick={() => setActiveIndex(-1)}
             >
-              <h3>Top spending categories for {data[activeIndex].month}</h3>
+              <h4>Top spending categories for {data[activeIndex].month}</h4>
               <Table>
                 <thead>
                   <tr>
@@ -143,7 +189,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                 </thead>
                 <tbody>
                   {topCategories.map(({ category, amount }) => (
-                    <tr key={category}>
+                    <tr key={category} onClick={() => showMoreInModal(category, data[activeIndex].month)}>
                       <td>{category}</td>
                       <td>{amount}</td>
                     </tr>
@@ -154,6 +200,14 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           )}
         </div>
       </Card.Body>
+      <Modal show={expandCategoryActivity.expanded} onHide={() => setExpandCategoryActivity({ expanded: false , category: '', month: ''})}>
+        <Modal.Header closeButton>
+          <Modal.Title>Activities for {expandCategoryActivity.category} in {expandCategoryActivity.month}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ActivitiesTable activities={financeData} loading={loadingActivities} />
+        </Modal.Body>
+      </Modal>
     </Card>
   )
 }
