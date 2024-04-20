@@ -9,15 +9,17 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { Insight } from '../api'
+import { deleteActivity, Insight } from '../api'
 import { Modal, Table } from 'react-bootstrap'
-import { ActivitiesTable } from './ActivitiesTable'
+import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
 import { useFinanceDataFetcher } from '../Pages/Home/effects'
 import { useAuth0TokenSilent } from '../hooks'
 
 interface MonthlyBreakdown {
   month: string
   amount: number
+  startDate?: string
+  endDate?: string
 }
 
 interface MonthlyCardProps {
@@ -28,9 +30,11 @@ function calculateMonthlyBreakdown(
   insights: Array<Insight>,
 ): Array<MonthlyBreakdown> {
   return insights
-    .map(({ start_date, categories }) => {
+    .map(({ start_date, end_date, categories }) => {
       return {
         month: start_date || '00-00-00',
+        startDate: start_date,
+        endDate: end_date,
         amount: categories.reduce((acc, cur) => {
           const amount = cur.amount
           return acc + (amount > 0 ? amount : 0)
@@ -55,20 +59,23 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     month: '',
     expanded: false,
   })
-
+  const monthlyData = useMemo(() => {
+    const slicedInsights = insights.sort((a, b) => {
+      if (!a.start_date || !b.start_date) return 0
+      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+    }).slice(0, 6)
+    return calculateMonthlyBreakdown(slicedInsights)
+  }, [insights])
   const {
     monthStart: expandCategoryMonthStart,
     monthEnd: expandCategoryMonthEnd,
   } = useMemo(() => {
-    if (!expandCategoryActivity.month) return { monthStart: new Date(), monthEnd: new Date() }
-    const date = new Date(expandCategoryActivity.month)
-    const monthStart = new Date(date.getFullYear(), date.getMonth(), 1)
-    const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+    const selectedMonthData = monthlyData.find(({ month }) => month === expandCategoryActivity.month)
     return {
-      monthStart,
-      monthEnd,
+      monthStart: selectedMonthData?.startDate,
+      monthEnd: selectedMonthData?.endDate,
     }
-  }, [expandCategoryActivity.month])
+  }, [monthlyData, expandCategoryActivity])
 
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setHoveredIndex(index)
@@ -78,21 +85,27 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     console.log(e)
   }, [])
 
-  const { financeData, loading: loadingActivities } = useFinanceDataFetcher(token, serError, {
+  const { financeData, loading: loadingActivities, reFetch: refetchActivities } = useFinanceDataFetcher(token, serError, {
     refetchOnChange: true,
     limit: expandCategoryActivity.expanded? 20: 0,
     category: expandCategoryActivity.category,
     // todo: calculate start and end date for the month
-    startDate: expandCategoryMonthStart.toISOString().split('T')[0],
-    endDate: expandCategoryMonthEnd.toISOString().split('T')[0],
+    startDate: expandCategoryMonthStart,
+    endDate: expandCategoryMonthEnd,
   })
 
-  const slicedInsights = insights.sort((a, b) => {
-    if (!a.start_date || !b.start_date) return 0
-    return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  }).slice(0, 6)
-
-  const data = calculateMonthlyBreakdown(slicedInsights)
+  function deleteAndFetchActivities(activityId: string) {
+    if (!token) return
+    deleteActivity(token, activityId).then((response) => {
+      if (!response.ok) {
+        console.log('Failed to delete activity')
+        return
+      }
+      refetchActivities(true, 20)
+    }).catch(err => {
+      console.log(err)
+    })
+  }
 
   const isExpanded = activeIndex !== -1
 
@@ -108,7 +121,6 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   }
 
   function showMoreInModal(category: string, month: string) {
-    console.log(`show more for ${category} in ${month}`)
     setExpandCategoryActivity({ category, month, expanded: true })
   }
   const cardStyles = isExpanded
@@ -147,7 +159,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
             cursor: isExpanded ? 'pointer' : 'default',
           }}
         >
-          <BarChart width={360} height={360} data={data}>
+          <BarChart width={360} height={360} data={monthlyData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
@@ -159,7 +171,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={() => setHoveredIndex(-1)}
             >
-              {data.map((_, index) => (
+              {monthlyData.map((_, index) => (
                 <Cell
                   cursor="pointer"
                   fill={
@@ -179,7 +191,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
               className="mx-4 w-[300px] h-[300px]"
               style={{ maxWidth: '360px', maxHeight: '360px' }}
             >
-              <h4>Top spending categories for {data[activeIndex].month}</h4>
+              <h4>Top spending categories for {monthlyData[activeIndex].month}</h4>
               <Table>
                 <thead>
                   <tr>
@@ -189,7 +201,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                 </thead>
                 <tbody>
                   {topCategories.map(({ category, amount }) => (
-                    <tr key={category} onClick={() => showMoreInModal(category, data[activeIndex].month)}>
+                    <tr key={category} onClick={() => showMoreInModal(category, monthlyData[activeIndex].month)}>
                       <td>{category}</td>
                       <td>{amount}</td>
                     </tr>
@@ -200,13 +212,32 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           )}
         </div>
       </Card.Body>
-      <Modal show={expandCategoryActivity.expanded} onHide={() => setExpandCategoryActivity({ expanded: false , category: '', month: ''})}>
+      <Modal 
+        show={expandCategoryActivity.expanded} 
+        onHide={() => setExpandCategoryActivity({ expanded: false , category: '', month: ''})}
+        size='lg'
+      >
         <Modal.Header closeButton>
           <Modal.Title>Activities for {expandCategoryActivity.category} in {expandCategoryActivity.month}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ActivitiesTable activities={financeData} loading={loadingActivities} />
+          <ActivitiesTable 
+            activities={financeData} 
+            loading={loadingActivities} 
+            options={{
+              actions: [
+                {
+                  type: ActivityActionType.DELETE,
+                  text: 'Delete',
+                  onClick: (activity) => deleteAndFetchActivities(activity.id)
+                }
+              ]
+            }}
+          />
         </Modal.Body>
+        <Modal.Footer>
+          <button onClick={() => setExpandCategoryActivity({ expanded: false, category: '', month: ''})}>Close</button>
+        </Modal.Footer>
       </Modal>
     </Card>
   )
