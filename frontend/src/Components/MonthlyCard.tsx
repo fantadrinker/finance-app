@@ -9,38 +9,16 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { deleteActivity, Insight } from '../api'
+import { CategoryBreakdown, deleteActivity, Insight } from '../api'
 import { Modal, Table } from 'react-bootstrap'
 import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
 import { useFinanceDataFetcher } from '../Pages/Home/effects'
 import { useAuth0TokenSilent } from '../hooks'
-
-interface MonthlyBreakdown {
-  month: string
-  amount: number
-  startDate?: string
-  endDate?: string
-}
+import { map, pipe, sort, take } from 'ramda'
+import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
 
 interface MonthlyCardProps {
   insights: Array<Insight>
-}
-
-function calculateMonthlyBreakdown(
-  insights: Array<Insight>,
-): Array<MonthlyBreakdown> {
-  return insights
-    .map(({ start_date, end_date, categories }) => {
-      return {
-        month: start_date || '00-00-00',
-        startDate: start_date,
-        endDate: end_date,
-        amount: categories.reduce((acc, cur) => {
-          const amount = cur.amount
-          return acc + (amount > 0 ? amount : 0)
-        }, 0),
-      }
-    })
 }
 
 interface ExpandCategoryActivityProps {
@@ -59,13 +37,16 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     month: '',
     expanded: false,
   })
-  const monthlyData = useMemo(() => {
-    const slicedInsights = insights.sort((a, b) => {
-      if (!a.start_date || !b.start_date) return 0
-      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-    }).slice(0, 6)
-    return calculateMonthlyBreakdown(slicedInsights)
-  }, [insights])
+
+  const isExpanded = useMemo(() => activeIndex !== -1, [activeIndex])
+  const sortedInsights = useMemo(() => sort(cmpInsights, insights), [insights])
+  const monthlyData = useMemo(() => 
+    pipe(
+      (insights: Insight[]) => take(6, insights),
+      map(transformInsightToMonthlyBreakdown)
+    )(sortedInsights)
+  , [sortedInsights])
+
   const {
     monthStart: expandCategoryMonthStart,
     monthEnd: expandCategoryMonthEnd,
@@ -77,6 +58,15 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     }
   }, [monthlyData, expandCategoryActivity])
 
+  const topCategories = useMemo(() => 
+    isExpanded
+      ? pipe(
+        sort<CategoryBreakdown>((a, b) => b.amount - a.amount),
+        (c: CategoryBreakdown[]) => take(5, c)
+      )(sortedInsights[activeIndex].categories)
+      : []
+  , [isExpanded, sortedInsights, activeIndex])
+
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setHoveredIndex(index)
   }, [])
@@ -85,11 +75,14 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     console.log(e)
   }, [])
 
-  const { financeData, loading: loadingActivities, reFetch: refetchActivities } = useFinanceDataFetcher(token, serError, {
+  const { 
+    financeData, 
+    loading: loadingActivities, 
+    reFetch: refetchActivities 
+  } = useFinanceDataFetcher(token, serError, {
     refetchOnChange: true,
     limit: expandCategoryActivity.expanded? 20: 0,
     category: expandCategoryActivity.category,
-    // todo: calculate start and end date for the month
     startDate: expandCategoryMonthStart,
     endDate: expandCategoryMonthEnd,
   })
@@ -106,8 +99,6 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
       console.log(err)
     })
   }
-
-  const isExpanded = activeIndex !== -1
 
   const handleClickBarChart = (_: any, index: number) => {
     // expands card and show a list of top categories in the month
@@ -134,18 +125,6 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         maxWidth: '400px',
         transition: 'all 0.2s linear 0s',
       }
-
-  const selectedAllCategories = isExpanded
-    ? insights[activeIndex].categories
-    : null
-
-  const topCategories = (isExpanded && selectedAllCategories)
-    ? selectedAllCategories
-        .sort((a, b) => {
-          return b.amount - a.amount
-        })
-        .slice(0, 5)
-    : []
 
   return (
     <Card style={cardStyles}>

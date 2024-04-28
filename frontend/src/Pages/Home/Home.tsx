@@ -125,11 +125,11 @@ export function Home() {
           {errorMessage && <div>{errorMessage}</div>}
 
           <div className="mb-11 w-full">
-            <ActivitiesTable 
+            <ActivitiesTable
               activities={financeData}
               loading={loading}
               hasMore={hasMore}
-              onScrollToEnd={hasMore? fetchMore: () => {}}
+              onScrollToEnd={hasMore ? fetchMore : () => { }}
               options={{
                 showCategories: true,
                 actions: [
@@ -149,12 +149,12 @@ export function Home() {
                   {
                     type: ActivityActionType.DELETE,
                     text: 'Delete',
-                    onClick: ({id}) => deleteAndFetch(id)
+                    onClick: ({ id }) => deleteAndFetch(id)
                   },
                   {
                     type: ActivityActionType.SEE_RELATED,
                     text: 'Related',
-                    onClick: ({id}) => dispatch({
+                    onClick: ({ id }) => dispatch({
                       type: 'openRelatedActivitiesModal',
                       payload: id
                     })
