@@ -65,9 +65,6 @@ parameter_overrides = "BranchPrefix='prod' ApiStageName='Prod'"
 [test.global.parameters]
 stack_name="backendLambdasSamTest"
 
-[test.sync]
-[test.sync.parameters]
-watch = true
 
 [test.deploy]
 [test.deploy.parameters]
