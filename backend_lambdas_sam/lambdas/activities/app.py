@@ -44,7 +44,7 @@ def lambda_handler(event, context):
             "format")
         body = event["body"]
         preview = params.get("type", "") == "preview"
-        print(f"processing POST request")
+        print(f"processing POST request", preview)
 
         return postActivities(user_id, file_format, body, activities_table, s3, preview)
     elif method == "GET":

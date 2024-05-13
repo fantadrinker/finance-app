@@ -8,7 +8,7 @@ from datetime import datetime, date
 
 import botocore
 
-from libs import serialize_rbc_activity, serialize_cap1_activity
+from libs import serialize_rbc_activity, serialize_cap1_activity, getMappings, applyMappings
 
 
 def uploadToS3(user: str, file_format: str, body, activities_table, s3):
@@ -79,6 +79,11 @@ def postActivities(user: str, file_format: str, body, activities_table, s3, prev
         items, start_date, end_date = getItemsFromFile(file_format, body)
 
         if preview:
+            mappings = getMappings(user, activities_table)
+            allItems = [{
+                **applyMappings(mappings, item),
+                "amount": str(item["amount"]),
+            } for item in items]
             return {
                 "statusCode": 200,
                 'headers': {
@@ -88,7 +93,7 @@ def postActivities(user: str, file_format: str, body, activities_table, s3, prev
                 },
                 "body": json.dumps({
                     "data": {
-                        "items": items
+                        "items": allItems
                     }
                 }),
             }
