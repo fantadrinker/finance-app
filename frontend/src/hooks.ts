@@ -9,6 +9,8 @@ export function useAuth0TokenSilent(): string | null {
     if (isAuthenticated) {
       getAccessTokenSilently().then(accessToken => {
         setToken(accessToken)
+      }).catch(err => {
+        console.error(err)
       })
     } else {
       setToken(null)
