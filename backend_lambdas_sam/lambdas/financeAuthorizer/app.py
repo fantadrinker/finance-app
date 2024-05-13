@@ -3,23 +3,26 @@ import jwt
 from jwt.exceptions import InvalidSignatureError
 import os
 
+
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
-    
+
     # Extract the public key from the JSON Web Key Set
     key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
-    
+
     try:
         # Verify the token using the extracted public key
-        decoded_token = jwt.decode(token, key=key, algorithms=["RS256"], audience=audiences)
-        
+        decoded_token = jwt.decode(token, key=key, algorithms=[
+                                   "RS256"], audience=audiences)
+
         # If the token was successfully verified, return the decoded token
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
         raise ValueError("Token verification failed.")
 # import requests
+
 
 def lambda_handler(event, context):
     """Sample pure Lambda function
@@ -54,7 +57,7 @@ def lambda_handler(event, context):
     url_base = os.environ.get("BASE_URL", "")
     jwks_url = f"{url_base}/.well-known/jwks.json"
     audiences = [
-        f"{url_base}/api/v2/", 
+        f"{url_base}/api/v2/",
         f"{url_base}/userinfo"
     ]
     token = event.get("authorizationToken", "")

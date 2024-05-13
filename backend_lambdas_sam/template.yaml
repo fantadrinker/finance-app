@@ -52,8 +52,9 @@ Resources:
             JwtConfiguration:
               issuer: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/"
               audience:
-                - https://j2qtj8bns9.execute-api.us-east-1.amazonaws.com/Test/
+                - https://v3rmvn9yri.execute-api.us-east-1.amazonaws.com/Test/
             IdentitySource: "$request.header.Authorization"
+        DefaultAuthorizer: OAuthAuthorizer
       CorsConfiguration:
         AllowMethods: 
           - OPTIONS

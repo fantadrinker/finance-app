@@ -25,6 +25,11 @@ def apigw_event_post_cap1(user_id, cap1_file_raw):
     return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=cap1", body=cap1_file_raw)
 
 @pytest.fixture()
+def apigw_event_post_cap1_preview(user_id, cap1_file_raw):
+    """ Generates API GW Event"""
+    return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=cap1&type=preview", body=cap1_file_raw)
+
+@pytest.fixture()
 def apigw_event_post_rbc(user_id, rbc_file_raw):
     """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=rbc", body=rbc_file_raw)
@@ -124,6 +129,49 @@ def mock_activities_with_descriptions(user_id):
         "amount": 30,
     }]
 
+
+def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event_post_cap1_preview):
+    
+    app.s3 = s3
+    app.activities_table = activities_table
+    # insert some mappings
+    activities_table.put_item(Item={
+        "user": user_id,
+        "sk": "mapping#RAMEN DANBO ROBSON",
+        "description": "RAMEN DANBO ROBSON",
+        "category": "Ramen",
+    })
+    ret = app.lambda_handler(apigw_event_post_cap1_preview, "")
+    assert ret["statusCode"] == 200
+    body = json.loads(ret["body"])
+    items = body["data"]["items"]
+    assert len(items) == 2
+    assert items[0]["description"] == "RAMEN DANBO ROBSON"
+    assert items[0]["category"] == "Ramen"
+    assert items[0]["account"] == "0733"
+    assert items[1]["description"] == "SAFEWAY #4931"
+    assert items[1]["category"] == "Merchandise"
+    assert items[1]["account"] == "0733"
+
+    # make sure the files are not uploaded to s3 yet
+    bucket = s3.Bucket('test-bucket')
+    all_objs = list(bucket.objects.filter(
+        Prefix=f"{user_id}/cap1/"
+    ))
+    assert len(all_objs) == 0
+    # connect to activities table to make sure the items were added
+    activities_response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99")
+    )
+    chksum_response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(
+            user_id) & Key("sk").begins_with("chksum#")
+    )
+    assert len(activities_response["Items"]) == 0
+    assert len(chksum_response["Items"]) == 0
+
+
 def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_cap1):
     
     app.s3 = s3
@@ -147,7 +195,6 @@ def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_ca
             user_id) & Key("sk").begins_with("chksum#")
     )
     assert len(activities_response["Items"]) == 2
-    print(activities_response)
     assert activities_response["Items"][0]["description"] == "SAFEWAY #4931"
     assert activities_response["Items"][0]["search_term"] == "safeway #4931"
     assert activities_response["Items"][0]["category"] == "Merchandise"
