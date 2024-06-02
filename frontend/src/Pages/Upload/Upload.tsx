@@ -3,7 +3,7 @@ import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import styles from './Upload.module.css'
-import { FileUpload, getUploads, postActivities } from '../../api'
+import { FileUpload, getUploads, postActivities, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
 
 enum ColumnFormat {
@@ -95,6 +95,23 @@ export const Upload = () => {
     }
   }
 
+  const previewUserFile = async (event: React.FormEvent) => {
+    if (!token) {
+      setErrorMessage('not authenticated')
+      return
+    }
+
+    try {
+      const response = await previewActivities(token, columnFormat.toString(), fileContent!)
+      if (!response.ok) {
+        setErrorMessage('error when processing file')
+      }
+      console.log(111, response)
+    } catch (e) {
+      setErrorMessage('error when processing file' + e.message)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <Form className={styles.uploadForm}>
@@ -136,6 +153,12 @@ export const Upload = () => {
             disabled={fileContent === null}
           >
             Process File
+          </Button>
+          <Button
+            onClick={previewUserFile}
+            disabled={fileContent === null}
+          >
+            Preview File
           </Button>
         </Form.Group>
       </Form>

@@ -4,7 +4,7 @@ export const API_GATEWAY_URL_MAP: Record<string, string | undefined> = Object.fr
   test: '/test',
 })
 
-export const awsLambdaAddr: string = process.env.NODE_ENV?
+export const awsLambdaAddr: string = process.env.NODE_ENV ?
   API_GATEWAY_URL_MAP[process.env.NODE_ENV] || '' : ''
 
 interface CategoryMappingDescription {
@@ -60,12 +60,13 @@ export interface CategoryBreakdown {
 
 function postCall(
   url: string,
+  params: string[][] = [],
   body: string = '',
   contentType: string = 'application/json',
   auth: string = ''
 ): Promise<Response> {
   try {
-    return fetch(awsLambdaAddr + url, {
+    return fetch(`${awsLambdaAddr}${url}${params && Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': contentType,
@@ -87,10 +88,9 @@ function getCall(
 ): Promise<Response> {
   try {
     return fetch(
-      `${awsLambdaAddr}${url}${
-        params && Object.keys(params).length > 0
-          ? `?${new URLSearchParams(params)}`
-          : ''
+      `${awsLambdaAddr}${url}${params && Object.keys(params).length > 0
+        ? `?${new URLSearchParams(params)}`
+        : ''
       }`,
       {
         method: 'GET',
@@ -204,6 +204,7 @@ export function postMappings(
   }
   return postCall(
     '/mappings',
+    [],
     JSON.stringify(mapping),
     'application/json',
     auth
@@ -223,14 +224,14 @@ export function deleteMapping(
 export function getActivities(
   auth: string,
   nextKey: string | null,
-  options: { 
-    size: number 
+  options: {
+    size: number
     category?: string
     startDate?: string
     endDate?: string
   } = {
-    size: 20,
-  },
+      size: 20,
+    },
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth)
@@ -333,7 +334,33 @@ export function postActivities(
   return fileContent
     .text()
     .then(file =>
-      postCall(`/activities?format=${columnFormat}`, file, 'text/html', auth)
+      postCall(`/activities`, [['format', columnFormat]], file, 'text/html', auth)
+    )
+    .then(res => {
+      if (res.ok) {
+        return res.json()
+      } else {
+        throw new Error('post activities failed')
+      }
+    })
+}
+
+
+export function previewActivities(
+  auth: string,
+  columnFormat: string,
+  fileContent: File
+): Promise<Response> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  if (!fileContent) {
+    throw new Error('no file')
+  }
+  return fileContent
+    .text()
+    .then(file =>
+      postCall(`/activities`, [['format', columnFormat], ['type', 'preview']], file, 'text/html', auth)
     )
     .then(res => {
       if (res.ok) {
@@ -379,9 +406,9 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     throw new Error('no auth')
   }
   return getCall('/insights', auth, [
-    ['all_categories', 'true'], 
-    ['exclude_negative', 'true'], 
-    ['by_month', 'true'], 
+    ['all_categories', 'true'],
+    ['exclude_negative', 'true'],
+    ['by_month', 'true'],
     ['starting_date', '2023-01-01'] // fix this
   ])
     .then(res => {
@@ -474,7 +501,7 @@ export function addWishlistItem(
   if (!auth) {
     throw new Error('no auth')
   }
-  return postCall('/wishlist', JSON.stringify(item), 'application/json', auth)
+  return postCall('/wishlist', [], JSON.stringify(item), 'application/json', auth)
 }
 
 export function updateWishlistItem(
