@@ -140,6 +140,25 @@ function putCall(url: string, body: string, auth: string): Promise<Response> {
   }
 }
 
+function serializeActivityResponse2Row(item: ActivityResponse): ActivityRow {
+  const {
+    sk,
+    date,
+    category,
+    account,
+    amount,
+    description,
+  } = item
+  return {
+    id: sk,
+    date,
+    category,
+    account,
+    amount: isNaN(parseFloat(amount)) ? 0 : parseFloat(amount),
+    desc: description,
+  }
+}
+
 function serializeActivitiesAPIResponse(
   res: ActivitiesAPIResponse,
   sliceResult?: {
@@ -151,25 +170,7 @@ function serializeActivitiesAPIResponse(
     ? res.data.slice(sliceResult.start, sliceResult.end)
     : res.data
   return {
-    data: allData.map(
-      ({
-        sk,
-        date,
-        category,
-        account,
-        amount,
-        description,
-      }: ActivityResponse) => {
-        return {
-          id: sk,
-          date,
-          category,
-          account,
-          amount: isNaN(parseFloat(amount)) ? 0 : parseFloat(amount),
-          desc: description,
-        }
-      }
-    ),
+    data: allData.map(serializeActivityResponse2Row),
     nextKey: res.LastEvaluatedKey?.sk,
   }
 }
@@ -350,7 +351,7 @@ export function previewActivities(
   auth: string,
   columnFormat: string,
   fileContent: File
-): Promise<Response> {
+): Promise<ActivityRow[]> {
   if (!auth) {
     throw new Error('no auth')
   }
@@ -368,7 +369,8 @@ export function previewActivities(
       } else {
         throw new Error('post activities failed')
       }
-    })
+    }).then((res: { data: { items: ActivityResponse[] } }) =>
+      res.data.items.map(serializeActivityResponse2Row))
 }
 
 export function deleteActivity(auth: string, id: string): Promise<Response> {

@@ -3,8 +3,10 @@ import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import styles from './Upload.module.css'
-import { FileUpload, getUploads, postActivities, previewActivities } from '../../api'
+import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
+import { Modal } from 'react-bootstrap'
+import { ActivitiesTable } from '../../Components/ActivitiesTable'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -45,6 +47,7 @@ export const Upload = () => {
   const [columnFormat, setColumnFormat] = useState<ColumnFormat>(
     ColumnFormat.cap1
   )
+  const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
   const token = useAuth0TokenSilent()
   const uploads = useFetchPrevUploads(token)
 
@@ -82,14 +85,11 @@ export const Upload = () => {
     }
     try {
       // processes user file, store in financeData state var
-      const response = await postActivities(
+      await postActivities(
         token,
         columnFormat.toString(),
         fileContent!
       )
-      if (!response.ok) {
-        setErrorMessage('error when processing file')
-      }
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)
     }
@@ -103,10 +103,7 @@ export const Upload = () => {
 
     try {
       const response = await previewActivities(token, columnFormat.toString(), fileContent!)
-      if (!response.ok) {
-        setErrorMessage('error when processing file')
-      }
-      console.log(111, response)
+      setPreviewActivityRows(response)
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)
     }
@@ -174,6 +171,24 @@ export const Upload = () => {
           })}
         </ul>
       </div>
+      <Modal
+        show={!!previewActivityRows}
+        onHide={() => setPreviewActivityRows(null)}
+        size='lg'
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Preview Activities</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ActivitiesTable
+            activities={previewActivityRows ?? []}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
+          <Button onClick={processUserFile}>Process File</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   )
 }
