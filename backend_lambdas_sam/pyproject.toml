@@ -12,6 +12,7 @@ defineConstant = { DEBUG = true }
 
 reportMissingImports = false # todo: figure out how to address this 
 reportMissingModuleSource = false # todo: figure out how to address this
+reportAttributeAccessIssue = false # todo: fix
 reportMissingTypeStubs = false
 
 pythonVersion = "3.11"
