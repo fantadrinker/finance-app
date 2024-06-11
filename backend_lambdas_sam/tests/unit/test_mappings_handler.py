@@ -61,6 +61,7 @@ def test_post_mapping(apigw_event_post, activities_table):
     """ Test post mapping """
     # Call our lambda function and compare the result
     response = app.lambda_handler(apigw_event_post, "")
+    assert response is not None
     assert response["statusCode"] == 201
 
     mappings = activities_table.scan()["Items"]
@@ -78,6 +79,7 @@ def test_post_update_mapping(user_id, apigw_event_post, activities_table):
         }
     )
     response = app.lambda_handler(apigw_event_post, "")
+    assert response is not None
     assert response["statusCode"] == 201
 
     mappings = activities_table.scan()["Items"]
@@ -94,6 +96,7 @@ def test_get_mapping(apigw_event_get, activities_table, mock_mappings_items):
 
     # Call our lambda function and compare the result
     response = app.lambda_handler(apigw_event_get, "")
+    assert response is not None
     assert response["statusCode"] == 200
 
     body = json.loads(response["body"])
@@ -116,6 +119,7 @@ def test_delete_mapping(apigw_event_delete, activities_table, mock_mappings_item
 
     # Call our lambda function and compare the result
     response = app.lambda_handler(apigw_event_delete, "")
+    assert response is not None
     assert response["statusCode"] == 200
 
     mappings = activities_table.scan()["Items"]

@@ -18,6 +18,8 @@ def check_record_type(record, event_type, sk_prefix):
 
 def process_new_activity(record, existing_mapping):
     global table
+    if table is None:
+        return
     # try to sum changes up by category and then update insights
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     category = record["dynamodb"]["NewImage"]["category"]["S"]
@@ -117,6 +119,8 @@ RELATED_ACTIVITY_TIMEDELTA = 7
 
 def find_related_activities(record):
     global table
+    if table is None:
+        return []
     user_id = record["dynamodb"]["Keys"]["user"]["S"]
     sk = record["dynamodb"]["Keys"]["sk"]["S"]
     amount = Decimal(record["dynamodb"]["NewImage"]["amount"]["N"])

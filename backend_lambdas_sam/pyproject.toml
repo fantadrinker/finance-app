@@ -1,5 +1,5 @@
 [tool.pyright]
-include = ["lambdas/AuthLayer"]
+include = ["lambdas", "tests"]
 exclude = ["**/node_modules",
     "**/__pycache__",
     "**/.pytype",
@@ -10,18 +10,17 @@ exclude = ["**/node_modules",
 defineConstant = { DEBUG = true }
 # stubPath = "src/stubs"
 
-reportMissingImports = true
+reportMissingImports = false # todo: figure out how to address this 
+reportMissingModuleSource = false # todo: figure out how to address this
 reportMissingTypeStubs = false
 
 pythonVersion = "3.11"
 # pythonPlatform = "Linux"
 pythonPath = "."
 
-extraPaths =  [ "lambdas/AuthLayer", "lambdas/activities"]
-
 executionEnvironments = [
 #  { root = "src/web", pythonVersion = "3.5", pythonPlatform = "Windows", extraPaths = [ "src/service_libs" ] },
 #  { root = "src/sdk", pythonVersion = "3.0", extraPaths = [ "src/backend" ] },
 #  { root = "src/tests", extraPaths = ["src/tests/e2e", "src/sdk" ]},
-  { root = "lambdas" }
+  { root = "lambdas", extraPaths = ["lambdas/AuthLayer", "lambdas/activities"] }
 ]

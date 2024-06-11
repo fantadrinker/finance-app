@@ -21,7 +21,7 @@ def lambda_handler(event, context):
         all_mappings = response['Items']
         nextKey = response.get('LastEvaluatedKey')
         processed_rows = 0
-        while nextKey and processed_rows < os.environ.get("MAX_ROWS", 10000):
+        while nextKey and processed_rows < int(os.environ.get("MAX_ROWS", 10000)):
             response = table.scan(
                 FilterExpression=Attr('sk').begins_with('mapping#'),
                 ExclusiveStartKey=nextKey
@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         nextKey = response.get('LastEvaluatedKey')
         processed_rows = 0
         user_insights_dict = {}
-        while nextKey and processed_rows < os.environ.get("MAX_ROWS", 10000):
+        while nextKey and processed_rows < int(os.environ.get("MAX_ROWS", 10000)):
             response = table.scan(
                 FilterExpression=Attr('sk').begins_with('20'),
                 ExclusiveStartKey=nextKey

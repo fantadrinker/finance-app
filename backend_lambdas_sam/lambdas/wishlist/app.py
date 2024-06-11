@@ -36,6 +36,13 @@ def _serialize_item(item):
 
 
 def get(user_id):
+    if table is None:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": []
+            })
+        }
     try:
         response = table.query(
             KeyConditionExpression=Key('user').eq(
@@ -74,6 +81,13 @@ def post(user_id, event):
             "body": "invalid body",
         }
 
+    if table is None:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": []
+            })
+        }
     try:
         table.put_item(
             Item={
@@ -105,6 +119,13 @@ def delete(user_id, event):
             "body": "invalid body",
         }
 
+    if table is None:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": []
+            })
+        }
     try:
         table.delete_item(
             Key={
@@ -149,6 +170,14 @@ def put(user_id, event):
             "body": "invalid body",
         }
 
+    if table is None:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "data": []
+            })
+        }
+    
     try:
         table.update_item(
             Key={

@@ -45,6 +45,8 @@ def get_grouped_by_categories(items, all_categories, categories):
 
 def getAllMappings(user: str):
     global activities_table
+    if activities_table is None:
+        return []
     response = activities_table.query(
         KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
     )
@@ -80,6 +82,8 @@ def get_new(
     monthlyBreakdown = False
 ): 
     global activities_table
+    if activities_table is None:
+        return
 
     if not ending_date:
         ending_date = datetime.now()
