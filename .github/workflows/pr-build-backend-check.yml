@@ -38,4 +38,5 @@ jobs:
                   if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
             - name: run tests
               run: pytest tests/unit -v -rP
-      
+            - name: static analysis
+              run: pyright .
