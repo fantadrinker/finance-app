@@ -6,7 +6,7 @@ pipeline {
         stage('Build Frontend') {
           steps {
             dir(path: 'frontend') {
-              pwd
+              sh 'pwd'
             }
           }
         }
@@ -14,7 +14,7 @@ pipeline {
         stage('Build Backend') {
           steps {
             dir(path: 'backend_lambdas_sam') {
-              pwd
+              sh 'pwd'
             }
           }
         }
