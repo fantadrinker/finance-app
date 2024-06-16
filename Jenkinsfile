@@ -1,5 +1,7 @@
 pipeline {
-  agent any
+  agent {
+    docker { image 'node:20.11.1-alpine3.19' }
+  }
   stages {
     stage('Build') {
       parallel {
@@ -7,6 +9,8 @@ pipeline {
           steps {
             dir(path: 'frontend') {
               sh 'pwd'
+              sh 'node --version'
+              sh 'npm --version'
             }
           }
         }
@@ -15,6 +19,8 @@ pipeline {
           steps {
             dir(path: 'backend_lambdas_sam') {
               sh 'pwd'
+              sh 'python --version'
+              sh 'python3 --version'
             }
           }
         }
