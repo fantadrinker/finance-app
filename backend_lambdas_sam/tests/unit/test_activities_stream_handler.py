@@ -479,6 +479,7 @@ def test_new_update_delete_activities(activities_table, apigw_event_new_activiti
 
     app.table = activities_table
     ret = app.lambda_handler(apigw_event_new_activities, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     # check that the activities insights are created or updated
     all_insights = activities_table.query(
@@ -519,6 +520,7 @@ def test_delete_activities(activities_table, apigw_event_delete_activities, user
 
     app.table = activities_table
     ret = app.lambda_handler(apigw_event_delete_activities, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     # check that the activities insights are created or updated
     all_insights = activities_table.query(
@@ -550,6 +552,7 @@ def test_modify_activities(activities_table, apigw_event_modify_activities, user
 
     app.table = activities_table
     ret = app.lambda_handler(apigw_event_modify_activities, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     # check that the activities insights are created or updated
     all_insights = activities_table.query(
@@ -589,6 +592,7 @@ def test_new_related_activities(
 
     app.table = activities_table
     ret = app.lambda_handler(api_gw_event_new_related_activities, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     related_activities = activities_table.query(

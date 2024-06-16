@@ -11,6 +11,8 @@ table = None
 def post(user, description, category, priority):
     global table
     # creates "user: user, sk: mapping#desc, description: description, category: category, priority: priority"
+    if not table:
+        return
     try:
         # first see if the mapping already exists
         response = table.get_item(
@@ -65,6 +67,8 @@ def post(user, description, category, priority):
 def get(user):
     # returns a list of unique category names
     global table
+    if not table:
+        return
     try:
         response = table.query(
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
@@ -119,6 +123,8 @@ def get(user):
 
 def delete(user, id):
     global table
+    if not table:
+        return
     try:
         response = table.delete_item(
             Key={

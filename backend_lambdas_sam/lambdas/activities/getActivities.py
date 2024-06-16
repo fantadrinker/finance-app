@@ -1,7 +1,8 @@
 import re
+from typing import Optional
 import json
 from boto3.dynamodb.conditions import Key, Attr
-import botocore
+from botocore.exceptions import ClientError
 from functools import reduce
 from datetime import timedelta, datetime
 from libs import getMappings, applyMappings
@@ -11,12 +12,12 @@ def getActivities(
         user: str,
         size: int,
         activities_table,
-        startKey: str = None,
-        description: str = None,
+        startKey: Optional[str] = None,
+        description: Optional[str] = None,
         orderByAmount: bool = False,
-        account: str = None,
-        amountMax: int = None,
-        amountMin: int = None):
+        account: Optional[str] = None,
+        amountMax: Optional[int] = None,
+        amountMin: Optional[int] = None):
     try:
         query_params = {
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
@@ -85,7 +86,7 @@ def getActivities(
                 "LastEvaluatedKey": data.get("LastEvaluatedKey", {})
             })
         }
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print(error)
         return {
             "statusCode": 500,
@@ -157,7 +158,7 @@ def getRelatedActivities(user: str, sk: str, activities_table):
                 "statusCode": 404,
                 "body": "no record found"
             }
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print(error)
         return {
             "statusCode": 500,
@@ -204,7 +205,7 @@ def getRelatedActivities(user: str, sk: str, activities_table):
                 "data": responses
             })
         }
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print("error fetching related activities", error)
         return {
             "statusCode": 500,
