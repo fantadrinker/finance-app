@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import {
   CategoryMapping,
   deleteMapping,
+  getBudgets,
   getMappings,
   postMappings,
 } from '../../api'
@@ -38,11 +39,17 @@ function deduplicate(arr: Array<string>) {
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
+
+  // mappings
   const [mappings, setMappings] = useState<Array<Mapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
+
+  // budgets
+  //
+  const [budgets, setBudgets] = useState<string>()
   useEffect(() => {
     if (!token) {
       return
@@ -56,6 +63,11 @@ export const Preferences = () => {
       .catch(err => {
         console.log(err)
       })
+
+    getBudgets(token).then((result) => {
+      if (result)
+        setBudgets(result)
+    })
   }, [token])
 
   if (!token) {
@@ -106,44 +118,49 @@ export const Preferences = () => {
   return (
     <div>
       <h1>Preferences</h1>
-      {mappings.length === 0 ? (
-        <div>No preferences found</div>
-      ) : (
-        <Table>
-          <thead>
-            <tr>
-              <td>Category</td>
-              <td>Description</td>
-              <td>Actions</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={3}>
-                <Button onClick={() => openModalWithParams('', '')}>
-                  Add new mapping
-                </Button>
-              </td>
-            </tr>
-            {mappings.map(({ category, description, sk }) => (
-              <tr key={`${category}${description}`}>
-                <td>{category}</td>
-                <td>{description}</td>
-                <td>
-                  <Button
-                    onClick={() => openModalWithParams(description, category)}
-                  >
-                    Update
-                  </Button>
-                  <Button onClick={() => deleteMappingAndFetch(sk)}>
-                    Delete
-                  </Button>
-                </td>
+      <section>
+        <h3>Budgets</h3>
+        {budgets}
+      </section>
+      <section>
+        <h3>Mappings</h3>
+        <div>
+          <Button onClick={() => openModalWithParams('', '')}>
+            Add new mapping
+          </Button>
+        </div>
+        {mappings.length === 0 ? (
+          <div>No preferences found</div>
+        ) : (
+          <Table>
+            <thead>
+              <tr>
+                <td>Category</td>
+                <td>Description</td>
+                <td>Actions</td>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+            </thead>
+            <tbody>
+              {mappings.map(({ category, description, sk }) => (
+                <tr key={`${category}${description}`}>
+                  <td>{category}</td>
+                  <td>{description}</td>
+                  <td>
+                    <Button
+                      onClick={() => openModalWithParams(description, category)}
+                    >
+                      Update
+                    </Button>
+                    <Button onClick={() => deleteMappingAndFetch(sk)}>
+                      Delete
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </section>
 
       <UpdateMappingModal
         show={showModal}

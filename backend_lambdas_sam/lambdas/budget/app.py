@@ -1,4 +1,7 @@
 
 
-def handler(request, context):
-    return "hello budget"
+def lambda_handler(request, context):
+    return {
+        "statusCode": 200,
+        "body": "success get budgets"
+    }
