@@ -48,6 +48,7 @@ export const Upload = () => {
     ColumnFormat.cap1
   )
   const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
+  const [processingFile, setProcessingFile] = useState<boolean>(false)
   const token = useAuth0TokenSilent()
   const uploads = useFetchPrevUploads(token)
 
@@ -83,6 +84,8 @@ export const Upload = () => {
       setErrorMessage('not authenticated')
       return
     }
+		setProcessingFile(true)
+
     try {
       // processes user file, store in financeData state var
       await postActivities(
@@ -90,6 +93,10 @@ export const Upload = () => {
         columnFormat.toString(),
         fileContent!
       )
+			setProcessingFile(false)
+			if (previewActivityRows) {
+				setPreviewActivityRows(null)
+			}
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)
     }
@@ -147,13 +154,13 @@ export const Upload = () => {
             onClick={processUserFile}
             type="submit"
             role="submit"
-            disabled={fileContent === null}
+            disabled={fileContent === null || processingFile}
           >
             Process File
           </Button>
           <Button
             onClick={previewUserFile}
-            disabled={fileContent === null}
+            disabled={fileContent === null || processingFile}
           >
             Preview File
           </Button>
@@ -186,7 +193,7 @@ export const Upload = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
-          <Button onClick={processUserFile}>Process File</Button>
+          <Button onClick={processUserFile} disabled={!!processingFile}>Process File</Button>
         </Modal.Footer>
       </Modal>
     </div>
