@@ -36,7 +36,13 @@ then build local python code
 
 then deploy to cloud
 
-    sam deploy --guided
+    sam deploy
+
+or develop locally
+
+    sam sync
+
+when deploying or syncing, the `samconfig.toml` is already setup to sync to development stack so don't need to worry about accidentally breaking production
 
 
 
