@@ -8,7 +8,13 @@ from datetime import datetime, date
 
 import botocore
 
-from libs import serialize_rbc_activity, serialize_cap1_activity, getMappings, applyMappings
+from libs import (
+        serialize_rbc_activity, 
+        serialize_cap1_activity, 
+        serialize_default_activity,
+        getMappings, 
+        applyMappings
+)
 
 
 def uploadToS3(user: str, file_format: str, body, activities_table, s3):
@@ -32,18 +38,23 @@ def uploadToS3(user: str, file_format: str, body, activities_table, s3):
     return s3_key, chksum
 
 
-def getItemsFromFile(file_format: str, body):
+def getItemsFromBody(body, file_format: str):
+    all_activities = []
+    if file_format:
+        # parse the csv
+        all_activities = csv.reader(body.splitlines(), delimiter=',') 
+    else:
+        bodyParsed = json.loads(body)
+        all_activities = bodyParsed.get('data', [])
 
-    # parse the csv
-    csv_reader = csv.reader(body.splitlines(), delimiter=',')
-    firstRow = True
+    firstRow = not file_format is None
 
     items = []
 
     start_date = date.max.strftime("%Y-%m-%d")
     end_date = date.min.strftime("%Y-%m-%d")
 
-    for row in csv_reader:
+    for row in all_activities:
         # skips first header row
         if firstRow:
             firstRow = False
@@ -54,6 +65,8 @@ def getItemsFromFile(file_format: str, body):
             item = serialize_cap1_activity(row)
         elif file_format == "rbc":
             item = serialize_rbc_activity(row)
+        elif not file_format:
+            item = serialize_default_activity(row)
         if item:
             # first update first and last dates
             if item['date'] < start_date:
@@ -70,13 +83,13 @@ def getItemsFromFile(file_format: str, body):
 
 def postActivities(user: str, file_format: str, body, activities_table, s3, preview: bool):
     try:
-        if not file_format or not body:
+        if not body:
             return {
                 "statusCode": 400,
                 "body": "missing body content or input format",
             }
 
-        items, start_date, end_date = getItemsFromFile(file_format, body)
+        items, start_date, end_date = getItemsFromBody(body, file_format)
 
         if preview:
             mappings = getMappings(user, activities_table)
