@@ -35,6 +35,7 @@ resolve_s3 = true
 [default.sync]
 [default.sync.parameters]
 watch = true
+use_container = true
 
 [default.local_start_api]
 [default.local_start_api.parameters]

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
+import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
 import {
   CategoryMapping,
@@ -43,15 +44,20 @@ export const Preferences = () => {
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
+	const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
     if (!token) {
       return
     }
     // fetch data from /preferences endpoint
+		setMappings([])
+		setAllCategories([])
+		setLoading(true)
     getMappings(token)
       .then(result => {
         setMappings(transformMappings(result))
         setAllCategories(deduplicate(result.map(({ category }) => category)))
+				setLoading(false)
       })
       .catch(err => {
         console.log(err)
@@ -106,9 +112,11 @@ export const Preferences = () => {
   return (
     <div>
       <h1>Preferences</h1>
-      {mappings.length === 0 ? (
+			{loading && <Spinner />}
+      {(!loading && mappings.length === 0) && (
         <div>No preferences found</div>
-      ) : (
+      )}
+			{(!loading && mappings.length > 0) && (
         <Table>
           <thead>
             <tr>
