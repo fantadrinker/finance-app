@@ -102,8 +102,6 @@ def get(user):
                         "sk": sk
                     }]
                 })
-
-
         return {
             "statusCode": 200,
             "body": json.dumps({

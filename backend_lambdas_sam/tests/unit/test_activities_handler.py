@@ -20,6 +20,34 @@ def rbc_file_raw():
 
 
 @pytest.fixture()
+def activities_body_json():
+    return json.dumps({
+            "data": [
+                {
+                    'date': '2023-01-01',
+                    'account': '0123',
+                    'description': 'Ramen Danbo',
+                    'category': 'Dining',
+                    'amount': "54.03"
+                },
+                {
+                    'date': '2023-01-31',
+                    'account': '0123',
+                    'description': 'SAFEWAY',
+                    'category': 'Grocery',
+                    'amount': '33.9'
+                },
+                {
+                    'date': '2023-02-01',
+                    'account': '0123',
+                    'description': 'ADV PARKING',
+                    'category': 'Transportation',
+                    'amount': '1.10'
+                },
+                ]
+            })
+
+@pytest.fixture()
 def apigw_event_post_cap1(user_id, cap1_file_raw):
     """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=cap1", body=cap1_file_raw)
@@ -240,7 +268,25 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     # assert chksum_item["file"] == f"{user_id}/rbc/2021-01-01.csv"
     assert chksum_item["start_date"] == "2023-07-05"
     assert chksum_item["end_date"] == "2023-07-06"
+
+
+def test_post_activities(activities_table, s3, user_id, activities_body_json):
+    app.s3 = s3
+    app.activities_table = activities_table
+    evt = TestHelpers.get_base_event(user_id, "POST", "/activity", "", body=activities_body_json)
+    ret = app.lambda_handler(evt, {})
+
+    assert ret["statusCode"] == 200
+
+    activities_response = activities_table.query(
+        KeyConditionExpression=Key("user").eq(user_id) & Key(
+            'sk').between("0000-00-00", "9999-99-99")
+    )
     
+    assert len(activities_response["Items"]) == 3
+    assert activities_response["Items"][0]["description"] == "Ramen Danbo"
+    assert activities_response["Items"][0]["search_term"] == "ramen danbo"
+    assert activities_response["Items"][0]["account"] == "0123"
 
 def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_activities):
     # setup table and insert some activities data in there
