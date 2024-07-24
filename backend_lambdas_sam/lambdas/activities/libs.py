@@ -49,9 +49,10 @@ def serialize_cap1_activity(row):
     }
 
 def serialize_default_activity(row):
+    date_str = row['date']
     return {
-            'sk': f'{row['date']}{str(uuid.uuid4())}',
-            'date': row['date'],
+            'sk': f'{date_str}{str(uuid.uuid4())}',
+            'date': date_str,
             'account': row['account'],
             'description': row['description'],
             'category': row['category'],
