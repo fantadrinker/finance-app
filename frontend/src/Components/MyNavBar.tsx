@@ -5,6 +5,7 @@ import NavDropdown from 'react-bootstrap/NavDropdown'
 import Container from 'react-bootstrap/Container'
 
 import { useAuth0 } from '@auth0/auth0-react'
+import { BASE_NAME } from '../config'
 
 const MyNavBar = () => {
   const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0()
@@ -18,7 +19,7 @@ const MyNavBar = () => {
   const logoutWithRedirect = () =>
     logout({
       logoutParams: {
-        returnTo: window.location.origin,
+        returnTo: `${window.location.origin}${BASE_NAME}`
       },
     })
   return (

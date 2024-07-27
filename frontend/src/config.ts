@@ -24,3 +24,5 @@ export function getConfig(): AuthConfig {
     ...(audience ? { audience } : null),
   }
 }
+
+export const BASE_NAME = process.env.NODE_ENV === 'production' ? '/finance-app' : ''
