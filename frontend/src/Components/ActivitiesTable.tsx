@@ -94,7 +94,7 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
         ))}
         {loading && (
           <tr>
-            <td colSpan={colCount}>
+            <td colSpan={colCount} className="text-center">
               <Spinner role="status" animation="border" />
             </td>
           </tr>
