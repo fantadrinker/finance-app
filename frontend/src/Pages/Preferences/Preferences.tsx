@@ -11,6 +11,7 @@ import {
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0 } from '@auth0/auth0-react'
 
 interface Mapping {
   sk: string
@@ -38,33 +39,38 @@ function deduplicate(arr: Array<string>) {
 // TODO: set up error handling
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
+
   const token = useAuth0TokenSilent()
+  const isLoggedIn = !!user_id && !!isAuthenticated && !!token
+
   const [mappings, setMappings] = useState<Array<Mapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
-	const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
-    if (!token) {
+    if (!isLoggedIn) {
       return
     }
     // fetch data from /preferences endpoint
-		setMappings([])
-		setAllCategories([])
-		setLoading(true)
-    getMappings(token)
+    setMappings([])
+    setAllCategories([])
+    setLoading(true)
+    getMappings(user_id, token)
       .then(result => {
         setMappings(transformMappings(result))
         setAllCategories(deduplicate(result.map(({ category }) => category)))
-				setLoading(false)
+        setLoading(false)
       })
       .catch(err => {
         console.log(err)
       })
-  }, [token])
+  }, [isLoggedIn])
 
-  if (!token) {
+  if (!isLoggedIn) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>
@@ -78,13 +84,17 @@ export const Preferences = () => {
     setShowModal(true)
   }
   const deleteMappingAndFetch = (sk: string) => {
+    if (!isLoggedIn) {
+      console.error('error trying to delete mapping while logged out')
+      return
+    }
     // calls delete /mappings endpoint
-    deleteMapping(token, sk)
+    deleteMapping(user_id, token, sk)
       .then(result => {
         if (!result.ok) {
           return []
         }
-        return getMappings(token ?? '')
+        return getMappings(user_id, token ?? '')
       })
       .then(data => setMappings(transformMappings(data)))
       .catch(err => {
@@ -93,8 +103,12 @@ export const Preferences = () => {
   }
 
   const updateNewCategory = async (desc: string, newCategory: string) => {
+    if (!isLoggedIn) {
+      console.error('error trying to delete mapping while logged out')
+      return
+    }
     // calls post /mappings endpoint to update category mapping
-    postMappings(token, {
+    postMappings(user_id, token, {
       description: desc,
       category: newCategory,
     })
@@ -112,11 +126,11 @@ export const Preferences = () => {
   return (
     <div>
       <h1>Preferences</h1>
-			{loading && <Spinner />}
+      {loading && <Spinner />}
       {(!loading && mappings.length === 0) && (
         <div>No preferences found</div>
       )}
-			{(!loading && mappings.length > 0) && (
+      {(!loading && mappings.length > 0) && (
         <Table>
           <thead>
             <tr>

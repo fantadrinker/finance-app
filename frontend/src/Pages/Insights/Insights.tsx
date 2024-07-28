@@ -1,3 +1,4 @@
+import { useAuth0 } from '@auth0/auth0-react'
 import { useState, useEffect } from 'react'
 import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
@@ -13,17 +14,20 @@ import { useAuth0TokenSilent } from '../../hooks'
  */
 
 export const Insights = () => {
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
   const token = useAuth0TokenSilent()
   const [insights, setInsights] = useState<Array<Insight>>([])
   const [loading, setLoading] = useState<boolean>(false)
+  const isLoggedIn = !!token && !!isAuthenticated && !!user_id
 
   useEffect(() => {
-    if (!token) {
+    if (!isLoggedIn) {
       return
     }
     setLoading(true)
     // fetch data from /insights endpoint
-    getInsights(token)
+    getInsights(user_id, token)
       .then(result => {
         setInsights(result)
       })
@@ -33,9 +37,9 @@ export const Insights = () => {
       .finally(() => {
         setLoading(false)
       })
-  }, [token])
+  }, [isLoggedIn])
 
-  if (!token) {
+  if (!isLoggedIn) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>

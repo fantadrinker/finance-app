@@ -17,8 +17,11 @@ import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
+import { useAuth0 } from '@auth0/auth0-react'
 
 export function Home() {
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
   const token = useAuth0TokenSilent()
 
   const [state, dispatch] = useReducer(reducer, {
@@ -35,34 +38,37 @@ export function Home() {
   const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
 
   const { financeData, loading, hasMore, fetchMore, reFetch } =
-    useFinanceDataFetcher(token, setErrorMessage)
+    useFinanceDataFetcher(user_id, token, setErrorMessage)
+
+
+  const isLoggedIn = isAuthenticated && !!token && !!user_id
 
   useEffect(() => {
-    if (token) {
-      getMappings(token)
-        .then(data => {
-          dispatch({
-            type: 'updateAllCategories',
-            payload: data.map(({ category }) => category),
-          })
-        })
-        .catch(err => {
-          console.log(err)
-          setErrorMessage(`Error fetching activity mappings ${err.message}`)
-        })
-      getDeletedActivities(token).then(({
-        data,
-        nextKey
-      }) => {
-        setDeletedActivities(data)
-      }).catch(err => {
-        console.log(err)
-        setErrorMessage(`Error fetching deleted activities ${err.message}`)
-      })
+    if (!isLoggedIn) {
+      return
     }
-  }, [token])
+    getMappings(user_id, token)
+      .then(data => {
+        dispatch({
+          type: 'updateAllCategories',
+          payload: data.map(({ category }) => category),
+        })
+      })
+      .catch(err => {
+        console.log(err)
+        setErrorMessage(`Error fetching activity mappings ${err.message}`)
+      })
+    getDeletedActivities(user_id, token).then(({
+      data,
+    }) => {
+      setDeletedActivities(data)
+    }).catch(err => {
+      console.log(err)
+      setErrorMessage(`Error fetching deleted activities ${err.message}`)
+    })
+  }, [token, isAuthenticated, user])
 
-  if (!token) {
+  if (!isLoggedIn) {
     return (
       <div>
         Not authenticated, please <Link to="/login">Log in </Link>
@@ -71,12 +77,12 @@ export function Home() {
   }
 
   const deleteAndFetch = async (id: string) => {
-    if (!token) {
+    if (!isLoggedIn) {
       return
     }
     try {
       const sizeToFetch = financeData.length
-      const response = await deleteActivity(token, id)
+      const response = await deleteActivity(user_id, token, id)
       if (response.ok) {
         reFetch(true, sizeToFetch)
       }
@@ -87,14 +93,23 @@ export function Home() {
   }
 
   function updateNewCategory(desc: string, newCategory: string): void {
+    if (!isLoggedIn) {
+      console.error('trying to update while not logged in')
+      return
+    }
+
     const sizeToRefetch = financeData.length
-    postMappings(token, {
+    postMappings(user_id, token, {
       description: desc,
       category: newCategory,
     })
       .then(apiResponse => {
         if (apiResponse.ok) {
-          getMappings(token)
+          if (!user.sub) {
+            console.error('trying to update while not logged in')
+            return
+          }
+          getMappings(user_id, token)
             .then(data => {
               dispatch({
                 type: 'updateCategory',

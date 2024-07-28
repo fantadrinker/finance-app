@@ -7,6 +7,7 @@ import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities 
 import { useAuth0TokenSilent } from '../../hooks'
 import { Modal } from 'react-bootstrap'
 import { ActivitiesTable } from '../../Components/ActivitiesTable'
+import { useAuth0 } from '@auth0/auth0-react'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -19,14 +20,11 @@ const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.rbc]: 'RBC',
 })
 
-function useFetchPrevUploads(token: string | null): Array<FileUpload> {
+function useFetchPrevUploads(user_id?: string, token?: string): Array<FileUpload> {
   const [uploads, setUploads] = useState<Array<FileUpload>>([])
   useEffect(() => {
-    if (!token) {
-      return
-    }
-    if (token) {
-      getUploads(token)
+    if (token && user_id) {
+      getUploads(user_id, token)
         .then(data => {
           setUploads(data)
         })
@@ -34,7 +32,7 @@ function useFetchPrevUploads(token: string | null): Array<FileUpload> {
           console.log(err)
         })
     }
-  }, [token])
+  }, [user_id, token])
   return uploads
 }
 
@@ -49,8 +47,12 @@ export const Upload = () => {
   )
   const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
   const [processingFile, setProcessingFile] = useState<boolean>(false)
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
   const token = useAuth0TokenSilent()
-  const uploads = useFetchPrevUploads(token)
+  const uploads = useFetchPrevUploads(user_id, token)
+
+  const isLoggedIn = !!user_id && !!token && isAuthenticated
 
   const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement
@@ -80,36 +82,37 @@ export const Upload = () => {
 
   const processUserFile = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!token) {
+    if (!isLoggedIn) {
       setErrorMessage('not authenticated')
       return
     }
-		setProcessingFile(true)
+    setProcessingFile(true)
 
     try {
       // processes user file, store in financeData state var
       await postActivities(
+        user_id,
         token,
         columnFormat.toString(),
         fileContent!
       )
-			setProcessingFile(false)
-			if (previewActivityRows) {
-				setPreviewActivityRows(null)
-			}
+      setProcessingFile(false)
+      if (previewActivityRows) {
+        setPreviewActivityRows(null)
+      }
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)
     }
   }
 
-  const previewUserFile = async (event: React.FormEvent) => {
-    if (!token) {
+  const previewUserFile = async (_: React.FormEvent) => {
+    if (!isLoggedIn) {
       setErrorMessage('not authenticated')
       return
     }
 
     try {
-      const response = await previewActivities(token, columnFormat.toString(), fileContent!)
+      const response = await previewActivities(user_id, token, columnFormat.toString(), fileContent!)
       setPreviewActivityRows(response)
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)

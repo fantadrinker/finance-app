@@ -95,6 +95,8 @@ const activeSlice = (props: SectorProps) => {
 }
 
 export const CategoryCard = ({ insights }: CategoryCardProps) => {
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
   const { getAccessTokenSilently } = useAuth0()
 
   const [categoryBreakdown, setCategoryBreakdown] = useState<
@@ -114,12 +116,13 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
   }, [insights])
 
   const handleClick = (event: any) => {
+    if (!user_id || !isAuthenticated) return
     // todo: type event
-    const categoriesToFetch = event.name === OTHERS_CATEGORY? categoryBreakdown.slice(0, 5).map(cur => cur.category): [event.name]
+    const categoriesToFetch = event.name === OTHERS_CATEGORY ? categoryBreakdown.slice(0, 5).map(cur => cur.category) : [event.name]
     setSelectedCategory(event.name)
     setLoading(true)
     getAccessTokenSilently()
-      .then(accessToken => getActivitiesByCategory(accessToken, categoriesToFetch, event.name === OTHERS_CATEGORY))
+      .then(accessToken => getActivitiesByCategory(user_id, accessToken, categoriesToFetch, event.name === OTHERS_CATEGORY))
       .then(activities => {
         setActivities(activities.data)
       })
@@ -134,15 +137,15 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
 
   const cardStyles = isExpanded
     ? {
-        flexGrow: 2,
-        maxWidth: '800px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 2,
+      maxWidth: '800px',
+      transition: 'all 0.2s linear 0s',
+    }
     : {
-        flexGrow: 1,
-        maxWidth: '400px',
-        transition: 'all 0.2s linear 0s',
-      }
+      flexGrow: 1,
+      maxWidth: '400px',
+      transition: 'all 0.2s linear 0s',
+    }
 
   return (
     <Card style={cardStyles}>
@@ -181,8 +184,8 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
                   key={`cell-${index}`}
                   fill={
                     isExpanded &&
-                    category !== selectedCategory &&
-                    index !== hoveredIndex
+                      category !== selectedCategory &&
+                      index !== hoveredIndex
                       ? 'grey'
                       : COLORS_GPT[index % COLORS_GPT.length]
                   }
