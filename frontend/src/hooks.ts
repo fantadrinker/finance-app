@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 
-export function useAuth0TokenSilent(): string | null {
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0()
+export function useAuth0WithTokenSilent(): {
+  token: string | null
+  user_id: string | null
+ } {
+  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
 
   const [token, setToken] = useState<string | null>(null)
   useEffect(() => {
@@ -16,5 +19,8 @@ export function useAuth0TokenSilent(): string | null {
       setToken(null)
     }
   }, [getAccessTokenSilently, isAuthenticated])
-  return token
+  return {
+    token,
+    user_id: user?.sub ?? null
+  }
 }

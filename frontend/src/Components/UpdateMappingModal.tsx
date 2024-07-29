@@ -3,9 +3,8 @@ import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import { ActivityRow, getActivitiesWithDescription } from '../api'
-import { useAuth0TokenSilent } from '../hooks'
+import { useAuth0WithTokenSilent } from '../hooks'
 import { ActivitiesTable } from './ActivitiesTable'
-import { useAuth0 } from '@auth0/auth0-react'
 
 interface UpdateMappingModalProps {
   show: boolean
@@ -24,9 +23,7 @@ const UpdateMappingModal = ({
   allCategories,
   submit, // TODO: remove this, call api directly
 }: UpdateMappingModalProps) => {
-  const auth = useAuth0TokenSilent()
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
+  const { token: auth, user_id } = useAuth0WithTokenSilent()
   const [newCategory, setNewCategory] = useState<string>(currentCategory)
   const [selectedCategory, setSelectedCategory] = useState<string>(
     allCategories.length > 0 ? currentCategory : ''
@@ -50,7 +47,7 @@ const UpdateMappingModal = ({
   }, [currentCategory, currentDescription, allCategories])
 
   useEffect(() => {
-    if (!show || !auth || newDescription.length === 0 || !isAuthenticated || !user_id) {
+    if (!show || !auth || newDescription.length === 0 || !user_id) {
       return
     }
     if (queuedActivityCall.current) {

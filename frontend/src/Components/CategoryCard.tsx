@@ -3,8 +3,8 @@ import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
 import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'
 import { Spinner } from 'react-bootstrap'
-import { useAuth0 } from '@auth0/auth0-react'
 import { ActivitiesTable } from './ActivitiesTable'
+import { useAuth0WithTokenSilent } from '../hooks'
 
 /**
  * TODO: animations
@@ -95,9 +95,7 @@ const activeSlice = (props: SectorProps) => {
 }
 
 export const CategoryCard = ({ insights }: CategoryCardProps) => {
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
-  const { getAccessTokenSilently } = useAuth0()
+  const { user_id, token } = useAuth0WithTokenSilent()
 
   const [categoryBreakdown, setCategoryBreakdown] = useState<
     Array<CategoryBreakdown>
@@ -116,13 +114,12 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
   }, [insights])
 
   const handleClick = (event: any) => {
-    if (!user_id || !isAuthenticated) return
+    if (!user_id || !token) return
     // todo: type event
     const categoriesToFetch = event.name === OTHERS_CATEGORY ? categoryBreakdown.slice(0, 5).map(cur => cur.category) : [event.name]
     setSelectedCategory(event.name)
     setLoading(true)
-    getAccessTokenSilently()
-      .then(accessToken => getActivitiesByCategory(user_id, accessToken, categoriesToFetch, event.name === OTHERS_CATEGORY))
+    getActivitiesByCategory(user_id, token, categoriesToFetch, event.name === OTHERS_CATEGORY)
       .then(activities => {
         setActivities(activities.data)
       })

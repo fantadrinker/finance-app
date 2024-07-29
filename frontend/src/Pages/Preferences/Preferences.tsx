@@ -10,8 +10,7 @@ import {
   postMappings,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
-import { useAuth0TokenSilent } from '../../hooks'
-import { useAuth0 } from '@auth0/auth0-react'
+import { useAuth0WithTokenSilent } from '../../hooks'
 
 interface Mapping {
   sk: string
@@ -39,11 +38,9 @@ function deduplicate(arr: Array<string>) {
 // TODO: set up error handling
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
 
-  const token = useAuth0TokenSilent()
-  const isLoggedIn = !!user_id && !!isAuthenticated && !!token
+  const { user_id, token } = useAuth0WithTokenSilent()
+  const isLoggedIn = !!user_id && !!token
 
   const [mappings, setMappings] = useState<Array<Mapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)

@@ -1,16 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react'
 import React, { useEffect, useState } from 'react'
 import { Form, Table } from 'react-bootstrap'
 import { addWishlistItem, getWishlist, WishListItem } from '../../api'
-import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0WithTokenSilent } from '../../hooks'
 
 export function Wishlist() {
   // TODO: add auth support
   // TODO: add delete, update actions, hook up create with backend
 
-  const { user } = useAuth0()
-  const user_id = user?.sub
-  const token = useAuth0TokenSilent()
+  const { token, user_id } = useAuth0WithTokenSilent()
   const [items, setItems] = useState<WishListItem[]>([])
   const [newName, setNewName] = useState<string>('')
   const [newDescription, setNewDescription] = useState<string>('')

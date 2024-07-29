@@ -11,18 +11,15 @@ import {
   getDeletedActivities,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
-import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0WithTokenSilent } from '../../hooks'
 import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
-import { useAuth0 } from '@auth0/auth0-react'
 
 export function Home() {
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
-  const token = useAuth0TokenSilent()
+  const { token, user_id } = useAuth0WithTokenSilent()
 
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
@@ -41,7 +38,7 @@ export function Home() {
     useFinanceDataFetcher(user_id ?? null, token, setErrorMessage)
 
 
-  const isLoggedIn = isAuthenticated && !!token && !!user_id
+  const isLoggedIn = !!token && !!user_id
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -66,7 +63,7 @@ export function Home() {
       console.log(err)
       setErrorMessage(`Error fetching deleted activities ${err.message}`)
     })
-  }, [token, isAuthenticated, user])
+  }, [token, user_id])
 
   if (!isLoggedIn) {
     return (
@@ -105,7 +102,7 @@ export function Home() {
     })
       .then(apiResponse => {
         if (apiResponse.ok) {
-          if (!user.sub) {
+          if (user_id) {
             console.error('trying to update while not logged in')
             return
           }

@@ -4,10 +4,9 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import styles from './Upload.module.css'
 import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities } from '../../api'
-import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0WithTokenSilent } from '../../hooks'
 import { Modal } from 'react-bootstrap'
 import { ActivitiesTable } from '../../Components/ActivitiesTable'
-import { useAuth0 } from '@auth0/auth0-react'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -47,12 +46,10 @@ export const Upload = () => {
   )
   const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
   const [processingFile, setProcessingFile] = useState<boolean>(false)
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
-  const token = useAuth0TokenSilent()
-  const uploads = useFetchPrevUploads(user_id, token ?? undefined)
+  const { token, user_id } = useAuth0WithTokenSilent()
+  const uploads = useFetchPrevUploads(user_id ?? undefined, token ?? undefined)
 
-  const isLoggedIn = !!user_id && !!token && isAuthenticated
+  const isLoggedIn = !!user_id && !!token 
 
   const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement

@@ -13,10 +13,9 @@ import { CategoryBreakdown, deleteActivity, Insight } from '../api'
 import { Modal, Table } from 'react-bootstrap'
 import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
 import { useFinanceDataFetcher } from '../Pages/Home/effects'
-import { useAuth0TokenSilent } from '../hooks'
+import { useAuth0WithTokenSilent } from '../hooks'
 import { map, pipe, sort, take } from 'ramda'
 import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
-import { useAuth0 } from '@auth0/auth0-react'
 
 interface MonthlyCardProps {
   insights: Array<Insight>
@@ -30,9 +29,7 @@ interface ExpandCategoryActivityProps {
 
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
-  const token = useAuth0TokenSilent()
+  const { token , user_id} = useAuth0WithTokenSilent()
   const [activeIndex, setActiveIndex] = useState(-1)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
   const [expandCategoryActivity, setExpandCategoryActivity] = useState<ExpandCategoryActivityProps>({
@@ -91,7 +88,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   })
 
   function deleteAndFetchActivities(activityId: string) {
-    if (!token || !isAuthenticated || !user_id) return
+    if (!token || !user_id) return
     deleteActivity(user_id, token, activityId).then((response) => {
       if (!response.ok) {
         console.log('Failed to delete activity')

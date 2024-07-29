@@ -1,11 +1,10 @@
-import { useAuth0 } from '@auth0/auth0-react'
 import { useState, useEffect } from 'react'
 import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
 import { getInsights, Insight } from '../../api'
 import { CategoryCard } from '../../Components/CategoryCard'
 import { MonthlyCard } from '../../Components/MonthlyCard'
-import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0WithTokenSilent } from '../../hooks'
 
 /**
  * TODO: 1. add a stacked bar chart to show the breakdown of each category https://recharts.org/en-US/examples/StackedBarChart
@@ -14,12 +13,10 @@ import { useAuth0TokenSilent } from '../../hooks'
  */
 
 export const Insights = () => {
-  const { user, isAuthenticated } = useAuth0()
-  const user_id = user?.sub
-  const token = useAuth0TokenSilent()
+  const { user_id, token } = useAuth0WithTokenSilent()
   const [insights, setInsights] = useState<Array<Insight>>([])
   const [loading, setLoading] = useState<boolean>(false)
-  const isLoggedIn = !!token && !!isAuthenticated && !!user_id
+  const isLoggedIn = !!token && !!user_id
 
   useEffect(() => {
     if (!isLoggedIn) {
