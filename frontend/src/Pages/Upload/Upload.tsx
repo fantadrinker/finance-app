@@ -50,7 +50,7 @@ export const Upload = () => {
   const { user, isAuthenticated } = useAuth0()
   const user_id = user?.sub
   const token = useAuth0TokenSilent()
-  const uploads = useFetchPrevUploads(user_id, token)
+  const uploads = useFetchPrevUploads(user_id, token ?? undefined)
 
   const isLoggedIn = !!user_id && !!token && isAuthenticated
 

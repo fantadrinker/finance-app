@@ -38,7 +38,7 @@ export function Home() {
   const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
 
   const { financeData, loading, hasMore, fetchMore, reFetch } =
-    useFinanceDataFetcher(user_id, token, setErrorMessage)
+    useFinanceDataFetcher(user_id ?? null, token, setErrorMessage)
 
 
   const isLoggedIn = isAuthenticated && !!token && !!user_id

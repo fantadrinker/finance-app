@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/Button'
 import { ActivityRow, getActivitiesWithDescription } from '../api'
 import { useAuth0TokenSilent } from '../hooks'
 import { ActivitiesTable } from './ActivitiesTable'
+import { useAuth0 } from '@auth0/auth0-react'
 
 interface UpdateMappingModalProps {
   show: boolean
@@ -24,6 +25,8 @@ const UpdateMappingModal = ({
   submit, // TODO: remove this, call api directly
 }: UpdateMappingModalProps) => {
   const auth = useAuth0TokenSilent()
+  const { user, isAuthenticated } = useAuth0()
+  const user_id = user?.sub
   const [newCategory, setNewCategory] = useState<string>(currentCategory)
   const [selectedCategory, setSelectedCategory] = useState<string>(
     allCategories.length > 0 ? currentCategory : ''
@@ -47,7 +50,7 @@ const UpdateMappingModal = ({
   }, [currentCategory, currentDescription, allCategories])
 
   useEffect(() => {
-    if (!show || !auth || newDescription.length === 0) {
+    if (!show || !auth || newDescription.length === 0 || !isAuthenticated || !user_id) {
       return
     }
     if (queuedActivityCall.current) {
@@ -57,7 +60,7 @@ const UpdateMappingModal = ({
     queuedActivityCall.current = window.setTimeout(() => {
       setActivitiesMatchingDesc([])
       setIsLoadingActivities(true)
-      getActivitiesWithDescription(auth, newDescription)
+      getActivitiesWithDescription(user_id, auth, newDescription)
         .then(result => {
           setActivitiesMatchingDesc(result.data)
         })
