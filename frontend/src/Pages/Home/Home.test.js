@@ -26,7 +26,7 @@ beforeEach(() => {
 
 describe('Home, if not logged in', () => {
   beforeEach(() => {
-    auth0Helper.useAuth0TokenSilent.mockReturnValue(null)
+    auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: null, user_id: null })
   })
   test('should redirect user to log in', async () => {
     render(<Home />)
@@ -37,13 +37,13 @@ describe('Home, if not logged in', () => {
 
 describe('if logged in', () => {
   beforeEach(() => {
-    auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+    auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
   })
 
   test('if logged in and no activities is logged, shows the correct prompt', async () => {
     render(<Home />)
     await waitFor(() =>
-      expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
+      expect(auth0Helper.useAuth0WithTokenSilent).toHaveBeenCalled()
     )
     const spinnerElement = screen.getByRole('status')
     await waitFor(() => expect(spinnerElement).toBeInTheDocument()) // wait for spinner to show
@@ -78,7 +78,7 @@ describe('if logged in', () => {
     )
     render(<Home />)
     await waitFor(() =>
-      expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
+      expect(auth0Helper.useAuth0WithTokenSilent).toHaveBeenCalled()
     )
     // find by test id for activity table row. assert count
     expect(await screen.findByRole('status')).toBeInTheDocument()
@@ -136,7 +136,7 @@ describe('if logged in', () => {
     const deleteButton = await screen.findByRole('button', { name: /delete/i })
     deleteButton.click()
     await waitFor(() =>
-      expect(API.deleteActivity).toHaveBeenCalledWith('test token', '1')
+      expect(API.deleteActivity).toHaveBeenCalledWith('test_user', 'test token', '1')
     )
   })
 
@@ -169,6 +169,7 @@ describe('if logged in', () => {
     )
     expect(API.getActivities).toHaveBeenCalledTimes(2)
     expect(API.getActivities).toHaveBeenLastCalledWith(
+      'test_user',
       'test token',
       'test next key'
     )

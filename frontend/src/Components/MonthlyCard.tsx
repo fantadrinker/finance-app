@@ -13,7 +13,7 @@ import { CategoryBreakdown, deleteActivity, Insight } from '../api'
 import { Modal, Table } from 'react-bootstrap'
 import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
 import { useFinanceDataFetcher } from '../Pages/Home/effects'
-import { useAuth0TokenSilent } from '../hooks'
+import { useAuth0WithTokenSilent } from '../hooks'
 import { map, pipe, sort, take } from 'ramda'
 import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
 
@@ -29,7 +29,7 @@ interface ExpandCategoryActivityProps {
 
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
-  const token = useAuth0TokenSilent()
+  const { token , user_id} = useAuth0WithTokenSilent()
   const [activeIndex, setActiveIndex] = useState(-1)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
   const [expandCategoryActivity, setExpandCategoryActivity] = useState<ExpandCategoryActivityProps>({
@@ -79,7 +79,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     financeData, 
     loading: loadingActivities, 
     reFetch: refetchActivities 
-  } = useFinanceDataFetcher(token, serError, {
+  } = useFinanceDataFetcher(user_id ?? null, token, serError, {
     refetchOnChange: true,
     limit: expandCategoryActivity.expanded? 20: 0,
     category: expandCategoryActivity.category,
@@ -88,8 +88,8 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   })
 
   function deleteAndFetchActivities(activityId: string) {
-    if (!token) return
-    deleteActivity(token, activityId).then((response) => {
+    if (!token || !user_id) return
+    deleteActivity(user_id, token, activityId).then((response) => {
       if (!response.ok) {
         console.log('Failed to delete activity')
         return

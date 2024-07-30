@@ -12,12 +12,12 @@ beforeEach(() => {
 
 describe('Upload page, user logged in', () => {
   beforeEach(() => {
-    auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+    auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
   })
   test('should prompt user for file upload', async () => {
     render(<Upload />)
     await waitFor(() =>
-      expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
+      expect(auth0Helper.useAuth0WithTokenSilent).toHaveBeenCalled()
     )
     await waitFor(async () => {
       const fileUpload = await screen.findByRole('file')
@@ -42,7 +42,7 @@ describe('Upload page, user logged in', () => {
     )
     render(<Upload />)
     await waitFor(() =>
-      expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
+      expect(auth0Helper.useAuth0WithTokenSilent).toHaveBeenCalled()
     )
     expect(await screen.findByText(/2021-01-01/i)).toBeInTheDocument()
     expect(await screen.findByText(/2021-01-31/i)).toBeInTheDocument()
