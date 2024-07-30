@@ -81,36 +81,6 @@ Resources:
   ApiLogs:
     Type: AWS::Logs::LogGroup
 
-  # lambda functions
-  MyAuthFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/financeAuthorizer/
-  
-  # required permissions
-  MyAuthRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "apigateway.amazonaws.com"
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: "InvokeMyAuthFunction"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - lambda:InvokeAsync
-                  - lambda:InvokeFunction
-                Resource: !GetAtt MyAuthFunction.Arn
-
   AuthLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
