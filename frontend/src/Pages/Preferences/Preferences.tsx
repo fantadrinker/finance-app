@@ -65,7 +65,7 @@ export const Preferences = () => {
       .catch(err => {
         console.log(err)
       })
-  }, [isLoggedIn])
+  }, [isLoggedIn, user_id, token])
 
   if (!isLoggedIn) {
     return (

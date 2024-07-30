@@ -20,7 +20,7 @@ export function Wishlist() {
     getWishlist(user_id, token).then(res => {
       setItems(res)
     })
-  }, [token])
+  }, [token, user_id])
 
   function addNewItem(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (!user_id || !token) { return }

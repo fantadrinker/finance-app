@@ -36,7 +36,7 @@ const RelatedActivitiesModal = ({
       .catch(err => {
         console.log(err)
       })
-  }, [token, activityId])
+  }, [token, activityId, user_id])
 
   return (
     <Modal show={show} onHide={closeModal}>

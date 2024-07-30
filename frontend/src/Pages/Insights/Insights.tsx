@@ -34,7 +34,7 @@ export const Insights = () => {
       .finally(() => {
         setLoading(false)
       })
-  }, [isLoggedIn])
+  }, [isLoggedIn, token, user_id])
 
   if (!isLoggedIn) {
     return (

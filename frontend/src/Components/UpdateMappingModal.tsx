@@ -69,7 +69,7 @@ const UpdateMappingModal = ({
         })
       }, 500)
 
-  }, [show, auth, newDescription])
+  }, [show, auth, newDescription, user_id])
 
   const selectCategories = allCategories.includes(currentCategory)
     ? allCategories

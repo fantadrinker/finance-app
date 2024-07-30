@@ -71,7 +71,7 @@ export const useFinanceDataFetcher = (
     } else {
       setNextKey(null)
     }
-  }, [token, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
+  }, [token, user_id, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
 
   return {
     financeData,

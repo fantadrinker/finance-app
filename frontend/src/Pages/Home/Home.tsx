@@ -63,7 +63,7 @@ export function Home() {
       console.log(err)
       setErrorMessage(`Error fetching deleted activities ${err.message}`)
     })
-  }, [token, user_id])
+  }, [token, isLoggedIn, user_id])
 
   if (!isLoggedIn) {
     return (
