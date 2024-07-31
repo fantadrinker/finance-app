@@ -12,9 +12,11 @@ Parameters:
   ApiStageName:
     Type: String
     Default: "Test"
-  SkipAuth:
-    Type: String
-    Default: "0" # 0 = false, 1 = true
+  
+Conditions:
+  SkipAuth: !Equals
+    - !Ref ApiStageName
+    - Test
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -30,14 +32,17 @@ Globals:
       Variables:
         ACTIVITIES_TABLE: !Ref ActivitiesTable
         BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-        SKIP_AUTH: !Ref SkipAuth
+        SKIP_AUTH: 
+          'Fn::If':
+            - SkipAuth
+            - '1'
+            - '0'
     Layers:
       - !Ref AuthLayer
   Api:
     TracingEnabled: true
 
 Resources:
-  # api gateway
   FinanceAPI:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -54,7 +59,8 @@ Resources:
               audience:
                 - https://v3rmvn9yri.execute-api.us-east-1.amazonaws.com/Test/
             IdentitySource: "$request.header.Authorization"
-        DefaultAuthorizer: OAuthAuthorizer
+        # TODO: re-enable this line
+        # DefaultAuthorizer: OAuthAuthorizer
       CorsConfiguration:
         AllowMethods: 
           - OPTIONS
@@ -74,36 +80,6 @@ Resources:
 
   ApiLogs:
     Type: AWS::Logs::LogGroup
-
-  # lambda functions
-  MyAuthFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: lambdas/financeAuthorizer/
-  
-  # required permissions
-  MyAuthRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - "apigateway.amazonaws.com"
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: "InvokeMyAuthFunction"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - lambda:InvokeAsync
-                  - lambda:InvokeFunction
-                Resource: !GetAtt MyAuthFunction.Arn
 
   AuthLayer:
     Type: AWS::Serverless::LayerVersion

@@ -1,4 +1,3 @@
-
 # this is the base layer that includes
 # authentication, database connection, and
 import requests
@@ -27,9 +26,9 @@ def verify_token_with_jwks(token, jwks_url, audiences):
 
 
 def get_user_id(event):
-    if os.environ.get("SKIP_AUTH", "") == "1":
-        # for local testing
-        return event.get("headers", {}).get("authorization", "")
+    token = event.get("headers", {}).get("authorization", "")
+    if os.environ.get('SKIP_AUTH', '') == '1':
+        return token
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
@@ -37,7 +36,6 @@ def get_user_id(event):
             f"{url_base}/api/v2/",
             f"{url_base}/userinfo"
         ]
-        token = event.get("headers", {}).get("authorization", "")
 
         decoded = verify_token_with_jwks(token, jwks_url, audiences)
         return decoded.get("sub", "")
