@@ -6,7 +6,7 @@ import os
 from jwt.exceptions import InvalidSignatureError
 
 
-def verify_token_with_jwks(token, jwks_url, audiences, skip_auth = False):
+def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
 
@@ -16,7 +16,7 @@ def verify_token_with_jwks(token, jwks_url, audiences, skip_auth = False):
     try:
         # Verify the token using the extracted public key
         decoded_token = jwt.decode(token, key=key, algorithms=[
-                                   "RS256"], audience=audiences, options={'verify_signature': not skip_auth})
+                                   "RS256"], audience=audiences)
 
         # If the token was successfully verified, return the decoded token
         return decoded_token
@@ -26,17 +26,18 @@ def verify_token_with_jwks(token, jwks_url, audiences, skip_auth = False):
 
 
 def get_user_id(event):
+    token = event.get("headers", {}).get("authorization", "")
+    if os.environ.get('SKIP_AUTH', '') == '1':
+        return token
     try:
-        skip_auth = os.environ.get('SKIP_AUTH', '') == '1'
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
             f"{url_base}/api/v2/",
             f"{url_base}/userinfo"
         ]
-        token = event.get("headers", {}).get("authorization", "")
 
-        decoded = verify_token_with_jwks(token, jwks_url, audiences, skip_auth)
+        decoded = verify_token_with_jwks(token, jwks_url, audiences)
         return decoded.get("sub", "")
     except:
         return ""
