@@ -43,7 +43,6 @@ Globals:
     TracingEnabled: true
 
 Resources:
-  # api gateway
   FinanceAPI:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -60,7 +59,8 @@ Resources:
               audience:
                 - https://v3rmvn9yri.execute-api.us-east-1.amazonaws.com/Test/
             IdentitySource: "$request.header.Authorization"
-        DefaultAuthorizer: OAuthAuthorizer
+        # TODO: re-enable this line
+        # DefaultAuthorizer: OAuthAuthorizer
       CorsConfiguration:
         AllowMethods: 
           - OPTIONS
