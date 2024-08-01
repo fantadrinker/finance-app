@@ -114,6 +114,8 @@ backend_lambdas_sam$ python -m pytest tests/unit -v
 backend_lambdas_sam$ sam deploy --config-env=test
 # Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
 backend_lambdas_sam$ AWS_SAM_STACK_NAME=backendLambdasSamTest python -m pytest tests/integration -v
+# Destroy the test stack
+backend_lambdas_sam$ sam delete --config-env=test
 ```
 
 Running the integration tests against the dev stack should fail because it requires a jwt token to retrieve the test user
