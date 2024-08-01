@@ -36,6 +36,13 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install ruff pytest
                   if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
-            - name: run tests
+            - name: run unit tests
               run: pytest tests/unit -v -rP
-      
+            - name: build backend
+              run: sam build --use-container      
+            - name: deploy to test stack
+              run: sam deploy --config-env=test --no-confirm-changeset --no-fail-on-empty-changeset 
+            - name: run integration tests
+              run: pytest tests/integration -v -rP
+            - name: teardown test stack
+              run: sam delete --config-env=test --no-prompts
