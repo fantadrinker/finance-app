@@ -18,6 +18,7 @@ defaults:
 
 jobs:
     build-and-test-backend:
+        environment: aws-prod
         runs-on: ubuntu-latest
         strategy:
             matrix:
@@ -38,6 +39,14 @@ jobs:
                   if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
             - name: run unit tests
               run: pytest tests/unit -v -rP
+            - uses: aws-actions/setup-sam@v2
+              with:
+                  use-installer: true
+            - uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
             - name: build backend
               run: sam build --use-container      
             - name: deploy to test stack
