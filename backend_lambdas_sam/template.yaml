@@ -14,7 +14,7 @@ Parameters:
     Default: "Test"
   
 Conditions:
-  SkipAuth: !Equals
+  IsTest: !Equals
     - !Ref ApiStageName
     - Test
 
@@ -34,7 +34,7 @@ Globals:
         BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
         SKIP_AUTH: 
           'Fn::If':
-            - SkipAuth
+            - IsTest
             - '1'
             - '0'
     Layers:
@@ -100,14 +100,10 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - S3WritePolicy:
-            BucketName: !Sub 
-              - "${AWS::AccountId}-${Branch}-activities-files"
-              - Branch: !Ref BranchPrefix
+            BucketName: !Ref ActivitiesFiles
       Environment:
         Variables:
-          ACTIVITIES_BUCKET: !Sub 
-            - "${AWS::AccountId}-${Branch}-activities-files"
-            - Branch: !Ref BranchPrefix
+          ACTIVITIES_BUCKET: !Ref ActivitiesFiles
       Events:
         PostActivities:
           Type: HttpApi 
@@ -283,7 +279,7 @@ Resources:
   ActivitiesFiles:
     Type: 'AWS::S3::Bucket'
     UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
+    DeletionPolicy: !If [IsTest, Delete, Retain] 
     Properties:
       BucketName: !Sub 
         - "${AWS::AccountId}-${Branch}-activities-files"
