@@ -24,7 +24,7 @@ resolve_s3 = true
 stack_name = "backendLambdasSamDev"
 s3_prefix = "backendLambdasSam/dev"
 region = "us-east-1"
-disable_rollback = true
+disable_rollback = false
 image_repositories = []
 parameter_overrides = "BranchPrefix='dev'"
 
@@ -75,4 +75,4 @@ s3_prefix="backendLambdasSamTest"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 region = "us-east-1"
-parameter_overrides = "BranchPrefix='test' ApiStageName='Test' SkipAuth='1'"
+parameter_overrides = "BranchPrefix='test'"

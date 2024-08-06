@@ -14,9 +14,9 @@ Parameters:
     Default: "Test"
   
 Conditions:
-  IsTest: !Equals
-    - !Ref ApiStageName
-    - Test
+  IsCI: !Equals
+    - !Ref BranchPrefix
+    - test
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
@@ -34,7 +34,7 @@ Globals:
         BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
         SKIP_AUTH: 
           'Fn::If':
-            - IsTest
+            - IsCI
             - '1'
             - '0'
     Layers:
@@ -279,7 +279,7 @@ Resources:
   ActivitiesFiles:
     Type: 'AWS::S3::Bucket'
     UpdateReplacePolicy: Retain
-    DeletionPolicy: !If [IsTest, Delete, Retain] 
+    DeletionPolicy: !If [IsCI, Delete, Retain] 
     Properties:
       BucketName: !Sub 
         - "${AWS::AccountId}-${Branch}-activities-files"
