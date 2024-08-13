@@ -6,6 +6,7 @@ version = 0.1
 [default.global]
 [default.global.parameters]
 stack_name = "backendLambdasSamDev"
+region = "us-east-1"
 
 [default.build]
 [default.build.parameters]

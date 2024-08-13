@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import {
   CategoryMapping,
   deleteMapping,
+  getBudgets,
   getMappings,
   postMappings,
 } from '../../api'
@@ -39,12 +40,18 @@ function deduplicate(arr: Array<string>) {
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
+
+  // mappings
   const [mappings, setMappings] = useState<Array<Mapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
 	const [loading, setLoading] = useState<boolean>(false)
+
+  // budgets
+  const [budgets, setBudgets] = useState<string>()
+
   useEffect(() => {
     if (!token) {
       return
@@ -62,6 +69,11 @@ export const Preferences = () => {
       .catch(err => {
         console.log(err)
       })
+
+    getBudgets(token).then((result) => {
+      if (result)
+        setBudgets(result)
+    })
   }, [token])
 
   if (!token) {
@@ -112,6 +124,12 @@ export const Preferences = () => {
   return (
     <div>
       <h1>Preferences</h1>
+      <section>
+        <h3>Budgets</h3>
+        {budgets}
+      </section>
+      <section>
+        <h3>Mappings</h3>
 			{loading && <Spinner />}
       {(!loading && mappings.length === 0) && (
         <div>No preferences found</div>
@@ -148,10 +166,11 @@ export const Preferences = () => {
                   </Button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      )}
+						))}
+            </tbody>
+          </Table>
+        )}
+      </section>
 
       <UpdateMappingModal
         show={showModal}
