@@ -186,7 +186,7 @@ export const Upload = () => {
         <Modal.Header closeButton>
           <Modal.Title>Preview Activities</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className="max-h-[60vh] overflow-scroll">
           <ActivitiesTable
             activities={previewActivityRows ?? []}
           />
