@@ -13,6 +13,7 @@ import MyNavBar from './Components/MyNavBar'
 import Login from './Pages/Login/Login'
 import Upload from './Pages/Upload'
 import Wishlist from './Pages/Wishlist'
+import { BASE_NAME } from './config'
 
 function App() {
   const { isLoading, error } = useAuth0()
@@ -27,7 +28,7 @@ function App() {
 
   return (
     <Router
-      basename={process.env.NODE_ENV === 'production' ? '/finance-app' : ''}
+      basename={BASE_NAME}
     >
       <MyNavBar />
       <div className="main">

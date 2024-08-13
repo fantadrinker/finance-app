@@ -68,7 +68,6 @@ export const useFinanceDataFetcher = (
           setLoading(false)
         })
     } else {
-      // setFinanceData([])
       setNextKey(null)
     }
   }, [token, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])

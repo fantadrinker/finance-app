@@ -48,6 +48,17 @@ def serialize_cap1_activity(row):
         'amount': amount
     }
 
+def serialize_default_activity(row):
+    date_str = row['date']
+    return {
+            'sk': f'{date_str}{str(uuid.uuid4())}',
+            'date': date_str,
+            'account': row['account'],
+            'description': row['description'],
+            'category': row['category'],
+            'amount': Decimal(row['amount'])
+    }
+
 
 def getMappings(user: str, activities_table, categories=None):
     params = {

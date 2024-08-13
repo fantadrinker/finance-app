@@ -52,14 +52,15 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     colCount++
   }
 
+
   return (
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
-          <td className="w-32">Date</td>
-          <td className="w-40">Account</td>
-          <td>Description</td>
-          {options?.showCategories && <td className="w-20">Category</td>}
+          <td className="lg:w-32 md:w-16">Date</td>
+          <td className="lg:w-40 md:w-20">Account</td>
+          <td className="">Description</td>
+          {options?.showCategories && <td className="lg:w-20 md:w-10">Category</td>}
           <td className="w-20">Amount</td>
           {options?.actions && <td>Actions</td>}
         </tr>
@@ -68,11 +69,11 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
         
         {activities.map(activity => (
           <tr key={activity.id}>
-            <td>{activity.date}</td>
-            <td>{activity.account}</td>
-            <td>{activity.desc}</td>
-            {options?.showCategories && <td>{activity.category}</td>}
-            <td>{activity.amount}</td>
+            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
+            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
+            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>
+            {options?.showCategories && <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.category}</span></td>}
+            <td><span className="inline-block whitespace-nowrap text-truncate lg:w-16 md:w-12">{activity.amount}</span></td>
             {options?.actions && (
               <td>
                 <Dropdown>
@@ -93,7 +94,7 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
         ))}
         {loading && (
           <tr>
-            <td colSpan={colCount}>
+            <td colSpan={colCount} className="text-center">
               <Spinner role="status" animation="border" />
             </td>
           </tr>

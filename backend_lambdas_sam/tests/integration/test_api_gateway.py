@@ -14,7 +14,7 @@ class TestApiGateway:
     @pytest.fixture()
     def api_gateway_url(self):
         """ Get the API Gateway URL from Cloudformation Stack outputs """
-        stack_name = os.environ.get("AWS_SAM_STACK_NAME")
+        stack_name = 'backendLambdasSamTest' # os.environ.get("AWS_SAM_STACK_NAME")
 
         if stack_name is None:
             raise ValueError(
@@ -53,10 +53,8 @@ class TestApiGateway:
             }
         )
 
-        print(api_auth_token)
-        print(response.text)
-
         assert response.status_code == 200
         response_data = response.json()
         assert response_data["count"] == 0
         assert response_data["data"] == []
+    

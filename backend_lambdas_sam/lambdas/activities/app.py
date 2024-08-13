@@ -40,8 +40,7 @@ def lambda_handler(event, context):
         print(event)
     if method == "POST":
         params = event.get("queryStringParameters", {})
-        file_format = "cap1" if not params or "format" not in params else params.get(
-            "format")
+        file_format = params.get("format")
         body = event["body"]
         preview = params.get("type", "") == "preview"
         print(f"processing POST request", preview)

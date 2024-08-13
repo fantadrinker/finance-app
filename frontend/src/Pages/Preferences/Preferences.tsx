@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Button from 'react-bootstrap/Button'
 import Table from 'react-bootstrap/Table'
+import Spinner from 'react-bootstrap/Spinner'
 import { Link } from 'react-router-dom'
 import {
   CategoryMapping,
@@ -46,19 +47,24 @@ export const Preferences = () => {
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
+	const [loading, setLoading] = useState<boolean>(false)
 
   // budgets
-  //
   const [budgets, setBudgets] = useState<string>()
+
   useEffect(() => {
     if (!token) {
       return
     }
     // fetch data from /preferences endpoint
+		setMappings([])
+		setAllCategories([])
+		setLoading(true)
     getMappings(token)
       .then(result => {
         setMappings(transformMappings(result))
         setAllCategories(deduplicate(result.map(({ category }) => category)))
+				setLoading(false)
       })
       .catch(err => {
         console.log(err)
@@ -124,39 +130,43 @@ export const Preferences = () => {
       </section>
       <section>
         <h3>Mappings</h3>
-        <div>
-          <Button onClick={() => openModalWithParams('', '')}>
-            Add new mapping
-          </Button>
-        </div>
-        {mappings.length === 0 ? (
-          <div>No preferences found</div>
-        ) : (
-          <Table>
-            <thead>
-              <tr>
-                <td>Category</td>
-                <td>Description</td>
-                <td>Actions</td>
+			{loading && <Spinner />}
+      {(!loading && mappings.length === 0) && (
+        <div>No preferences found</div>
+      )}
+			{(!loading && mappings.length > 0) && (
+        <Table>
+          <thead>
+            <tr>
+              <td>Category</td>
+              <td>Description</td>
+              <td>Actions</td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={3}>
+                <Button onClick={() => openModalWithParams('', '')}>
+                  Add new mapping
+                </Button>
+              </td>
+            </tr>
+            {mappings.map(({ category, description, sk }) => (
+              <tr key={`${category}${description}`}>
+                <td>{category}</td>
+                <td>{description}</td>
+                <td>
+                  <Button
+                    onClick={() => openModalWithParams(description, category)}
+                  >
+                    Update
+                  </Button>
+                  <Button onClick={() => deleteMappingAndFetch(sk)}>
+                    Delete
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {mappings.map(({ category, description, sk }) => (
-                <tr key={`${category}${description}`}>
-                  <td>{category}</td>
-                  <td>{description}</td>
-                  <td>
-                    <Button
-                      onClick={() => openModalWithParams(description, category)}
-                    >
-                      Update
-                    </Button>
-                    <Button onClick={() => deleteMappingAndFetch(sk)}>
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+						))}
             </tbody>
           </Table>
         )}
