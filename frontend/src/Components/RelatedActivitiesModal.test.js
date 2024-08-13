@@ -19,7 +19,7 @@ beforeEach(() => {
 })
 
 test('should show modal when show is true', () => {
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <RelatedActivitiesModal
@@ -33,7 +33,7 @@ test('should show modal when show is true', () => {
 })
 
 test('should show loading when loading', async () => {
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <RelatedActivitiesModal
@@ -72,7 +72,7 @@ test('should show related activities table if data were returned', async () => {
       })
     )
   )
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <RelatedActivitiesModal

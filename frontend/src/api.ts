@@ -1,3 +1,5 @@
+import { isEmpty } from "ramda"
+
 export const API_GATEWAY_URL_MAP: Record<string, string | undefined> = Object.freeze({
   development: process.env.REACT_APP_API_GATEWAY_URL_DEV,
   production: process.env.REACT_APP_API_GATEWAY_URL_PROD,
@@ -60,13 +62,14 @@ export interface CategoryBreakdown {
 
 function postCall(
   url: string,
+  user_id: string,
+  auth: string,
   params: string[][] = [],
   body: string = '',
   contentType: string = 'application/json',
-  auth: string = ''
 ): Promise<Response> {
   try {
-    return fetch(`${awsLambdaAddr}${url}${params && Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : ''}`, {
+    return fetch(`${awsLambdaAddr}${url}${params && Object.keys(params).length > 0 ? `?${new URLSearchParams([...params, ['user_id', user_id]])}` : ''}`, {
       method: 'POST',
       headers: {
         'Content-Type': contentType,
@@ -83,13 +86,14 @@ function postCall(
 
 function getCall(
   url: string,
+  user_id: string,
   auth: string,
   params: string[][] = []
 ): Promise<Response> {
   try {
     return fetch(
       `${awsLambdaAddr}${url}${params && Object.keys(params).length > 0
-        ? `?${new URLSearchParams(params)}`
+        ? `?${new URLSearchParams([...params, ['user_id', user_id]])}`
         : ''
       }`,
       {
@@ -107,9 +111,9 @@ function getCall(
   }
 }
 
-function deleteCall(url: string, auth: string): Promise<Response> {
+function deleteCall(url: string, user_id: string, auth: string, params: string[][] = []): Promise<Response> {
   try {
-    return fetch(awsLambdaAddr + url, {
+    return fetch(`${awsLambdaAddr}${url}${params && !isEmpty(params) ? `?${new URLSearchParams([...params, ['user_id', user_id]])}` : ''}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -123,9 +127,9 @@ function deleteCall(url: string, auth: string): Promise<Response> {
   }
 }
 
-function putCall(url: string, body: string, auth: string): Promise<Response> {
+function putCall(url: string, body: string, user_id: string, auth: string, params: string[][] = []): Promise<Response> {
   try {
-    return fetch(awsLambdaAddr + url, {
+    return fetch(`${awsLambdaAddr}${url}${params && !isEmpty(params) ? `?${new URLSearchParams([...params, ['user_id', user_id]])}` : ''}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -178,12 +182,13 @@ function serializeActivitiesAPIResponse(
 // need another api layer to handle different api responses
 
 export function getMappings(
+  user_id: string,
   auth: string | null
 ): Promise<Array<CategoryMapping>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/mappings', auth)
+  return getCall('/mappings', user_id, auth)
     .then(res => {
       if (res.status === 200) {
         return res.json()
@@ -197,32 +202,36 @@ export function getMappings(
 }
 
 export function postMappings(
+  user_id: string | null,
   auth: string | null,
   mapping: { description: string; category: string }
 ): Promise<Response> {
-  if (!auth) {
+  if (!auth || !user_id) {
     throw new Error('no auth')
   }
   return postCall(
     '/mappings',
+    user_id,
+    auth,
     [],
     JSON.stringify(mapping),
     'application/json',
-    auth
   )
 }
 
 export function deleteMapping(
+  user_id: string | null,
   auth: string | null,
   id: string
 ): Promise<Response> {
-  if (!auth) {
+  if (!auth || !user_id) {
     throw new Error('no auth')
   }
-  return deleteCall(`/mappings?id=${id}`, auth)
+  return deleteCall(`/mappings`, user_id, auth, [['id', id]])
 }
 
 export function getActivities(
+  user_id: string,
   auth: string,
   nextKey: string | null,
   options: {
@@ -255,6 +264,7 @@ export function getActivities(
 
   return getCall(
     '/activities',
+    user_id,
     auth,
     urlParams
   )
@@ -269,13 +279,14 @@ export function getActivities(
 }
 
 export function getActivitiesWithDescription(
+  user_id: string,
   auth: string,
   description: string
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall(`/activities`, auth, [['description', description]])
+  return getCall(`/activities`, user_id, auth, [['description', description]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
@@ -287,13 +298,14 @@ export function getActivitiesWithDescription(
 }
 
 export function getRelatedActivities(
+  user_id: string,
   auth: string,
   id: string
 ): Promise<GetActivitiesResponse> {
-  if (!auth) {
+  if (!auth || !user_id) {
     throw new Error('no auth')
   }
-  return getCall(`/activities`, auth, [['related', id]])
+  return getCall(`/activities`, user_id, auth, [['related', id]])
     .then(res => {
       if (!res.ok) {
         throw new Error('get related activities failed')
@@ -305,12 +317,13 @@ export function getRelatedActivities(
 }
 
 export function getDeletedActivities(
-  auth: string
+  user_id: string,
+  auth: string,
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/deleted', auth)
+  return getCall('/deleted', user_id, auth)
     .then(res => {
       if (!res.ok) {
         throw new Error('get deleted activities failed')
@@ -322,6 +335,7 @@ export function getDeletedActivities(
 }
 
 export function postActivities(
+  user_id: string,
   auth: string,
   columnFormat: string,
   fileContent: File
@@ -335,7 +349,7 @@ export function postActivities(
   return fileContent
     .text()
     .then(file =>
-      postCall(`/activities`, [['format', columnFormat]], file, 'text/html', auth)
+      postCall(`/activities`, user_id, auth, [['format', columnFormat]], file, 'text/html')
     )
     .then(res => {
       if (res.ok) {
@@ -348,6 +362,7 @@ export function postActivities(
 
 
 export function previewActivities(
+  user_id: string,
   auth: string,
   columnFormat: string,
   fileContent: File
@@ -361,7 +376,7 @@ export function previewActivities(
   return fileContent
     .text()
     .then(file =>
-      postCall(`/activities`, [['format', columnFormat], ['type', 'preview']], file, 'text/html', auth)
+      postCall(`/activities`, user_id, auth, [['format', columnFormat], ['type', 'preview']], file, 'text/html')
     )
     .then(res => {
       if (res.ok) {
@@ -373,11 +388,11 @@ export function previewActivities(
       res.data.items.map(serializeActivityResponse2Row))
 }
 
-export function deleteActivity(auth: string, id: string): Promise<Response> {
+export function deleteActivity(user_id: string, auth: string, id: string): Promise<Response> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return deleteCall(`/activities?sk=${id}`, auth)
+  return deleteCall(`/activities`, user_id, auth, [['sk', id]])
 }
 
 export interface FileUpload {
@@ -386,11 +401,14 @@ export interface FileUpload {
   start_date: string
 }
 
-export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
+export function getUploads(
+  user_id: string,
+  auth: string | null
+): Promise<Array<FileUpload>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/chksums', auth)
+  return getCall('/chksums', user_id, auth)
     .then(res => {
       if (res.status === 200) {
         return res.json()
@@ -403,11 +421,14 @@ export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
     })
 }
 
-export function getInsights(auth: string | null): Promise<Array<Insight>> {
+export function getInsights(
+  user_id: string,
+  auth: string | null
+): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/insights', auth, [
+  return getCall('/insights', user_id, auth, [
     ['all_categories', 'true'],
     ['exclude_negative', 'true'],
     ['by_month', 'true'],
@@ -442,18 +463,19 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
 }
 
 export function getActivitiesByCategory(
+  user_id: string,
   auth: string,
   categories: string[],
   exclude: boolean = false
 ): Promise<GetActivitiesResponse> {
-  if (!auth) {
+  if (!auth || user_id) {
     throw new Error('no auth')
   }
   const urlParams = [...categories.map(cat => ['category', cat]), ['size', '5']]
   if (exclude) {
     urlParams.push(['exclude', 'true'])
   }
-  return getCall(`/activities`, auth, urlParams)
+  return getCall(`/activities`, user_id, auth, urlParams)
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
@@ -472,11 +494,14 @@ export interface WishListItem {
   description: string
 }
 
-export function getWishlist(auth: string | null = null) {
+export function getWishlist(
+  user_id: string,
+  auth: string | null = null
+) {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/wishlist', auth)
+  return getCall('/wishlist', user_id, auth)
     .then(res => {
       if (res.status === 200) {
         return res.json()
@@ -489,29 +514,31 @@ export function getWishlist(auth: string | null = null) {
     })
 }
 
-export function deleteWishlistItem(auth: string | null = null, id: string) {
+export function deleteWishlistItem(user_id: string, auth: string | null = null, id: string) {
   if (!auth) {
     throw new Error('no auth')
   }
-  return deleteCall(`/wishlist?id=${id}`, auth)
+  return deleteCall(`/wishlist?id=${id}`, user_id, auth)
 }
 
 export function addWishlistItem(
+  user_id: string,
   auth: string | null = null,
   item: WishListItem
 ) {
   if (!auth) {
     throw new Error('no auth')
   }
-  return postCall('/wishlist', [], JSON.stringify(item), 'application/json', auth)
+  return postCall('/wishlist', user_id, auth, [], JSON.stringify(item), 'application/json')
 }
 
 export function updateWishlistItem(
+  user_id: string,
   auth: string | null = null,
   item: WishListItem
 ) {
   if (!auth) {
     throw new Error('no auth')
   }
-  return putCall('/wishlist', JSON.stringify(item), auth)
+  return putCall('/wishlist', user_id, auth, JSON.stringify(item))
 }

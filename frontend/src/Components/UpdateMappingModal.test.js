@@ -6,7 +6,7 @@ import UpdateMappingModal from './UpdateMappingModal'
 jest.mock('../hooks')
 
 test('should show modal when show is true', () => {
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <UpdateMappingModal
@@ -28,7 +28,7 @@ test('should show modal when show is true', () => {
 })
 
 test('should not show modal when show is false', () => {
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <UpdateMappingModal
@@ -45,7 +45,7 @@ test('should not show modal when show is false', () => {
 })
 
 test('should show new category input box when new category is selected', () => {
-  auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
+  auth0Helper.useAuth0WithTokenSilent.mockReturnValue({ token: 'test token', user_id: 'test_user' })
 
   render(
     <UpdateMappingModal

@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Form, Table } from 'react-bootstrap'
 import { addWishlistItem, getWishlist, WishListItem } from '../../api'
-import { useAuth0TokenSilent } from '../../hooks'
+import { useAuth0WithTokenSilent } from '../../hooks'
 
 export function Wishlist() {
   // TODO: add auth support
-  //
   // TODO: add delete, update actions, hook up create with backend
-  //
-  const token = useAuth0TokenSilent()
+
+  const { token, user_id } = useAuth0WithTokenSilent()
   const [items, setItems] = useState<WishListItem[]>([])
   const [newName, setNewName] = useState<string>('')
   const [newDescription, setNewDescription] = useState<string>('')
@@ -17,17 +16,17 @@ export function Wishlist() {
 
   useEffect(() => {
     // fetch items from backend
-    if (token) {
-      getWishlist(token).then(res => {
-        setItems(res)
-      })
-    }
-  }, [token])
+    if (!user_id || !token) { return }
+    getWishlist(user_id, token).then(res => {
+      setItems(res)
+    })
+  }, [token, user_id])
 
   function addNewItem(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    if (!user_id || !token) { return }
     e.preventDefault()
 
-    addWishlistItem(token, {
+    addWishlistItem(user_id, token, {
       name: newName,
       description: newDescription,
       url: newUrl,
@@ -41,7 +40,7 @@ export function Wishlist() {
       setNewDescription('')
       setNewUrl('')
       setNewPrice(0)
-      getWishlist(token).then(res => {
+      getWishlist(user_id, token).then(res => {
         setItems(res)
       })
     })

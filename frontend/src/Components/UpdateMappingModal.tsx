@@ -3,7 +3,7 @@ import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import { ActivityRow, getActivitiesWithDescription } from '../api'
-import { useAuth0TokenSilent } from '../hooks'
+import { useAuth0WithTokenSilent } from '../hooks'
 import { ActivitiesTable } from './ActivitiesTable'
 
 interface UpdateMappingModalProps {
@@ -23,7 +23,7 @@ const UpdateMappingModal = ({
   allCategories,
   submit, // TODO: remove this, call api directly
 }: UpdateMappingModalProps) => {
-  const auth = useAuth0TokenSilent()
+  const { token: auth, user_id } = useAuth0WithTokenSilent()
   const [newCategory, setNewCategory] = useState<string>(currentCategory)
   const [selectedCategory, setSelectedCategory] = useState<string>(
     allCategories.length > 0 ? currentCategory : ''
@@ -47,7 +47,7 @@ const UpdateMappingModal = ({
   }, [currentCategory, currentDescription, allCategories])
 
   useEffect(() => {
-    if (!show || !auth || newDescription.length === 0) {
+    if (!show || !auth || newDescription.length === 0 || !user_id) {
       return
     }
     if (queuedActivityCall.current) {
@@ -57,7 +57,7 @@ const UpdateMappingModal = ({
     queuedActivityCall.current = window.setTimeout(() => {
       setActivitiesMatchingDesc([])
       setIsLoadingActivities(true)
-      getActivitiesWithDescription(auth, newDescription)
+      getActivitiesWithDescription(user_id, auth, newDescription)
         .then(result => {
           setActivitiesMatchingDesc(result.data)
         })
@@ -69,7 +69,7 @@ const UpdateMappingModal = ({
         })
       }, 500)
 
-  }, [show, auth, newDescription])
+  }, [show, auth, newDescription, user_id])
 
   const selectCategories = allCategories.includes(currentCategory)
     ? allCategories

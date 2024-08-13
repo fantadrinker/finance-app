@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { ActivityRow, getActivities } from "../../api"
 
 export const useFinanceDataFetcher = (
+  user_id: string | null,
   token: string | null,
   setError: (e: string) => void,
   options: {
@@ -11,8 +12,8 @@ export const useFinanceDataFetcher = (
     startDate?: string,
     endDate?: string
   } = {
-    limit: 20
-  }
+      limit: 20
+    }
 ) => {
   const [financeData, setFinanceData] = useState<Array<ActivityRow>>([])
   const [nextKey, setNextKey] = useState<string | null>(null)
@@ -21,16 +22,16 @@ export const useFinanceDataFetcher = (
   const [loading, setLoading] = useState<boolean>(false)
 
   function fetchData(fromStart: boolean, limit: number = 20) {
-    if (token) {
+    if (token && user_id) {
       setLoading(true)
-      getActivities(token, fromStart? null: fetchNextKey, { 
+      getActivities(user_id, token, fromStart ? null : fetchNextKey, {
         size: limit,
         category: options.category,
         startDate: options.startDate,
         endDate: options.endDate
-      }) 
+      })
         .then(({ data, nextKey }) => {
-          const newData = fromStart? data: [...financeData, ...data]
+          const newData = fromStart ? data : [...financeData, ...data]
           setFinanceData(newData)
           setNextKey(nextKey)
         })
@@ -45,19 +46,19 @@ export const useFinanceDataFetcher = (
   }
 
   useEffect(() => {
-    if (token && options.limit > 0) {
+    if (token && user_id && options.limit > 0) {
       if (options.refetchOnChange) {
         setFinanceData([])
       }
       setLoading(true)
-      getActivities(token, fetchNextKey, { 
-        size: options.limit, 
-        category: options.category, 
-        startDate: options.startDate, 
+      getActivities(user_id, token, fetchNextKey, {
+        size: options.limit,
+        category: options.category,
+        startDate: options.startDate,
         endDate: options.endDate
       })
         .then(({ data, nextKey }) => {
-          setFinanceData(existingData => options.refetchOnChange? data: [...existingData, ...data])
+          setFinanceData(existingData => options.refetchOnChange ? data : [...existingData, ...data])
           setNextKey(nextKey)
         })
         .catch(err => {
@@ -70,7 +71,7 @@ export const useFinanceDataFetcher = (
     } else {
       setNextKey(null)
     }
-  }, [token, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
+  }, [token, user_id, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
 
   return {
     financeData,

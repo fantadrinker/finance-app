@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Button from 'react-bootstrap/Button'
-import { useAuth0TokenSilent } from '../hooks'
+import { useAuth0WithTokenSilent } from '../hooks'
 import { ActivityRow, getRelatedActivities } from '../api'
 import { ActivitiesTable } from './ActivitiesTable'
 
@@ -16,19 +16,19 @@ const RelatedActivitiesModal = ({
   closeModal,
   activityId,
 }: RelatedActivitiesModalProps) => {
-  const token = useAuth0TokenSilent()
+  const { token, user_id } = useAuth0WithTokenSilent()
   const [loading, setLoading] = useState<boolean>(false)
   const [relatedActivities, setRelatedActivities] = useState<
     Array<ActivityRow>
   >([])
 
   useEffect(() => {
-    if (!token || !activityId) {
+    if (!token || !activityId || !user_id) {
       return
     }
     // fetch related activities
     setLoading(true)
-    getRelatedActivities(token, activityId)
+    getRelatedActivities(user_id, token, activityId)
       .then(({ data }) => {
         setRelatedActivities(data)
         setLoading(false)
@@ -36,7 +36,7 @@ const RelatedActivitiesModal = ({
       .catch(err => {
         console.log(err)
       })
-  }, [token, activityId])
+  }, [token, activityId, user_id])
 
   return (
     <Modal show={show} onHide={closeModal}>
