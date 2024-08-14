@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - backend_lambdas_sam
   workflow_dispatch:
 
 permissions:

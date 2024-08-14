@@ -5,9 +5,9 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches-ignore:
-      - 'main'
+      - main
     paths:
-      - 'backend-lambdas-sam' # this will be fixed when the directory name is changed
+      - backend_lambdas_sam # this will be fixed when the directory name is changed
 
 
 permissions:
