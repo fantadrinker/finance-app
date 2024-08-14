@@ -4,7 +4,10 @@ name: Check if PR can be built successfully in backend
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["*"]
+    branches-ignore:
+      - 'main'
+    paths:
+      - 'backend-lambdas-sam' # this will be fixed when the directory name is changed
 
 
 permissions:
