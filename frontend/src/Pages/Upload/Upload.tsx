@@ -1,7 +1,8 @@
-import React, { useState, useEffect, ChangeEvent } from 'react'
+import React, { useState, useEffect, ChangeEvent, useMemo, useCallback } from 'react'
 import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
+import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
 import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
@@ -42,15 +43,43 @@ export const Upload = () => {
   const [warningMessage, setWarningMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+  // file select
   const [fileContent, setFileContent] = useState<File | null>(null)
   const [fileName, setFileName] = useState<string>('')
   const [columnFormat, setColumnFormat] = useState<ColumnFormat>(
     ColumnFormat.cap1
   )
+
+  // file previews
   const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
   const [processingFile, setProcessingFile] = useState<boolean>(false)
+
+  // success toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const showToast = toastMessage || warningMessage || errorMessage
+
+  const toastType = useMemo(() => {
+    if (errorMessage) {
+      return 'Error'
+    }
+    if (warningMessage) {
+      return 'Warning'
+    }
+    if (toastMessage) {
+      return 'Message'
+    }
+    return null
+  }, [errorMessage, warningMessage, toastMessage])
+
   const token = useAuth0TokenSilent()
   const uploads = useFetchPrevUploads(token)
+
+  const closeToast = useCallback(() => {
+    setToastMessage(null)
+    setWarningMessage(null)
+    setErrorMessage(null)
+  }, [setToastMessage, setWarningMessage, setErrorMessage])
 
   const updateUserFile = (event: ChangeEvent<HTMLInputElement>) => {
     const target = event.target as HTMLInputElement
@@ -84,7 +113,7 @@ export const Upload = () => {
       setErrorMessage('not authenticated')
       return
     }
-		setProcessingFile(true)
+    setProcessingFile(true)
 
     try {
       // processes user file, store in financeData state var
@@ -93,10 +122,11 @@ export const Upload = () => {
         columnFormat.toString(),
         fileContent!
       )
-			setProcessingFile(false)
-			if (previewActivityRows) {
-				setPreviewActivityRows(null)
-			}
+      setProcessingFile(false)
+      if (previewActivityRows) {
+        setPreviewActivityRows(null)
+      }
+      setToastMessage('success')
     } catch (e) {
       setErrorMessage('error when processing file' + e.message)
     }
@@ -118,6 +148,10 @@ export const Upload = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <Toast show={!!showToast} onClose={closeToast} >
+        <Toast.Header>{toastType}</Toast.Header>
+        <Toast.Body>{errorMessage ?? warningMessage ?? toastMessage}</Toast.Body>
+      </Toast>
       <Form className={styles.uploadForm}>
         <h2>Upload a File</h2>
         {warningMessage !== null && (

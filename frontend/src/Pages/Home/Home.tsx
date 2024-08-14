@@ -62,6 +62,7 @@ export function Home() {
     }
   }, [token])
 
+  // test
   if (!token) {
     return (
       <div>
