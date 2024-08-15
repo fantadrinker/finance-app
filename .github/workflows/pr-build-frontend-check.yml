@@ -6,8 +6,9 @@ on:
   push:
     branches-ignore: 
       - main
-    # paths:
-    #   - frontend/** # this will be fixed when the directory name is changed
+    paths:
+      - .github/**
+      - frontend/** # this will be fixed when the directory name is changed
 
 
 permissions:
