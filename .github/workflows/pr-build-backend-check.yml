@@ -6,8 +6,9 @@ on:
   push:
     branches-ignore:
       - main
-    paths:
-      - backend_lambdas_sam/** # this will be fixed when the directory name is changed
+      # paths:
+      # - backend_lambdas_sam/** # this will be fixed when the directory name is changed
+      # - .github/**
 
 
 permissions:

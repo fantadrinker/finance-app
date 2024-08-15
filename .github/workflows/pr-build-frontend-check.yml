@@ -5,8 +5,8 @@ on:
   # Runs on pushes targeting the default branch
   push:
     branches: ['*']
-    paths:
-      - frontend/** # this will be fixed when the directory name is changed
+    # paths:
+    #   - frontend/** # this will be fixed when the directory name is changed
 
 
 permissions:
