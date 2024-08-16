@@ -67,7 +67,7 @@ const UpdateMappingModal = ({
         .finally(() => {
           setIsLoadingActivities(false)
         })
-      }, 500)
+    }, 500)
 
   }, [show, auth, newDescription])
 
@@ -76,7 +76,7 @@ const UpdateMappingModal = ({
     : allCategories.concat([currentCategory])
 
   return (
-    <Modal show={show} onHide={closeModal}>
+    <Modal size="lg" show={show} onHide={closeModal}>
       <Modal.Header closeButton>
         <Modal.Title>Update Category Mapping</Modal.Title>
       </Modal.Header>
