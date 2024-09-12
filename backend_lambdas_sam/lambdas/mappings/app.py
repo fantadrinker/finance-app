@@ -1,7 +1,7 @@
 import json
 import os
 import boto3
-import datetime
+from datetime import datetime
 from boto3.dynamodb.conditions import Key
 import botocore
 from AuthLayer import get_user_id
@@ -41,7 +41,7 @@ def post(user, description, category, priority):
                     "description": description,
                     "category": category,
                     "priority": priority,
-                    "created_at": str(datetime.datetime.now())
+                    "created_at": datetime.strftime(datetime.now(), '%Y-%m-%d')
                 }
             )
         # TODO: update the activities rows here
@@ -83,11 +83,15 @@ def get(user):
         for mapping in all_mappings:
             category = mapping.get("category", "")
             description = mapping.get("description", "")
+            creation_date_str = mapping.get("created_at", "")
+            creation_date = datetime.strptime(creation_date_str, "%Y-%m-%d") if creation_date_str else None
             sk = mapping.get("sk", "")
             priority = mapping.get("priority", 0)
 
             found_category = [item for item in group_by_categories if item["category"] == category]
             if found_category:
+                if creation_date is not None and creation_date > found_category[0]["last_update_time"]:
+                    found_category[0]["last_update_time"] = creation_date
                 found_category[0]["descriptions"].append({
                     "description": description,
                     "priority": str(priority),
@@ -96,18 +100,26 @@ def get(user):
             else:
                 group_by_categories.append({
                     "category": category,
+                    "last_update_time": creation_date,
                     "descriptions": [{
                         "description": description,
                         "priority": str(priority),
                         "sk": sk
                     }]
                 })
+        
+        group_by_categories.sort(key=lambda x: x["last_update_time"], reverse=True)
+
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": group_by_categories
+                "data": [{
+                    "category": category["category"],
+                    "descriptions": category["descriptions"]
+                } for category in group_by_categories]
             })
         }
+    
     except botocore.exceptions.ClientError as error:
         print(error)
         return {
