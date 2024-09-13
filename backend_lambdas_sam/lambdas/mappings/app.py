@@ -8,6 +8,8 @@ from AuthLayer import get_user_id
 
 table = None
 
+MAPPING_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
+
 def post(user, description, category, priority):
     global table
     # creates "user: user, sk: mapping#desc, description: description, category: category, priority: priority"
@@ -41,7 +43,7 @@ def post(user, description, category, priority):
                     "description": description,
                     "category": category,
                     "priority": priority,
-                    "created_at": datetime.strftime(datetime.now(), '%Y-%m-%d')
+                    "created_at": datetime.strftime(datetime.now(), MAPPING_TIMESTAMP_FORMAT)
                 }
             )
         # TODO: update the activities rows here
@@ -84,7 +86,7 @@ def get(user):
             category = mapping.get("category", "")
             description = mapping.get("description", "")
             creation_date_str = mapping.get("created_at", "")
-            creation_date = datetime.strptime(creation_date_str, "%Y-%m-%d") if creation_date_str else None
+            creation_date = datetime.strptime(creation_date_str, MAPPING_TIMESTAMP_FORMAT) if creation_date_str else None
             sk = mapping.get("sk", "")
             priority = mapping.get("priority", 0)
 

@@ -53,7 +53,7 @@ def mock_mappings_items(user_id):
             "sk": f"mapping#testDescription{i}",
             "category": f"testCategory{i % 4}",
             "description": f"testDescription{i}",
-            "created_at": f"2024-09-1{i % 10}"
+            "created_at": "2024-09-10 10:10:10"
         }
         for i in range(10)
     ]
@@ -66,28 +66,28 @@ def mock_mappings_items_with_dates(user_id):
             "sk": "mapping#ramen_danbo",
             "category": "Dining",
             "description": "ramen_danbo",
-            "created_at": "2021-01-01",
+            "created_at": "2021-01-01 00:00:00",
         },
         {
             "user": user_id,
             "sk": "mapping#T&TSuper",
             "category": "Grocery",
             "description": "T&TSuper",
-            "created_at": "2022-09-01",
+            "created_at": "2022-09-01 00:00:09",
         },
         {
             "user": user_id,
             "sk": "mapping#mcdonalds",
             "category": "Dining",
             "description": "mcdonalds",
-            "created_at": "2022-10-01",
+            "created_at": "2022-09-01 00:00:10",
         },
         {
             "user": user_id,
             "sk": "mapping#netflix",
             "category": "Subscriptions",
             "description": "netflix",
-            "created_at": "2024-01-01",
+            "created_at": "2024-01-01 00:00:00",
         },
     ]
 
