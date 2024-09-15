@@ -100,7 +100,7 @@ export const Preferences = () => {
         category: newCategory,
       })
       if (!result.ok) {
-        throw Error("mapping update failed")
+        throw Error("mapping update request failed")
       }
       console.log('mapping updated, updated informations should come later')
       return true
