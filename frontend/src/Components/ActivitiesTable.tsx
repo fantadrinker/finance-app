@@ -21,7 +21,7 @@ interface ActivitiesTableProps {
   onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
-    actions: ActivityAction[]
+    actions?: ActivityAction[]
   }
 }
 

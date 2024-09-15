@@ -94,20 +94,20 @@ export const Preferences = () => {
 
   const updateNewCategory = async (desc: string, newCategory: string) => {
     // calls post /mappings endpoint to update category mapping
-    postMappings(token, {
-      description: desc,
-      category: newCategory,
-    })
-      .then(result => {
-        if (!result.ok) {
-          return
-        }
-        console.log('mapping updated, updated informations should come later')
-        setShowModal(false)
+    try {
+      const result = await postMappings(token, {
+        description: desc,
+        category: newCategory,
       })
-      .catch(err => {
-        console.log(err)
-      })
+      if (!result.ok) {
+        throw Error("mapping update failed")
+      }
+      console.log('mapping updated, updated informations should come later')
+      return true
+    } catch (err) {
+      console.log(err)
+    }
+    return false
   }
   return (
     <div>

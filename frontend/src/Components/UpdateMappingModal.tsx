@@ -12,7 +12,7 @@ interface UpdateMappingModalProps {
   currentCategory: string
   currentDescription: string
   allCategories: string[]
-  submit: (newCategory: string, newDescription: string) => void
+  submit: (newCategory: string, newDescription: string) => Promise<boolean>
 }
 
 const UpdateMappingModal = ({
@@ -30,6 +30,8 @@ const UpdateMappingModal = ({
   )
   const [newDescription, setNewDescription] =
     useState<string>(currentDescription)
+
+  const [isProcessingSubmit, setIsProcessingSubmit] = useState<boolean>(false)
 
   const [activitiesMatchingDesc, setActivitiesMatchingDesc] = useState<
     ActivityRow[]
@@ -116,24 +118,36 @@ const UpdateMappingModal = ({
             />
           </>
         )}
-        {isLoadingActivities && <p>Loading activities...</p>}
-        {activitiesMatchingDesc.length > 0 && (
-          <>
-            <Form.Label>Activities with this description</Form.Label>
-            <ActivitiesTable activities={activitiesMatchingDesc} />
-          </>
-        )}
+
+        <div className='mt-3 max-h-96 overflow-y-scroll'>
+          {isLoadingActivities && <p>Loading activities...</p>}
+          {activitiesMatchingDesc.length > 0 && (
+            <>
+              <Form.Label>Activities with this description</Form.Label>
+              <ActivitiesTable 
+                activities={activitiesMatchingDesc} 
+                options={{
+                  showCategories: true
+                }}
+              />
+            </>
+          )}
+        </div>
       </Modal.Body>
       <Modal.Footer>
         <Button
-          onClick={() =>
+          disabled={isProcessingSubmit}
+          onClick={() => {
+            setIsProcessingSubmit(true)
             submit(
               newDescription ?? currentDescription,
               selectedCategory === ''
                 ? newCategory ?? currentCategory
                 : selectedCategory
-            )
-          }
+            ).then((shouldClose) => {
+              if(shouldClose) closeModal()
+            })
+          }}
         >
           Update Mapping
         </Button>

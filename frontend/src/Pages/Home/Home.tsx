@@ -87,32 +87,28 @@ export function Home() {
     }
   }
 
-  function updateNewCategory(desc: string, newCategory: string): void {
+  async function updateNewCategory(desc: string, newCategory: string): Promise<boolean> {
     const sizeToRefetch = financeData.length
-    postMappings(token, {
-      description: desc,
-      category: newCategory,
-    })
-      .then(apiResponse => {
-        if (apiResponse.ok) {
-          getMappings(token)
-            .then(data => {
-              dispatch({
-                type: 'updateCategory',
-                payload: data.map(({ category }) => category)
-              })
-            })
-            .catch(err => {
-              console.log(err)
-              setErrorMessage(`Error fetching activity mappings ${err.message}`)
-            })
-          reFetch(true, sizeToRefetch)
-        }
+    try {
+      const postResponse = await postMappings(token, {
+        description: desc,
+        category: newCategory,
       })
-      .catch(err => {
-        console.log(err)
-        setErrorMessage(`Error updating category mapping${err.message}`)
+      if (!postResponse.ok) {
+        throw Error("error updating category mapping, api response not ok")
+      }
+      reFetch(true, sizeToRefetch)
+      const updatedMappings = await getMappings(token)
+      dispatch({
+        type: 'updateAllCategories',
+        payload: updatedMappings.map(({ category }) => category)
       })
+      return true
+    } catch(err) {
+      console.log(err)
+      setErrorMessage(`Error updating category mapping${err.message}`)
+    }
+    return false
   }
 
   return (
