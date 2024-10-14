@@ -45,6 +45,10 @@ or develop locally
 when deploying or syncing, the `samconfig.toml` is already setup to sync to development stack so don't need to worry about accidentally breaking production
 
 
+# Pre-commit
+
+To set up pre-commit, run `sudo apt get pre-commit` or follow its official installation guide.
+
 
 # Dev Plans
 
@@ -59,6 +63,3 @@ The above are pretty much all done, here's the next set of features I'm gonna wo
 2. On insights page, transitions need to be animated.
 3. Insights page, I would like to see monthly trend for a specific set of categories.
 4. Explore more on user custom mappings.
-
-
-

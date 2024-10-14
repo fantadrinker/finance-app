@@ -57,4 +57,3 @@ class TestApiGateway:
         response_data = response.json()
         assert response_data["count"] == 0
         assert response_data["data"] == []
-    

@@ -49,14 +49,14 @@ def getAllMappings(user: str):
         KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
     )
     all_mappings = response.get("Items", [])
-    
+
     while response.get("LastEvaluatedKey"):
         response = activities_table.query(
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
             ExclusiveStartKey=response["LastEvaluatedKey"]
         )
         all_mappings.extend(response.get("Items", []))
-    
+
     return all_mappings
 
 def applyMappings(mappings: list, item: dict):
@@ -65,27 +65,27 @@ def applyMappings(mappings: list, item: dict):
     return {
         **item,
         "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
-    }    
+    }
 
 # starting_date and ending_date are in the format YYYY-MM-DD
-# all_categories is a boolean, if true we return all categories, else we only return what's 
+# all_categories is a boolean, if true we return all categories, else we only return what's
 # in the 'categories' param
 def get_new(
-    user_id, 
-    starting_date, 
-    ending_date, 
-    all_categories = False, 
+    user_id,
+    starting_date,
+    ending_date,
+    all_categories = False,
     categories = [],
     exclude_negative = False,
     monthlyBreakdown = False
-): 
+):
     global activities_table
 
     if not ending_date:
         ending_date = datetime.now()
     else:
         ending_date = datetime.strptime(ending_date, "%Y-%m-%d")
-    
+
     if not starting_date:
         starting_date = ending_date - timedelta(days=30)
     else:
@@ -107,7 +107,7 @@ def get_new(
         # first get all transactions for the time period
         params = {
             "KeyConditionExpression": Key("user").eq(user_id) & Key("sk").between(
-                starting_date.strftime("%Y-%m-%d"), 
+                starting_date.strftime("%Y-%m-%d"),
                 ending_date.strftime("%Y-%m-%d")
             ),
         }
@@ -125,13 +125,13 @@ def get_new(
                 ExclusiveStartKey=response["LastEvaluatedKey"]
             )
             items.extend(more_response.get("Items", []))
-        
+
         # then get all mappings
         response = activities_table.query(
             KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("mapping#"),
         )
         mappings = getAllMappings(user_id)
-        
+
         return {
             "statusCode": 200,
             "body": json.dumps({
@@ -139,7 +139,7 @@ def get_new(
                     "start_date": period_start.strftime("%Y-%m-%d"),
                     "end_date": period_end.strftime("%Y-%m-%d"),
                     "categories": get_grouped_by_categories(
-                        [applyMappings(mappings, item) for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")], 
+                        [applyMappings(mappings, item) for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")],
                         all_categories,
                         categories,
                     )

@@ -6,7 +6,7 @@ from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
 
 table = None
-# this lambda is meant to be invoked manually, to check if 
+# this lambda is meant to be invoked manually, to check if
 
 def lambda_handler(event, context):
     global table

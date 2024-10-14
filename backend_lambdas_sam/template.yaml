@@ -12,7 +12,7 @@ Parameters:
   ApiStageName:
     Type: String
     Default: "Test"
-  
+
 Conditions:
   IsCI: !Equals
     - !Ref BranchPrefix
@@ -32,7 +32,7 @@ Globals:
       Variables:
         ACTIVITIES_TABLE: !Ref ActivitiesTable
         BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-        SKIP_AUTH: 
+        SKIP_AUTH:
           'Fn::If':
             - IsCI
             - '1'
@@ -62,12 +62,12 @@ Resources:
         # TODO: re-enable this line
         # DefaultAuthorizer: OAuthAuthorizer
       CorsConfiguration:
-        AllowMethods: 
+        AllowMethods:
           - OPTIONS
           - POST
           - GET
           - DELETE
-        AllowHeaders: 
+        AllowHeaders:
           - Content-Type
           - X-Amz-Date
           - Authorization
@@ -96,7 +96,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/activities/
-      Policies: 
+      Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - S3WritePolicy:
@@ -106,7 +106,7 @@ Resources:
           ACTIVITIES_BUCKET: !Ref ActivitiesFiles
       Events:
         PostActivities:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -137,15 +137,15 @@ Resources:
             TableName: !Ref ActivitiesTable
       Events:
         GetFileChecks:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /chksums
             Method: GET
-  
+
   DeletedFunction:
-    Type: AWS::Serverless::Function 
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/deleted/
       Policies:
@@ -153,7 +153,7 @@ Resources:
             TableName: !Ref ActivitiesTable
       Events:
         GetDeleted:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -170,15 +170,15 @@ Resources:
             TableName: !Ref ActivitiesTable
       Events:
         GetInsights:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /insights
             Method: GET
-        
+
   MappingsFunction:
-    Type: AWS::Serverless::Function 
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/mappings/
       Policies:
@@ -186,21 +186,21 @@ Resources:
             TableName: !Ref ActivitiesTable
       Events:
         GetMappings:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /mappings
             Method: GET
         PostMappings:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /mappings
             Method: POST
         DeleteMappings:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -211,7 +211,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       CodeUri: lambdas/activitiesStreams/
-      Policies: 
+      Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
         - DynamoDBStreamReadPolicy:
@@ -221,21 +221,21 @@ Resources:
         ProcessNewActivitiesOrMappings:
           Type: DynamoDB
           Properties:
-            Stream: 
+            Stream:
               !GetAtt ActivitiesTable.StreamArn
             StartingPosition: TRIM_HORIZON
             FilterCriteria:
               Filters:
                 - Pattern: '{"dynamodb": {"Keys": {"sk": {"S": [{"prefix": "20"}, {"prefix": "mapping#"}]}}}}'
-  
+
   MonthlyCheckFunction:
-    Type: AWS::Serverless::Function 
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: lambdas/monthlyCheck/
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ActivitiesTable
-  
+
   WishListFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -245,28 +245,28 @@ Resources:
             TableName: !Ref ActivitiesTable
       Events:
         GetWishList:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /wishlist
             Method: GET
         PostWishList:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /wishlist
             Method: POST
         DeleteWishList:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
             Path: /wishlist
             Method: DELETE
         UpdateWishList:
-          Type: HttpApi 
+          Type: HttpApi
           Properties:
             ApiId:
               Ref: FinanceAPI
@@ -279,16 +279,16 @@ Resources:
   ActivitiesFiles:
     Type: 'AWS::S3::Bucket'
     UpdateReplacePolicy: Retain
-    DeletionPolicy: !If [IsCI, Delete, Retain] 
+    DeletionPolicy: !If [IsCI, Delete, Retain]
     Properties:
-      BucketName: !Sub 
+      BucketName: !Sub
         - "${AWS::AccountId}-${Branch}-activities-files"
         - Branch: !Ref BranchPrefix
 
   # dynamodb tables
   ActivitiesTable:
     Type: AWS::DynamoDB::Table
-    Properties: 
+    Properties:
       AttributeDefinitions:
         - AttributeName: user
           AttributeType: S
@@ -314,4 +314,3 @@ Outputs:
   Function:
     Description: Activities Lambda Function ARN
     Value: !GetAtt ActivitiesFunction.Arn
-  

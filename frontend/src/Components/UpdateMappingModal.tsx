@@ -124,8 +124,8 @@ const UpdateMappingModal = ({
           {activitiesMatchingDesc.length > 0 && (
             <>
               <Form.Label>Activities with this description</Form.Label>
-              <ActivitiesTable 
-                activities={activitiesMatchingDesc} 
+              <ActivitiesTable
+                activities={activitiesMatchingDesc}
                 options={{
                   showCategories: true
                 }}

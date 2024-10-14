@@ -2,7 +2,7 @@ name: "Verify and deploys sam"
 
 on:
   pull_request:
-    paths: 
+    paths:
       - 'backend-lambdas-sam/*'
       - '.github/*'
 

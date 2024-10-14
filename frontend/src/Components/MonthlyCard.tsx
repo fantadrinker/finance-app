@@ -40,7 +40,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
 
   const isExpanded = useMemo(() => activeIndex !== -1, [activeIndex])
   const sortedInsights = useMemo(() => sort(cmpInsights, insights), [insights])
-  const monthlyData = useMemo(() => 
+  const monthlyData = useMemo(() =>
     pipe(
       (insights: Insight[]) => take(6, insights),
       map(transformInsightToMonthlyBreakdown)
@@ -58,7 +58,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     }
   }, [monthlyData, expandCategoryActivity])
 
-  const topCategories = useMemo(() => 
+  const topCategories = useMemo(() =>
     isExpanded
       ? pipe(
         sort<CategoryBreakdown>((a, b) => b.amount - a.amount),
@@ -75,10 +75,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
     console.log(e)
   }, [])
 
-  const { 
-    financeData, 
-    loading: loadingActivities, 
-    reFetch: refetchActivities 
+  const {
+    financeData,
+    loading: loadingActivities,
+    reFetch: refetchActivities
   } = useFinanceDataFetcher(token, serError, {
     refetchOnChange: true,
     limit: expandCategoryActivity.expanded? 20: 0,
@@ -191,8 +191,8 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           )}
         </div>
       </Card.Body>
-      <Modal 
-        show={expandCategoryActivity.expanded} 
+      <Modal
+        show={expandCategoryActivity.expanded}
         onHide={() => setExpandCategoryActivity({ expanded: false , category: '', month: ''})}
         size='lg'
       >
@@ -200,9 +200,9 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           <Modal.Title>Activities for {expandCategoryActivity.category} in {expandCategoryActivity.month}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <ActivitiesTable 
-            activities={financeData} 
-            loading={loadingActivities} 
+          <ActivitiesTable
+            activities={financeData}
+            loading={loadingActivities}
             options={{
               actions: [
                 {

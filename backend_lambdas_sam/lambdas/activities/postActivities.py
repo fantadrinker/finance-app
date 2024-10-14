@@ -9,10 +9,10 @@ from datetime import datetime, date
 import botocore
 
 from libs import (
-        serialize_rbc_activity, 
-        serialize_cap1_activity, 
+        serialize_rbc_activity,
+        serialize_cap1_activity,
         serialize_default_activity,
-        getMappings, 
+        getMappings,
         applyMappings
 )
 
@@ -42,7 +42,7 @@ def getItemsFromBody(body, file_format: str):
     all_activities = []
     if file_format:
         # parse the csv
-        all_activities = csv.reader(body.splitlines(), delimiter=',') 
+        all_activities = csv.reader(body.splitlines(), delimiter=',')
     else:
         bodyParsed = json.loads(body)
         all_activities = bodyParsed.get('data', [])

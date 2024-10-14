@@ -44,4 +44,3 @@ class TestHelpers:
                 "authorization": user_id
             },
         }
-    

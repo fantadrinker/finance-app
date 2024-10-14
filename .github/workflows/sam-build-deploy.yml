@@ -1,7 +1,7 @@
 # workflow for testing builds for PRs
 name: build and deploy lambdas and apis to SAM in AWS
 
-on: 
+on:
   push:
     branches:
       - main
@@ -17,7 +17,7 @@ defaults:
   run:
     shell: bash
     working-directory: ./backend_lambdas_sam
-  
+
 jobs:
   setup-build-env:
     runs-on: ubuntu-latest
@@ -35,6 +35,6 @@ jobs:
       # Build inside Docker containers
       - run: sam build --use-container
       # Prevent prompts and failure when the stack is unchanged
-      # sadly this would not work, fails with 
+      # sadly this would not work, fails with
       # Error: Cannot use both --resolve-s3 and --s3-bucket parameters in non-guided deployments. Please use only one or use the --guided option for a guided deployment.
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env=prod

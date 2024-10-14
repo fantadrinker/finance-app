@@ -10,7 +10,7 @@ activities_table = None
 def lambda_handler(event, context):
     global activities_table
     user_id = get_user_id(event)
-    
+
     if not user_id:
         return {
             "statusCode": 400,
