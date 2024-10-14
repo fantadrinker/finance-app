@@ -51,9 +51,9 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
             - name: build backend
-              run: sam build --use-container      
+              run: sam build --use-container
             - name: deploy to test stack
-              run: sam deploy --config-env=test --no-confirm-changeset --no-fail-on-empty-changeset 
+              run: sam deploy --config-env=test --no-confirm-changeset --no-fail-on-empty-changeset
             - name: run integration tests
               run: pytest tests/integration -v -rP
             - name: teardown test stack

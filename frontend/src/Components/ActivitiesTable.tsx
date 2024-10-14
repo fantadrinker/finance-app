@@ -30,7 +30,7 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     if (!onScrollToEnd) {
       return
     }
-    
+
     window.onscroll = () => {
       if (
         !loading &&
@@ -66,7 +66,7 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
         </tr>
       </thead>
       <tbody>
-        
+
         {activities.map(activity => (
           <tr key={activity.id}>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>

@@ -30,10 +30,10 @@ def mock_data(user_id):
         "date": "2020-01-01",
         "checksum": "test123",
     }]
-    
+
 
 def test_get_deleted(activities_table, apigw_event_get, mock_data):
-    
+
     for item in mock_data:
         activities_table.put_item(Item=item)
 
@@ -47,4 +47,3 @@ def test_get_deleted(activities_table, apigw_event_get, mock_data):
     assert data["data"][0]["user"] == "test-user-id"
     assert data["count"] == 1
     assert data["LastEvaluatedKey"] == {}
-    

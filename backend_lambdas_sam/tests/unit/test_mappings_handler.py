@@ -162,7 +162,7 @@ def test_get_mapping_date_ordering(apigw_event_get, activities_table, mock_mappi
 
     assert body["data"][1]["category"] == "Dining"
     assert len(body["data"][1]["descriptions"]) == 2
-    
+
     assert body["data"][2]["category"] == "Grocery"
     assert len(body["data"][2]["descriptions"]) == 1
     assert body["data"][2]["descriptions"][0]["description"] == "T&TSuper"

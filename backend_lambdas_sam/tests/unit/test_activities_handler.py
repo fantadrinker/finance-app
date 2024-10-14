@@ -94,7 +94,7 @@ def apigw_event_get_by_account(user_id):
 def apigw_event_delete(user_id):
     """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "DELETE", "/activity", "sk=2019-12-266")
-    
+
 
 @pytest.fixture()
 def mock_activities(user_id):
@@ -159,7 +159,7 @@ def mock_activities_with_descriptions(user_id):
 
 
 def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event_post_cap1_preview):
-    
+
     app.s3 = s3
     app.activities_table = activities_table
     # insert some mappings
@@ -201,7 +201,7 @@ def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event
 
 
 def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_cap1):
-    
+
     app.s3 = s3
     app.activities_table = activities_table
     ret = app.lambda_handler(apigw_event_post_cap1, "")
@@ -232,7 +232,7 @@ def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_ca
     assert len(chksum_response["Items"]) == 1
     item = chksum_response["Items"][0]
     # TODO: check if start and end date are correct
-    # TODO: use regex to fix this line 
+    # TODO: use regex to fix this line
     # assert item["file"] == f"{user_id}/cap1/2021-01-01.csv"
     assert item["start_date"] == "2023-02-24"
     assert item["end_date"] == "2023-02-25"
@@ -264,7 +264,7 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     assert len(chksum_response["Items"]) == 1
     chksum_item = chksum_response["Items"][0]
     # TODO: check start end date
-    # TODO: use regex to fix this line 
+    # TODO: use regex to fix this line
     # assert chksum_item["file"] == f"{user_id}/rbc/2021-01-01.csv"
     assert chksum_item["start_date"] == "2023-07-05"
     assert chksum_item["end_date"] == "2023-07-06"
@@ -282,7 +282,7 @@ def test_post_activities(activities_table, s3, user_id, activities_body_json):
         KeyConditionExpression=Key("user").eq(user_id) & Key(
             'sk').between("0000-00-00", "9999-99-99")
     )
-    
+
     assert len(activities_response["Items"]) == 3
     assert activities_response["Items"][0]["description"] == "Ramen Danbo"
     assert activities_response["Items"][0]["search_term"] == "ramen danbo"
@@ -331,17 +331,17 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
 
 
 def test_delete_activities(
-        activities_table, 
+        activities_table,
         user_id,
-        apigw_event_delete, 
+        apigw_event_delete,
         mock_activities):
     # setup table and insert some activities data in there
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     ret = app.lambda_handler(apigw_event_delete, "")
     assert ret["statusCode"] == 200
-    
+
     remaining_items = activities_table.query(
         KeyConditionExpression=Key("user").eq(user_id) & Key("sk").begins_with("20"),
     )
@@ -360,7 +360,7 @@ def test_get_activities_by_category(
     # setup table and insert some activities data in there
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     ret = app.lambda_handler(apigw_event_get_by_category, "")
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
@@ -375,7 +375,7 @@ def test_get_activities_by_category(
     assert all([item["category"] in ["test_odd", "test_even"] for item in data["data"]])
     assert int(data["data"][0]["amount"]) == 19
 
-    
+
 def test_get_activities_by_category_with_mappings(
         activities_table,
         apigw_event_get_by_category_mapped,
@@ -383,7 +383,7 @@ def test_get_activities_by_category_with_mappings(
     # setup table and insert some activities data in there
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     # add mappings
     activities_table.put_item(Item={
         "user": "test-user-id",
@@ -398,7 +398,7 @@ def test_get_activities_by_category_with_mappings(
         "description": "test activity 7",
         "category": "test_odd_mapped",
     })
-    
+
     ret = app.lambda_handler(apigw_event_get_by_category_mapped, "")
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
@@ -413,7 +413,7 @@ def test_get_activities_by_category_with_mappings_partial(
     # setup table and insert some activities data in there
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     # add mappings that matches all
     activities_table.put_item(Item={
         "user": "test-user-id",
@@ -421,7 +421,7 @@ def test_get_activities_by_category_with_mappings_partial(
         "description": "test activity",
         "category": "test_category_mapped",
     })
-    
+
     ret = app.lambda_handler(TestHelpers.get_base_event(user_id, "GET", "/activities", "category=test_category_mapped"), "")
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
@@ -433,7 +433,7 @@ def test_get_activities_by_category_with_start_end_date(
         mock_activities):
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     event = TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&startDate=2019-12-28&endDate=2020-01-01")
     ret = app.lambda_handler(event, "")
 
@@ -455,13 +455,13 @@ def test_get_activities_exclude_categories(user_id, activities_table, mock_activ
     data = json.loads(ret["body"])
     assert data["count"] == 5
     assert all([item["category"] == "test_odd" for item in data["data"]])
-    
+
 
 def test_get_activities_by_account(activities_table, apigw_event_get_by_account, mock_activities):
 
     for items in mock_activities:
         activities_table.put_item(Item=items)
-    
+
     ret = app.lambda_handler(apigw_event_get_by_account, "")
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
@@ -473,7 +473,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_get_activi
 
     for items in mock_activities_with_different_amount:
         activities_table.put_item(Item=items)
-    
+
     # max 30
     ret = app.lambda_handler({
         **apigw_get_activities_base,
@@ -547,7 +547,7 @@ def test_get_activities_by_description(activities_table, apigw_get_activities_ba
 def test_get_activities_with_mappings(activities_table, apigw_get_activities_base, mock_activities_with_descriptions):
     for items in mock_activities_with_descriptions:
         activities_table.put_item(Item=items)
-    
+
     # add mappings
     activities_table.put_item(Item={
         "user": "test-user-id",
@@ -578,4 +578,4 @@ def test_get_activities_with_mappings(activities_table, apigw_get_activities_bas
     assert third_item_category == "Groceries" # not mapped
 
     fourth_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#4"), None)
-    assert fourth_item_category == "SAFEWAY" # not mapped 
+    assert fourth_item_category == "SAFEWAY" # not mapped

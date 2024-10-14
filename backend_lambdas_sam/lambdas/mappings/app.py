@@ -72,7 +72,7 @@ def get(user):
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
         )
         all_mappings = response.get("Items", [])
-        
+
         while response.get("LastEvaluatedKey"):
             response = table.query(
                 KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
@@ -109,7 +109,7 @@ def get(user):
                         "sk": sk
                     }]
                 })
-        
+
         group_by_categories.sort(key=lambda x: x["last_update_time"], reverse=True)
 
         return {
@@ -121,7 +121,7 @@ def get(user):
                 } for category in group_by_categories]
             })
         }
-    
+
     except botocore.exceptions.ClientError as error:
         print(error)
         return {
@@ -159,7 +159,7 @@ def delete(user, id):
 def lambda_handler(event, context):
     global table
     user_id = get_user_id(event)
-    
+
     if not user_id:
         return {
             "statusCode": 400,
@@ -171,7 +171,7 @@ def lambda_handler(event, context):
     method = event.get("routeKey", "").split(' ')[0]
     # should support 3 functionalities
     # post: create or update description to category mapping
-    #       takes in a json body with description and category, 
+    #       takes in a json body with description and category,
     #       and potentially a priority
     # get: get all the mappings defined for the user, paginated
     # delete: delete a mapping for a given list of ids
@@ -181,7 +181,7 @@ def lambda_handler(event, context):
         category = body.get("category", "")
         priority = body.get("priority", 0)
         return post(
-            user_id, 
+            user_id,
             description,
             category,
             priority)

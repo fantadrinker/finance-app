@@ -45,7 +45,7 @@ def apigw_event_get_by_month(user_id):
         "/activityInsights",
         "starting_date=2021-01-01&ending_date=2022-02-01&all_categories=false&by_month=true"
     )
-    
+
 
 @pytest.fixture()
 def mock_activities(user_id):
@@ -130,13 +130,13 @@ def test_get_insights_with_existing_mappings(activities_table, apigw_event_get_2
     # also test pagination
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    
+
     activities_table.put_item(Item={
         "user": "test-user-id",
         "sk": "mapping#MCDONALDS",
         "description": "MCDONALDS",
         "category": "Food"
-    }) 
+    })
     activities_table.put_item(Item={
         "user": "test-user-id",
         "sk": "mapping#RAMEN",

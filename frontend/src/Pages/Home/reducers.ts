@@ -19,41 +19,41 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
       if (!description || !category) {
         return state
       }
-      return { 
+      return {
         ...state,
-        showUpdateMappingModal: true, 
-        description, 
-        category 
+        showUpdateMappingModal: true,
+        description,
+        category
       }
     case 'openRelatedActivitiesModal':
       if (!action.payload) {
         return state
       }
-      return { 
-        ...state, 
+      return {
+        ...state,
         showRelatedActivitiesModal: true,
         relatedActivityId: action.payload
       }
     case 'updateAllCategories':
-      return { 
-        ...state, 
-        allCategories: action.payload 
+      return {
+        ...state,
+        allCategories: action.payload
       }
     case 'updateNewCategory':
-      return { 
-        ...state, 
+      return {
+        ...state,
         showUpdateMappingModal: false,
         allCategories: [...state.allCategories, action.payload]
       }
     case 'closeUpdateMappingModal':
-      return { 
-        ...state, 
-        showUpdateMappingModal: false 
+      return {
+        ...state,
+        showUpdateMappingModal: false
       }
     case 'closeRelatedActivitiesModal':
-      return { 
-        ...state, 
-        showRelatedActivitiesModal: false 
+      return {
+        ...state,
+        showRelatedActivitiesModal: false
       }
     default:
       return state

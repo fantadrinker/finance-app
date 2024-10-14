@@ -74,7 +74,7 @@ def test_lambda_handler(activities_table, mock_insights_data, mock_activities_da
         activities_table.put_item(Item=item)
     for item in mock_insights_data:
         activities_table.put_item(Item=item)
-    
+
     app.table = activities_table
     response = app.lambda_handler({}, {})
 
