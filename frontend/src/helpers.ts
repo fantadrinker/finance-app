@@ -1,5 +1,7 @@
+import { ActivityRow } from "./api"
+
 // "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
-export const processCapitalOneActivities = rows => {
+export const processCapitalOneActivities = (rows: Array<string>) => {
   return rows
     .reduce((acc, rowStr) => {
       const dataArr = rowStr.split(',')
@@ -19,12 +21,12 @@ export const processCapitalOneActivities = rows => {
       ]
     }, [])
     .sort((a, b) => {
-      return new Date(a.date) - new Date(b.date)
+      return new Date(a.date).getTime() - new Date(b.date).getTime()
     })
 }
 
 // "Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"
-export const processRBCActivities = rows => {
+export const processRBCActivities = (rows: Array<string>) => {
   return rows
     .reduce((acc, rowStr) => {
       const dataArr = rowStr.split(',')
@@ -44,11 +46,11 @@ export const processRBCActivities = rows => {
       ]
     }, [])
     .sort((a, b) => {
-      return new Date(a.date) - new Date(b.date)
+      return new Date(a.date).getTime() - new Date(b.date).getTime()
     })
 }
 
-const download = (filename, text) => {
+const download = (filename: string, text: string) => {
   var element = document.createElement('a')
   element.setAttribute(
     'href',
@@ -64,9 +66,9 @@ const download = (filename, text) => {
   document.body.removeChild(element)
 }
 
-export const downloadFinanceData = data => {
+export const downloadFinanceData = (data: Array<ActivityRow>) => {
   const text = data.reduce((acc, { date, account, desc, category, amount }) => {
     return acc + `${date}, ${account}, ${desc}, ${category}, ${amount}\n`
-  }, '')
+  }, 'Date, Account, Description, Category, Amount\n')
   download('test.csv', text)
 }
