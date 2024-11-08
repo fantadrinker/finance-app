@@ -8,6 +8,7 @@ import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities 
 import { useAuth0TokenSilent } from '../../hooks'
 import { Modal } from 'react-bootstrap'
 import { ActivitiesTable } from '../../Components/ActivitiesTable'
+import { downloadFinanceData } from '../../helpers'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -146,6 +147,10 @@ export const Upload = () => {
     }
   }
 
+  const downloadAsCsv = async (event: React.FormEvent) => {
+    downloadFinanceData(previewActivityRows ?? [])
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <Toast show={!!showToast} onClose={closeToast} >
@@ -228,6 +233,7 @@ export const Upload = () => {
         <Modal.Footer>
           <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
           <Button onClick={processUserFile} disabled={!!processingFile}>Process File</Button>
+          <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
         </Modal.Footer>
       </Modal>
     </div>
