@@ -145,6 +145,7 @@ const UpdateMappingModal = ({
                 ? newCategory ?? currentCategory
                 : selectedCategory
             ).then((shouldClose) => {
+              setIsProcessingSubmit(false)
               if(shouldClose) closeModal()
             })
           }}
