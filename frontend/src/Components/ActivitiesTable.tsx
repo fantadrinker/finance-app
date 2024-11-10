@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
-import { Button, Dropdown, Spinner } from 'react-bootstrap'
+import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -44,6 +44,12 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     }
   }, [loading, onScrollToEnd])
 
+  const [selectedActivities, setSelectedActivities] = useState<Record<string, boolean>>({})
+
+  const isAllSelected = useMemo(() => {
+    return activities.every(({id}) => selectedActivities[id])
+  }, [selectedActivities, activities])
+
   let colCount = 4
   if (options?.showCategories) {
     colCount++
@@ -52,11 +58,20 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     colCount++
   }
 
-
   return (
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
+          <td className="w-4"><Form.Check
+            type="checkbox"
+            checked={isAllSelected}
+            onChange={(event) => {
+              setSelectedActivities(event.target.checked? activities.reduce((acc, curr) => ({
+                ...acc,
+                [curr.id]: true
+              }), {}): {})
+            }} 
+          /></td>
           <td className="lg:w-32 md:w-16">Date</td>
           <td className="lg:w-40 md:w-20">Account</td>
           <td className="">Description</td>
@@ -69,6 +84,18 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
 
         {activities.map(activity => (
           <tr key={activity.id}>
+            <td><Form.Check 
+              type="checkbox" 
+              checked={!!selectedActivities[activity.id]} 
+              onChange={(event) => {
+                setSelectedActivities((selectedActivities) => {
+                  return {
+                    ...selectedActivities,
+                    [activity.id]: event.target.checked
+                  }
+                })
+              }} 
+            /></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>
