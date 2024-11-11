@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react'
+import { useContext, useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
@@ -17,9 +17,14 @@ import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
+import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 
 export function Home() {
   const token = useAuth0TokenSilent()
+
+  const {
+    selectedIds,
+  } = useContext(MultiSelectContext)
 
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
@@ -62,7 +67,6 @@ export function Home() {
     }
   }, [token])
 
-  // test
   if (!token) {
     return (
       <div>
@@ -122,6 +126,9 @@ export function Home() {
           {errorMessage && <div>{errorMessage}</div>}
 
           <div className="mb-11 w-full">
+            {selectedIds.size > 0 && (<div>
+              {selectedIds.size} activities selected
+            </div>)}
             <ActivitiesTable
               activities={financeData}
               loading={loading}

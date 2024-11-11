@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
+import { MultiSelectContext } from '../Contexts/MultiSelectContext'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -25,7 +26,15 @@ interface ActivitiesTableProps {
   }
 }
 
-export function ActivitiesTable({ activities, hasMore, options, loading, onScrollToEnd }: ActivitiesTableProps) {
+export function ActivitiesTable({ 
+  activities, 
+  hasMore, 
+  options, 
+  loading, 
+  onScrollToEnd 
+}: ActivitiesTableProps) {
+
+  const {selectedIds, updateSelectedIds} = useContext(MultiSelectContext)
   useEffect(() => {
     if (!onScrollToEnd) {
       return
@@ -44,11 +53,9 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     }
   }, [loading, onScrollToEnd])
 
-  const [selectedActivities, setSelectedActivities] = useState<Record<string, boolean>>({})
-
   const isAllSelected = useMemo(() => {
-    return activities.every(({id}) => selectedActivities[id])
-  }, [selectedActivities, activities])
+    return activities.length > 0 && activities.every(({id}) => selectedIds.has(id))
+  }, [selectedIds, activities])
 
   let colCount = 4
   if (options?.showCategories) {
@@ -66,10 +73,12 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
             type="checkbox"
             checked={isAllSelected}
             onChange={(event) => {
-              setSelectedActivities(event.target.checked? activities.reduce((acc, curr) => ({
-                ...acc,
-                [curr.id]: true
-              }), {}): {})
+              if (event.target.checked) {
+                updateSelectedIds(new Set(activities.map(({id}) => id))) 
+              }
+              else {
+                updateSelectedIds(new Set([]))
+              }
             }} 
           /></td>
           <td className="lg:w-32 md:w-16">Date</td>
@@ -86,14 +95,13 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
           <tr key={activity.id}>
             <td><Form.Check 
               type="checkbox" 
-              checked={!!selectedActivities[activity.id]} 
+              checked={selectedIds.has(activity.id)} 
               onChange={(event) => {
-                setSelectedActivities((selectedActivities) => {
-                  return {
-                    ...selectedActivities,
-                    [activity.id]: event.target.checked
-                  }
-                })
+                if (event.target.checked && !selectedIds.has(activity.id)) {
+                  updateSelectedIds(selectedIds.union(new Set([activity.id])))
+                } else if (!event.target.checked && selectedIds.has(activity.id)) {
+                  updateSelectedIds(selectedIds.difference(new Set([activity.id])))
+                }
               }} 
             /></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>

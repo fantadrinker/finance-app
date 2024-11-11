@@ -14,6 +14,7 @@ import Login from './Pages/Login/Login'
 import Upload from './Pages/Upload'
 import Wishlist from './Pages/Wishlist'
 import { BASE_NAME } from './config'
+import { MultiSelectContextProviderWrapper } from './Contexts/MultiSelectContext'
 
 function App() {
   const { isLoading, error } = useAuth0()
@@ -37,7 +38,9 @@ function App() {
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={(<MultiSelectContextProviderWrapper>
+            <Home />
+          </MultiSelectContextProviderWrapper>)} />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
