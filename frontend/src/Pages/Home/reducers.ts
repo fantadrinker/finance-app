@@ -1,15 +1,16 @@
 interface HomeState {
-  showUpdateMappingModal: boolean
-  showRelatedActivitiesModal: boolean
-  relatedActivityId: string | null
-  description: string
-  category: string
-  allCategories: string[]
+  showUpdateMappingModal: boolean;
+  showRelatedActivitiesModal: boolean;
+  showSelectedActivitiesModal: boolean;
+  relatedActivityId: string | null;
+  description: string;
+  category: string;
+  allCategories: string[];
 }
 
 interface HomeActions {
-  type: string
-  payload?: any
+  type: string;
+  payload?: any;
 }
 
 export function reducer(state: HomeState, action: HomeActions): HomeState {
@@ -34,6 +35,11 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
         showRelatedActivitiesModal: true,
         relatedActivityId: action.payload
       }
+    case 'openSelectedActivitiesModal':
+      return {
+        ...state,
+        showSelectedActivitiesModal: true
+      }
     case 'updateAllCategories':
       return {
         ...state,
@@ -54,6 +60,11 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
       return {
         ...state,
         showRelatedActivitiesModal: false
+      }
+    case 'closeSelectedActivitiesModal':
+      return {
+        ...state,
+        showSelectedActivitiesModal: false
       }
     default:
       return state

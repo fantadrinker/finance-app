@@ -1,4 +1,4 @@
-import { useContext, useEffect, useReducer, useState } from 'react'
+import { useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
@@ -18,6 +18,8 @@ import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
+import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
+import { Button } from 'react-bootstrap'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -29,6 +31,7 @@ export function Home() {
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
     showRelatedActivitiesModal: false,
+    showSelectedActivitiesModal: false,
     relatedActivityId: null,
     description: '',
     category: '',
@@ -66,6 +69,10 @@ export function Home() {
       })
     }
   }, [token])
+
+  const selectedActivities = useMemo(() => {
+    return financeData.filter(({id}) => selectedIds.has(id))
+  }, [financeData, selectedIds])
 
   if (!token) {
     return (
@@ -126,9 +133,13 @@ export function Home() {
           {errorMessage && <div>{errorMessage}</div>}
 
           <div className="mb-11 w-full">
-            {selectedIds.size > 0 && (<div>
+            <Button onClick={() => dispatch({
+              type: 'openSelectedActivitiesModal'
+            })}
+              disabled={selectedIds.size === 0}  
+            >
               {selectedIds.size} activities selected
-            </div>)}
+            </Button>
             <ActivitiesTable
               activities={financeData}
               loading={loading}
@@ -186,6 +197,13 @@ export function Home() {
           type: 'closeRelatedActivitiesModal'
         })}
         activityId={state.relatedActivityId || undefined}
+      />
+      <SelectedActivitiesModal
+        show={state.showSelectedActivitiesModal}
+        closeModal={() => dispatch({
+          type: 'closeSelectedActivitiesModal'
+        })}
+        activities={selectedActivities}
       />
     </div>
   )
