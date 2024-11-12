@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useContext, useEffect, useMemo } from 'react'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
-import { Button, Dropdown, Spinner } from 'react-bootstrap'
+import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
+import { MultiSelectContext } from '../Contexts/MultiSelectContext'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -25,7 +26,15 @@ interface ActivitiesTableProps {
   }
 }
 
-export function ActivitiesTable({ activities, hasMore, options, loading, onScrollToEnd }: ActivitiesTableProps) {
+export function ActivitiesTable({ 
+  activities, 
+  hasMore, 
+  options, 
+  loading, 
+  onScrollToEnd 
+}: ActivitiesTableProps) {
+
+  const {selectedIds, updateSelectedIds} = useContext(MultiSelectContext)
   useEffect(() => {
     if (!onScrollToEnd) {
       return
@@ -44,6 +53,10 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     }
   }, [loading, onScrollToEnd])
 
+  const isAllSelected = useMemo(() => {
+    return activities.length > 0 && activities.every(({id}) => selectedIds.has(id))
+  }, [selectedIds, activities])
+
   let colCount = 4
   if (options?.showCategories) {
     colCount++
@@ -52,11 +65,22 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
     colCount++
   }
 
-
   return (
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
+          <td className="w-4"><Form.Check
+            type="checkbox"
+            checked={isAllSelected}
+            onChange={(event) => {
+              if (event.target.checked) {
+                updateSelectedIds(new Set(activities.map(({id}) => id))) 
+              }
+              else {
+                updateSelectedIds(new Set([]))
+              }
+            }} 
+          /></td>
           <td className="lg:w-32 md:w-16">Date</td>
           <td className="lg:w-40 md:w-20">Account</td>
           <td className="">Description</td>
@@ -69,6 +93,17 @@ export function ActivitiesTable({ activities, hasMore, options, loading, onScrol
 
         {activities.map(activity => (
           <tr key={activity.id}>
+            <td><Form.Check 
+              type="checkbox" 
+              checked={selectedIds.has(activity.id)} 
+              onChange={(event) => {
+                if (event.target.checked && !selectedIds.has(activity.id)) {
+                  updateSelectedIds(selectedIds.union(new Set([activity.id])))
+                } else if (!event.target.checked && selectedIds.has(activity.id)) {
+                  updateSelectedIds(selectedIds.difference(new Set([activity.id])))
+                }
+              }} 
+            /></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>

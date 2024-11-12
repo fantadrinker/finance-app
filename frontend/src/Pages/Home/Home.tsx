@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react'
+import { useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
@@ -17,13 +17,21 @@ import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
+import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
+import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
+import { Button } from 'react-bootstrap'
 
 export function Home() {
   const token = useAuth0TokenSilent()
 
+  const {
+    selectedIds,
+  } = useContext(MultiSelectContext)
+
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
     showRelatedActivitiesModal: false,
+    showSelectedActivitiesModal: false,
     relatedActivityId: null,
     description: '',
     category: '',
@@ -62,7 +70,10 @@ export function Home() {
     }
   }, [token])
 
-  // test
+  const selectedActivities = useMemo(() => {
+    return financeData.filter(({id}) => selectedIds.has(id))
+  }, [financeData, selectedIds])
+
   if (!token) {
     return (
       <div>
@@ -122,6 +133,13 @@ export function Home() {
           {errorMessage && <div>{errorMessage}</div>}
 
           <div className="mb-11 w-full">
+            <Button onClick={() => dispatch({
+              type: 'openSelectedActivitiesModal'
+            })}
+              disabled={selectedIds.size === 0}  
+            >
+              {selectedIds.size} activities selected
+            </Button>
             <ActivitiesTable
               activities={financeData}
               loading={loading}
@@ -179,6 +197,13 @@ export function Home() {
           type: 'closeRelatedActivitiesModal'
         })}
         activityId={state.relatedActivityId || undefined}
+      />
+      <SelectedActivitiesModal
+        show={state.showSelectedActivitiesModal}
+        closeModal={() => dispatch({
+          type: 'closeSelectedActivitiesModal'
+        })}
+        activities={selectedActivities}
       />
     </div>
   )
