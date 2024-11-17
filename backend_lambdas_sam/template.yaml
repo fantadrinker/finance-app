@@ -314,3 +314,9 @@ Outputs:
   Function:
     Description: Activities Lambda Function ARN
     Value: !GetAtt ActivitiesFunction.Arn
+  DynamoDB:
+    Description: DynamoDB
+    Value: !Ref ActivitiesTable
+  S3Bucket:
+    Description: S3 Bucket created from the stack
+    Value: !Ref ActivitiesFiles
