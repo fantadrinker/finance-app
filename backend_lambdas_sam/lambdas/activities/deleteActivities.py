@@ -1,7 +1,7 @@
 import json
 
 import botocore
-
+from boto3.dynamodb.conditions import Key
 
 def delete_activities(user: str, sk: str, activities_table):
     # deletes all activites for a user, or a specific activity if sk is provided
