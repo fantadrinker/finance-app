@@ -56,5 +56,5 @@ jobs:
               run: sam deploy --config-env=test --no-confirm-changeset --no-fail-on-empty-changeset
             - name: run integration tests
               run: pytest tests/integration -v -rP
-            - name: teardown test stack
-              run: sam delete --config-env=test --no-prompts
+            - name: clean up and teardown test stack
+              run: python scripts/delete_files.py && sam delete --config-env=test --no-prompts
