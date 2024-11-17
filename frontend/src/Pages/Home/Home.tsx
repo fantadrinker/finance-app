@@ -26,6 +26,7 @@ export function Home() {
 
   const {
     selectedIds,
+    updateSelectedIds
   } = useContext(MultiSelectContext)
 
   const [state, dispatch] = useReducer(reducer, {
@@ -140,6 +141,9 @@ export function Home() {
             >
               {selectedIds.size} activities selected
             </Button>
+            {selectedIds.size > 0 && <Button onClick={() => updateSelectedIds(new Set([]))}>
+              Clear Selected
+            </Button>}
             <ActivitiesTable
               activities={financeData}
               loading={loading}
