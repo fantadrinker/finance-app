@@ -73,7 +73,7 @@ const UpdateMappingModal = ({
 
   }, [show, auth, newDescription])
 
-  const selectCategories = allCategories.includes(currentCategory)
+  const selectCategories = (currentCategory === "" || allCategories.includes(currentCategory))
     ? allCategories
     : allCategories.concat([currentCategory])
 
@@ -145,6 +145,7 @@ const UpdateMappingModal = ({
                 ? newCategory ?? currentCategory
                 : selectedCategory
             ).then((shouldClose) => {
+              setIsProcessingSubmit(false)
               if(shouldClose) closeModal()
             })
           }}
