@@ -17,9 +17,6 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
   switch (action.type) {
     case 'openUpdateMappingModal':
       const { description, category } = action.payload
-      if (!description || !category) {
-        return state
-      }
       return {
         ...state,
         showUpdateMappingModal: true,
