@@ -73,8 +73,12 @@ def apigw_event_get_max_5(user_id):
 
 
 @pytest.fixture()
-def apigw_event_get_by_category(user_id):
+def apigw_event_get_by_category_size_5(user_id):
     return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&size=5")
+
+@pytest.fixture()
+def apigw_event_get_by_category_size_3(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&size=3")
 
 @pytest.fixture()
 def apigw_event_get_by_category_multiple(user_id):
@@ -354,14 +358,22 @@ def test_delete_activities(
 
 def test_get_activities_by_category(
         activities_table,
-        apigw_event_get_by_category,
+        apigw_event_get_by_category_size_5,
+        apigw_event_get_by_category_size_3,
         apigw_event_get_by_category_multiple,
         mock_activities):
     # setup table and insert some activities data in there
     for item in mock_activities:
         activities_table.put_item(Item=item)
 
-    ret = app.lambda_handler(apigw_event_get_by_category, "")
+    ret = app.lambda_handler(apigw_event_get_by_category_size_5, "")
+    assert ret["statusCode"] == 200
+    data = json.loads(ret["body"])
+    assert data["count"] == 5
+    assert all([item["category"] == "test_odd" for item in data["data"]])
+    assert int(data["data"][0]["amount"]) == 19
+
+    ret = app.lambda_handler(apigw_event_get_by_category_size_3, "")
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5

@@ -93,7 +93,15 @@ def getActivities(
         }
 
 
-def getActivitiesForCategory(user_id, categories, activities_table, exclude: bool, startDate: str, endDate: str):
+def getActivitiesForCategory(
+        user_id, 
+        categories, 
+        activities_table, 
+        exclude: bool, 
+        startDate: str, 
+        endDate: str,
+        limit: int = 0
+    ):
     mappings = getMappings(user_id, activities_table, categories)
     descs = [x["description"] for x in mappings]
     filterExps = None
@@ -132,7 +140,7 @@ def getActivitiesForCategory(user_id, categories, activities_table, exclude: boo
             "data": [{
                 **applyMappings(mappings, item),
                 "amount": str(item["amount"]),
-            } for item in sortedItems[:5]],
+            } for item in sortedItems[:limit]],
             "count": len(allItems)
         })
     }
