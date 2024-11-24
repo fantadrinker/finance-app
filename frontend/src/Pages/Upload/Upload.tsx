@@ -4,7 +4,7 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
-import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities } from '../../api'
+import { ActivityRow, FileUpload, getUploads, postActivities, postActivitiesJSON, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
 import { Modal } from 'react-bootstrap'
 import { ActivitiesTable } from '../../Components/ActivitiesTable'
@@ -139,11 +139,33 @@ export const Upload = () => {
       return
     }
 
+    let activities: ActivityRow[] = []
+    if (fileContent) {
+      try {
+        activities = await previewActivities(token, columnFormat.toString(), fileContent!)
+      } catch (e) {
+        setErrorMessage('error when processing file' + e.message)
+      }
+    }
+    setPreviewActivityRows(activities)
+  }
+
+  const processActivitiesJSON = async () => {
+    if (!token) {
+      setErrorMessage('not authenticated')
+      return
+    }
+
+    setProcessingFile(true)
     try {
-      const response = await previewActivities(token, columnFormat.toString(), fileContent!)
-      setPreviewActivityRows(response)
+      await postActivitiesJSON(token, previewActivityRows ?? [])
+      setProcessingFile(false)
+      if (previewActivityRows) {
+        setPreviewActivityRows(null)
+      }
+      setToastMessage('success')
     } catch (e) {
-      setErrorMessage('error when processing file' + e.message)
+      setToastMessage('something went wrong')
     }
   }
 
@@ -203,6 +225,11 @@ export const Upload = () => {
           >
             Preview File
           </Button>
+          <Button
+            onClick={previewUserFile}
+          >
+            Manually upload
+          </Button>
         </Form.Group>
       </Form>
       <div>
@@ -232,7 +259,7 @@ export const Upload = () => {
         </Modal.Body>
         <Modal.Footer>
           <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
-          <Button onClick={processUserFile} disabled={!!processingFile}>Process File</Button>
+          <Button onClick={processActivitiesJSON} disabled={!!processingFile}>Process File</Button>
           <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
         </Modal.Footer>
       </Modal>

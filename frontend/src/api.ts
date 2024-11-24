@@ -346,6 +346,31 @@ export function postActivities(
     })
 }
 
+export function postActivitiesJSON(
+  auth: string,
+  activities: ActivityRow[]
+): Promise<Response> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  if (activities.length === 0) {
+    throw new Error('no activity to upload')
+  }
+  return postCall('/activities', [], JSON.stringify({
+    data: activities.map((activity) => ({
+      ...activity,
+      description: activity.desc,
+      amount: `${activity.amount}`
+    }))
+  }), 'application/json', auth).then(res => {
+    if (res.ok) {
+      return res.json()
+    } else {
+      throw new Error('post activities failed')
+    }
+  })
+}
+
 
 export function previewActivities(
   auth: string,
