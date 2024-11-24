@@ -77,7 +77,8 @@ def lambda_handler(event, context):
                 activities_table,
                 exclude,
                 startDate,
-                endDate
+                endDate,
+                5 if size == 0 else size
             )
         return getActivities(
             user_id,
