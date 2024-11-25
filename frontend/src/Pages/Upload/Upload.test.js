@@ -19,14 +19,17 @@ describe('Upload page, user logged in', () => {
     await waitFor(() =>
       expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
     )
+    let submitButton
     await waitFor(async () => {
       const fileUpload = await screen.findByRole('file')
-      const submitButton = screen.getByRole('submit')
+      submitButton = screen.getByRole('submit')
       expect(fileUpload).toBeInTheDocument()
-      expect(submitButton).toBeInTheDocument()
-      expect(submitButton).toBeDisabled()
     })
     // TODO: later mock the upload file, then check if button is enabled
+    expect(submitButton).toBeInTheDocument()
+    expect(submitButton).toBeDisabled()
+
+    // when clicking on the submit button, preview submit modal should open
   })
   test('should show user previous uploads if there is any', async () => {
     API.getUploads.mockReturnValue(

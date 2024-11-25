@@ -189,6 +189,8 @@ export const Upload = () => {
           <ButtonGroup>
             <Button
               onClick={previewUserFile}
+              type="submit"
+              role="submit"
               disabled={fileContent === null || processingFile}
             >
               Preview File
