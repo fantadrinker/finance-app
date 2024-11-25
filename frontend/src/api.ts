@@ -321,31 +321,6 @@ export function getDeletedActivities(
     .then(serializeActivitiesAPIResponse)
 }
 
-export function postActivities(
-  auth: string,
-  columnFormat: string,
-  fileContent: File
-): Promise<Response> {
-  if (!auth) {
-    throw new Error('no auth')
-  }
-  if (!fileContent) {
-    throw new Error('no file')
-  }
-  return fileContent
-    .text()
-    .then(file =>
-      postCall(`/activities`, [['format', columnFormat]], file, 'text/html', auth)
-    )
-    .then(res => {
-      if (res.ok) {
-        return res.json()
-      } else {
-        throw new Error('post activities failed')
-      }
-    })
-}
-
 export function postActivitiesJSON(
   auth: string,
   activities: ActivityRow[]

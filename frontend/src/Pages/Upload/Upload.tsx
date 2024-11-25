@@ -4,9 +4,9 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
-import { ActivityRow, FileUpload, getUploads, postActivities, postActivitiesJSON, previewActivities } from '../../api'
+import { ActivityRow, FileUpload, getUploads, postActivitiesJSON, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
-import { Modal } from 'react-bootstrap'
+import { ButtonGroup, Modal } from 'react-bootstrap'
 import { ActivitiesTable } from '../../Components/ActivitiesTable'
 import { downloadFinanceData } from '../../helpers'
 
@@ -108,31 +108,6 @@ export const Upload = () => {
       })
   }
 
-  const processUserFile = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!token) {
-      setErrorMessage('not authenticated')
-      return
-    }
-    setProcessingFile(true)
-
-    try {
-      // processes user file, store in financeData state var
-      await postActivities(
-        token,
-        columnFormat.toString(),
-        fileContent!
-      )
-      setProcessingFile(false)
-      if (previewActivityRows) {
-        setPreviewActivityRows(null)
-      }
-      setToastMessage('success')
-    } catch (e) {
-      setErrorMessage('error when processing file' + e.message)
-    }
-  }
-
   const previewUserFile = async (event: React.FormEvent) => {
     if (!token) {
       setErrorMessage('not authenticated')
@@ -211,25 +186,19 @@ export const Upload = () => {
               )
             })}
           </Form.Select>
-          <Button
-            onClick={processUserFile}
-            type="submit"
-            role="submit"
-            disabled={fileContent === null || processingFile}
-          >
-            Process File
-          </Button>
-          <Button
-            onClick={previewUserFile}
-            disabled={fileContent === null || processingFile}
-          >
-            Preview File
-          </Button>
-          <Button
-            onClick={previewUserFile}
-          >
-            Manually upload
-          </Button>
+          <ButtonGroup>
+            <Button
+              onClick={previewUserFile}
+              disabled={fileContent === null || processingFile}
+            >
+              Preview File
+            </Button>
+            <Button
+              onClick={previewUserFile}
+            >
+              Manually Input
+            </Button>
+          </ButtonGroup>
         </Form.Group>
       </Form>
       <div>
