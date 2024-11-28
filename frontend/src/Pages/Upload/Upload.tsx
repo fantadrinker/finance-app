@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, ChangeEvent, useMemo, useCallback, useContext } from 'react'
 import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
@@ -8,6 +8,7 @@ import { ActivityRow, FileUpload, getUploads, previewActivities } from '../../ap
 import { useAuth0TokenSilent } from '../../hooks'
 import { ButtonGroup } from 'react-bootstrap'
 import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
+import { MultiSelectContext, MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -194,12 +195,14 @@ export const Upload = () => {
           })}
         </ul>
       </div>
-      <UploadPreviewModal
-        show={!!previewActivityRows}
-        closeModal={() => setPreviewActivityRows(null)}
-        setToastMessage={setToastMessage}
-        activities={previewActivityRows ?? []}
-      />
+      <MultiSelectContextProviderWrapper>
+        <UploadPreviewModal
+          show={!!previewActivityRows}
+          closeModal={() => setPreviewActivityRows(null)}
+          setToastMessage={setToastMessage}
+          activities={previewActivityRows ?? []}
+        />
+      </MultiSelectContextProviderWrapper>
     </div>
   )
 }
