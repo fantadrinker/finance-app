@@ -4,11 +4,10 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
-import { ActivityRow, FileUpload, getUploads, postActivitiesJSON, previewActivities } from '../../api'
+import { ActivityRow, FileUpload, getUploads, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
-import { ButtonGroup, Modal } from 'react-bootstrap'
-import { ActivitiesTable } from '../../Components/ActivitiesTable'
-import { downloadFinanceData } from '../../helpers'
+import { ButtonGroup } from 'react-bootstrap'
+import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -109,6 +108,8 @@ export const Upload = () => {
   }
 
   const previewUserFile = async (event: React.FormEvent) => {
+    setProcessingFile(true)
+    event.preventDefault()
     if (!token) {
       setErrorMessage('not authenticated')
       return
@@ -118,34 +119,12 @@ export const Upload = () => {
     if (fileContent) {
       try {
         activities = await previewActivities(token, columnFormat.toString(), fileContent!)
+        setProcessingFile(false)
       } catch (e) {
         setErrorMessage('error when processing file' + e.message)
       }
     }
     setPreviewActivityRows(activities)
-  }
-
-  const processActivitiesJSON = async () => {
-    if (!token) {
-      setErrorMessage('not authenticated')
-      return
-    }
-
-    setProcessingFile(true)
-    try {
-      await postActivitiesJSON(token, previewActivityRows ?? [])
-      setProcessingFile(false)
-      if (previewActivityRows) {
-        setPreviewActivityRows(null)
-      }
-      setToastMessage('success')
-    } catch (e) {
-      setToastMessage('something went wrong')
-    }
-  }
-
-  const downloadAsCsv = async (event: React.FormEvent) => {
-    downloadFinanceData(previewActivityRows ?? [])
   }
 
   return (
@@ -215,25 +194,12 @@ export const Upload = () => {
           })}
         </ul>
       </div>
-      <Modal
+      <UploadPreviewModal
         show={!!previewActivityRows}
-        onHide={() => setPreviewActivityRows(null)}
-        size='lg'
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Preview Activities</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="max-h-[60vh] overflow-scroll">
-          <ActivitiesTable
-            activities={previewActivityRows ?? []}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
-          <Button onClick={processActivitiesJSON} disabled={!!processingFile}>Process File</Button>
-          <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
-        </Modal.Footer>
-      </Modal>
+        closeModal={() => setPreviewActivityRows(null)}
+        setToastMessage={setToastMessage}
+        activities={previewActivityRows ?? []}
+      />
     </div>
   )
 }
