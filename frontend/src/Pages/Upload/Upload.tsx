@@ -4,11 +4,11 @@ import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
-import { ActivityRow, FileUpload, getUploads, postActivities, previewActivities } from '../../api'
+import { ActivityRow, FileUpload, getUploads, previewActivities } from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
-import { Modal } from 'react-bootstrap'
-import { ActivitiesTable } from '../../Components/ActivitiesTable'
-import { downloadFinanceData } from '../../helpers'
+import { ButtonGroup } from 'react-bootstrap'
+import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
+import {  MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -108,47 +108,24 @@ export const Upload = () => {
       })
   }
 
-  const processUserFile = async (event: React.FormEvent) => {
+  const previewUserFile = async (event: React.FormEvent) => {
+    setProcessingFile(true)
     event.preventDefault()
     if (!token) {
       setErrorMessage('not authenticated')
       return
     }
-    setProcessingFile(true)
 
-    try {
-      // processes user file, store in financeData state var
-      await postActivities(
-        token,
-        columnFormat.toString(),
-        fileContent!
-      )
-      setProcessingFile(false)
-      if (previewActivityRows) {
-        setPreviewActivityRows(null)
+    let activities: ActivityRow[] = []
+    if (fileContent) {
+      try {
+        activities = await previewActivities(token, columnFormat.toString(), fileContent!)
+        setProcessingFile(false)
+      } catch (e) {
+        setErrorMessage('error when processing file' + e.message)
       }
-      setToastMessage('success')
-    } catch (e) {
-      setErrorMessage('error when processing file' + e.message)
     }
-  }
-
-  const previewUserFile = async (event: React.FormEvent) => {
-    if (!token) {
-      setErrorMessage('not authenticated')
-      return
-    }
-
-    try {
-      const response = await previewActivities(token, columnFormat.toString(), fileContent!)
-      setPreviewActivityRows(response)
-    } catch (e) {
-      setErrorMessage('error when processing file' + e.message)
-    }
-  }
-
-  const downloadAsCsv = async (event: React.FormEvent) => {
-    downloadFinanceData(previewActivityRows ?? [])
+    setPreviewActivityRows(activities)
   }
 
   return (
@@ -189,20 +166,21 @@ export const Upload = () => {
               )
             })}
           </Form.Select>
-          <Button
-            onClick={processUserFile}
-            type="submit"
-            role="submit"
-            disabled={fileContent === null || processingFile}
-          >
-            Process File
-          </Button>
-          <Button
-            onClick={previewUserFile}
-            disabled={fileContent === null || processingFile}
-          >
-            Preview File
-          </Button>
+          <ButtonGroup>
+            <Button
+              onClick={previewUserFile}
+              type="submit"
+              role="submit"
+              disabled={fileContent === null || processingFile}
+            >
+              Preview File
+            </Button>
+            <Button
+              onClick={previewUserFile}
+            >
+              Manually Input
+            </Button>
+          </ButtonGroup>
         </Form.Group>
       </Form>
       <div>
@@ -217,25 +195,14 @@ export const Upload = () => {
           })}
         </ul>
       </div>
-      <Modal
-        show={!!previewActivityRows}
-        onHide={() => setPreviewActivityRows(null)}
-        size='lg'
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Preview Activities</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="max-h-[60vh] overflow-scroll">
-          <ActivitiesTable
-            activities={previewActivityRows ?? []}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setPreviewActivityRows(null)}>Close</Button>
-          <Button onClick={processUserFile} disabled={!!processingFile}>Process File</Button>
-          <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
-        </Modal.Footer>
-      </Modal>
+      <MultiSelectContextProviderWrapper>
+        <UploadPreviewModal
+          show={!!previewActivityRows}
+          closeModal={() => setPreviewActivityRows(null)}
+          setToastMessage={setToastMessage}
+          activities={previewActivityRows ?? []}
+        />
+      </MultiSelectContextProviderWrapper>
     </div>
   )
 }

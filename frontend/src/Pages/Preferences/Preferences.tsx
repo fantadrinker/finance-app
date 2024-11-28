@@ -35,7 +35,6 @@ function deduplicate(arr: Array<string>) {
   return Array.from(new Set(arr))
 }
 
-// TODO: set up error handling
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
