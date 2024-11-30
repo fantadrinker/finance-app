@@ -5,19 +5,12 @@ import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'
 import { Spinner } from 'react-bootstrap'
 import { useAuth0 } from '@auth0/auth0-react'
 import { ActivitiesTable } from './ActivitiesTable'
+import { COLORS_GPT } from '../helpers'
 
 /**
  * TODO: animations
  */
 
-const COLORS_GPT = [
-  '#1f77b4',
-  '#ff7f0e',
-  '#2ca02c',
-  '#d62728',
-  '#9467bd',
-  '#8c564b',
-]
 
 const OTHERS_CATEGORY = 'Others'
 
