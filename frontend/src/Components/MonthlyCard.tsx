@@ -166,7 +166,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={() => setHoveredIndex(-1)}
               >
-                {/*monthlyData.map((_, index) => (
+                {monthlyData.map((_, index) => (
                   <Cell
                     cursor="pointer"
                     fill={
@@ -178,7 +178,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                     }
                     key={`cell-${index}`}
                   />
-                ))*/}
+                ))}
               </Bar>)
 
             })}
