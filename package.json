@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "cd frontend && npm run precommit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "precommit": "echo 111"
   },
   "author": "fantadrinker",
   "license": "ISC",
