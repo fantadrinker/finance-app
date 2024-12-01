@@ -14,7 +14,7 @@ export function SelectedActivitiesModal({
   closeModal
 }: SelectedActivitiesModalProps) {
   return (
-    <Modal show={show} onHide={closeModal}>
+    <Modal show={show} onHide={closeModal} size="lg" >
       <Modal.Header>Selected Activities</Modal.Header>
       <Modal.Body>
         <ActivitiesTable 
