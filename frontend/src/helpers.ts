@@ -72,3 +72,21 @@ export const downloadFinanceData = (data: Array<ActivityRow>) => {
   }, 'Date, Account, Description, Category, Amount\n')
   download('test.csv', text)
 }
+
+export const COLORS_GPT = [
+  '#1f77b4',
+  '#ff7f0e',
+  '#2ca02c',
+  '#d62728',
+  '#9467bd',
+  '#8c564b',
+]
+
+export function getRandomColorMap(input: string[]): Record<string, string> {
+  return input.reduce((acc, curr, index) => {
+    return {
+      ...acc,
+      [curr]: COLORS_GPT[index % COLORS_GPT.length]
+    }
+  }, {})
+}

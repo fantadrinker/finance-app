@@ -14,8 +14,9 @@ import { Modal, Table } from 'react-bootstrap'
 import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
 import { useFinanceDataFetcher } from '../Pages/Home/effects'
 import { useAuth0TokenSilent } from '../hooks'
-import { map, pipe, sort, take } from 'ramda'
+import { flatten, keys, map, pipe, prop, sort, take, uniq } from 'ramda'
 import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
+import { getRandomColorMap } from '../helpers'
 
 interface MonthlyCardProps {
   insights: Array<Insight>
@@ -46,6 +47,17 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
       map(transformInsightToMonthlyBreakdown)
     )(sortedInsights)
   , [sortedInsights])
+
+  const allCategories = useMemo(() => {
+    return pipe(
+      map(pipe(
+        prop('breakdown'),
+        keys
+      )),
+      flatten,
+      uniq
+    )(monthlyData)
+  }, [monthlyData])
 
   const {
     monthStart: expandCategoryMonthStart,
@@ -125,6 +137,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         maxWidth: '400px',
         transition: 'all 0.2s linear 0s',
       }
+  const colorMapForCategories = getRandomColorMap(allCategories)
 
   return (
     <Card style={cardStyles}>
@@ -143,27 +156,32 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            <Bar
-              dataKey="amount"
-              fill="#8884d8"
-              onClick={handleClickBarChart}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={() => setHoveredIndex(-1)}
-            >
-              {monthlyData.map((_, index) => (
-                <Cell
-                  cursor="pointer"
-                  fill={
-                    index === activeIndex
-                      ? '#82ca9d'
-                      : index === hoveredIndex
-                      ? '#87a9b5'
-                      : '#8884d8'
-                  }
-                  key={`cell-${index}`}
-                />
-              ))}
-            </Bar>
+            {allCategories.map((category) => {
+              return (<Bar
+                key={category}
+                dataKey={category}
+                stackId={1}
+                fill={colorMapForCategories[category]}
+                onClick={handleClickBarChart}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={() => setHoveredIndex(-1)}
+              >
+                {monthlyData.map((_, index) => (
+                  <Cell
+                    cursor="pointer"
+                    fill={
+                      index === activeIndex
+                        ? '#82ca9d'
+                        : index === hoveredIndex
+                        ? '#87a9b5'
+                        : colorMapForCategories[category]
+                    }
+                    key={`cell-${index}`}
+                  />
+                ))}
+              </Bar>)
+
+            })}
           </BarChart>
           {isExpanded && (
             <div
