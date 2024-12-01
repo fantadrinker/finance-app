@@ -16,7 +16,10 @@ import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
 import { useFinanceDataFetcher } from './effects'
-import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
+import {
+  ActivitiesTable,
+  ActivityActionType,
+} from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
 import { Button } from 'react-bootstrap'
@@ -24,10 +27,7 @@ import { Button } from 'react-bootstrap'
 export function Home() {
   const token = useAuth0TokenSilent()
 
-  const {
-    selectedIds,
-    updateSelectedIds
-  } = useContext(MultiSelectContext)
+  const { selectedIds, updateSelectedIds } = useContext(MultiSelectContext)
 
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
@@ -59,20 +59,19 @@ export function Home() {
           console.log(err)
           setErrorMessage(`Error fetching activity mappings ${err.message}`)
         })
-      getDeletedActivities(token).then(({
-        data,
-        nextKey
-      }) => {
-        setDeletedActivities(data)
-      }).catch(err => {
-        console.log(err)
-        setErrorMessage(`Error fetching deleted activities ${err.message}`)
-      })
+      getDeletedActivities(token)
+        .then(({ data, nextKey }) => {
+          setDeletedActivities(data)
+        })
+        .catch(err => {
+          console.log(err)
+          setErrorMessage(`Error fetching deleted activities ${err.message}`)
+        })
     }
   }, [token])
 
   const selectedActivities = useMemo(() => {
-    return financeData.filter(({id}) => selectedIds.has(id))
+    return financeData.filter(({ id }) => selectedIds.has(id))
   }, [financeData, selectedIds])
 
   if (!token) {
@@ -99,7 +98,10 @@ export function Home() {
     }
   }
 
-  async function updateNewCategory(desc: string, newCategory: string): Promise<boolean> {
+  async function updateNewCategory(
+    desc: string,
+    newCategory: string
+  ): Promise<boolean> {
     const sizeToRefetch = financeData.length
     try {
       const postResponse = await postMappings(token, {
@@ -107,16 +109,16 @@ export function Home() {
         category: newCategory,
       })
       if (!postResponse.ok) {
-        throw Error("error updating category mapping, api response not ok")
+        throw Error('error updating category mapping, api response not ok')
       }
       reFetch(true, sizeToRefetch)
       const updatedMappings = await getMappings(token)
       dispatch({
         type: 'updateAllCategories',
-        payload: updatedMappings.map(({ category }) => category)
+        payload: updatedMappings.map(({ category }) => category),
       })
       return true
-    } catch(err) {
+    } catch (err) {
       console.log(err)
       setErrorMessage(`Error updating category mapping${err.message}`)
     }
@@ -134,51 +136,57 @@ export function Home() {
           {errorMessage && <div>{errorMessage}</div>}
 
           <div className="mb-11 w-full">
-            <Button onClick={() => dispatch({
-              type: 'openSelectedActivitiesModal'
-            })}
-              disabled={selectedIds.size === 0}  
+            <Button
+              onClick={() =>
+                dispatch({
+                  type: 'openSelectedActivitiesModal',
+                })
+              }
+              disabled={selectedIds.size === 0}
             >
               {selectedIds.size} activities selected
             </Button>
-            {selectedIds.size > 0 && <Button onClick={() => updateSelectedIds(new Set([]))}>
-              Clear Selected
-            </Button>}
+            {selectedIds.size > 0 && (
+              <Button onClick={() => updateSelectedIds(new Set([]))}>
+                Clear Selected
+              </Button>
+            )}
             <ActivitiesTable
               activities={financeData}
               loading={loading}
               hasMore={hasMore}
-              onScrollToEnd={hasMore ? fetchMore : () => { }}
+              onScrollToEnd={hasMore ? fetchMore : () => {}}
               options={{
                 showCategories: true,
                 actions: [
                   {
                     type: ActivityActionType.UPDATE,
                     text: 'Update Mapping',
-                    onClick: (activity) => {
+                    onClick: activity => {
                       dispatch({
                         type: 'openUpdateMappingModal',
                         payload: {
                           description: activity.desc || '',
-                          category: activity.category
-                        }
+                          category: activity.category,
+                        },
                       })
-                    }
+                    },
                   },
                   {
                     type: ActivityActionType.DELETE,
                     text: 'Delete',
-                    onClick: ({ id }) => deleteAndFetch(id)
+                    onClick: ({ id }) => deleteAndFetch(id),
                   },
                   {
                     type: ActivityActionType.SEE_RELATED,
                     text: 'Related',
-                    onClick: ({ id }) => dispatch({
-                      type: 'openRelatedActivitiesModal',
-                      payload: id
-                    })
-                  }
-                ]
+                    onClick: ({ id }) =>
+                      dispatch({
+                        type: 'openRelatedActivitiesModal',
+                        payload: id,
+                      }),
+                  },
+                ],
               }}
             />
           </div>
@@ -197,16 +205,20 @@ export function Home() {
       />
       <RelatedActivitiesModal
         show={state.showRelatedActivitiesModal}
-        closeModal={() => dispatch({
-          type: 'closeRelatedActivitiesModal'
-        })}
+        closeModal={() =>
+          dispatch({
+            type: 'closeRelatedActivitiesModal',
+          })
+        }
         activityId={state.relatedActivityId || undefined}
       />
       <SelectedActivitiesModal
         show={state.showSelectedActivitiesModal}
-        closeModal={() => dispatch({
-          type: 'closeSelectedActivitiesModal'
-        })}
+        closeModal={() =>
+          dispatch({
+            type: 'closeSelectedActivitiesModal',
+          })
+        }
         activities={selectedActivities}
       />
     </div>

@@ -15,6 +15,7 @@ import Upload from './Pages/Upload'
 import Wishlist from './Pages/Wishlist'
 import { BASE_NAME } from './config'
 import { MultiSelectContextProviderWrapper } from './Contexts/MultiSelectContext'
+import { getActivities } from './api'
 
 function App() {
   const { isLoading, error } = useAuth0()
@@ -28,9 +29,7 @@ function App() {
   }
 
   return (
-    <Router
-      basename={BASE_NAME}
-    >
+    <Router basename={BASE_NAME}>
       <MyNavBar />
       <div className="main">
         <Routes>
@@ -38,9 +37,14 @@ function App() {
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/" element={(<MultiSelectContextProviderWrapper>
-            <Home />
-          </MultiSelectContextProviderWrapper>)} />
+          <Route
+            path="/"
+            element={
+              <MultiSelectContextProviderWrapper>
+                <Home />
+              </MultiSelectContextProviderWrapper>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

@@ -19,7 +19,7 @@ const MyNavBar = () => {
   const logoutWithRedirect = () =>
     logout({
       logoutParams: {
-        returnTo: `${window.location.origin}${BASE_NAME}`
+        returnTo: `${window.location.origin}${BASE_NAME}`,
       },
     })
   return (

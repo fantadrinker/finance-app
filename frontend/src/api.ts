@@ -1,11 +1,13 @@
-export const API_GATEWAY_URL_MAP: Record<string, string | undefined> = Object.freeze({
-  development: process.env.REACT_APP_API_GATEWAY_URL_DEV,
-  production: process.env.REACT_APP_API_GATEWAY_URL_PROD,
-  test: '/test',
-})
+export const API_GATEWAY_URL_MAP: Record<string, string | undefined> =
+  Object.freeze({
+    development: process.env.REACT_APP_API_GATEWAY_URL_DEV,
+    production: process.env.REACT_APP_API_GATEWAY_URL_PROD,
+    test: '/test',
+  })
 
-export const awsLambdaAddr: string = process.env.NODE_ENV ?
-  API_GATEWAY_URL_MAP[process.env.NODE_ENV] || '' : ''
+export const awsLambdaAddr: string = process.env.NODE_ENV
+  ? API_GATEWAY_URL_MAP[process.env.NODE_ENV] || ''
+  : ''
 
 interface CategoryMappingDescription {
   description: string
@@ -66,15 +68,22 @@ function postCall(
   auth: string = ''
 ): Promise<Response> {
   try {
-    return fetch(`${awsLambdaAddr}${url}${params && Object.keys(params).length > 0 ? `?${new URLSearchParams(params)}` : ''}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': contentType,
-        Authorization: auth,
-      },
-      mode: 'cors',
-      body,
-    })
+    return fetch(
+      `${awsLambdaAddr}${url}${
+        params && Object.keys(params).length > 0
+          ? `?${new URLSearchParams(params)}`
+          : ''
+      }`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': contentType,
+          Authorization: auth,
+        },
+        mode: 'cors',
+        body,
+      }
+    )
   } catch (err) {
     console.log('post error', err)
     throw err
@@ -88,9 +97,10 @@ function getCall(
 ): Promise<Response> {
   try {
     return fetch(
-      `${awsLambdaAddr}${url}${params && Object.keys(params).length > 0
-        ? `?${new URLSearchParams(params)}`
-        : ''
+      `${awsLambdaAddr}${url}${
+        params && Object.keys(params).length > 0
+          ? `?${new URLSearchParams(params)}`
+          : ''
       }`,
       {
         method: 'GET',
@@ -141,14 +151,7 @@ function putCall(url: string, body: string, auth: string): Promise<Response> {
 }
 
 function serializeActivityResponse2Row(item: ActivityResponse): ActivityRow {
-  const {
-    sk,
-    date,
-    category,
-    account,
-    amount,
-    description,
-  } = item
+  const { sk, date, category, account, amount, description } = item
   return {
     id: sk,
     date,
@@ -231,8 +234,8 @@ export function getActivities(
     startDate?: string
     endDate?: string
   } = {
-      size: 20,
-    },
+    size: 20,
+  }
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     console.log(auth)
@@ -253,11 +256,7 @@ export function getActivities(
     urlParams.push(['endDate', options.endDate])
   }
 
-  return getCall(
-    '/activities',
-    auth,
-    urlParams
-  )
+  return getCall('/activities', auth, urlParams)
     .then(res => {
       if (!res.ok) {
         throw new Error('get activities failed')
@@ -331,13 +330,19 @@ export function postActivitiesJSON(
   if (activities.length === 0) {
     throw new Error('no activity to upload')
   }
-  return postCall('/activities', [], JSON.stringify({
-    data: activities.map((activity) => ({
-      ...activity,
-      description: activity.desc,
-      amount: `${activity.amount}`
-    }))
-  }), 'application/json', auth).then(res => {
+  return postCall(
+    '/activities',
+    [],
+    JSON.stringify({
+      data: activities.map(activity => ({
+        ...activity,
+        description: activity.desc,
+        amount: `${activity.amount}`,
+      })),
+    }),
+    'application/json',
+    auth
+  ).then(res => {
     if (res.ok) {
       return res.json()
     } else {
@@ -345,7 +350,6 @@ export function postActivitiesJSON(
     }
   })
 }
-
 
 export function previewActivities(
   auth: string,
@@ -361,7 +365,16 @@ export function previewActivities(
   return fileContent
     .text()
     .then(file =>
-      postCall(`/activities`, [['format', columnFormat], ['type', 'preview']], file, 'text/html', auth)
+      postCall(
+        `/activities`,
+        [
+          ['format', columnFormat],
+          ['type', 'preview'],
+        ],
+        file,
+        'text/html',
+        auth
+      )
     )
     .then(res => {
       if (res.ok) {
@@ -369,8 +382,10 @@ export function previewActivities(
       } else {
         throw new Error('post activities failed')
       }
-    }).then((res: { data: { items: ActivityResponse[] } }) =>
-      res.data.items.map(serializeActivityResponse2Row))
+    })
+    .then((res: { data: { items: ActivityResponse[] } }) =>
+      res.data.items.map(serializeActivityResponse2Row)
+    )
 }
 
 export function deleteActivity(auth: string, id: string): Promise<Response> {
@@ -411,7 +426,7 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     ['all_categories', 'true'],
     ['exclude_negative', 'true'],
     ['by_month', 'true'],
-    ['starting_date', '2023-01-01'] // fix this
+    ['starting_date', '2023-01-01'], // fix this
   ])
     .then(res => {
       if (res.ok) {
@@ -422,22 +437,24 @@ export function getInsights(auth: string | null): Promise<Array<Insight>> {
     })
     .then(jsonResult => {
       const { data } = jsonResult
-      return data.map((insight: {
-        categories: {
-          category: string
-          amount: string
-        }[]
-      }) => {
-        return {
-          ...insight,
-          categories: insight.categories.map(({ category, amount }) => {
-            return {
-              category,
-              amount: parseFloat(amount),
-            }
-          }),
+      return data.map(
+        (insight: {
+          categories: {
+            category: string
+            amount: string
+          }[]
+        }) => {
+          return {
+            ...insight,
+            categories: insight.categories.map(({ category, amount }) => {
+              return {
+                category,
+                amount: parseFloat(amount),
+              }
+            }),
+          }
         }
-      })
+      )
     })
 }
 
@@ -503,7 +520,13 @@ export function addWishlistItem(
   if (!auth) {
     throw new Error('no auth')
   }
-  return postCall('/wishlist', [], JSON.stringify(item), 'application/json', auth)
+  return postCall(
+    '/wishlist',
+    [],
+    JSON.stringify(item),
+    'application/json',
+    auth
+  )
 }
 
 export function updateWishlistItem(

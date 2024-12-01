@@ -1,0 +1,15 @@
+{
+  "name": "my-finance-webapp",
+  "version": "1.0.0",
+  "description": "This is a webapp to handle tracking my finance, categorizing spending and keep track of how much I spend on what kinds of stuff each month.",
+  "main": "index.js",
+  "scripts": {
+    "test": "cd frontend && npm run precommit",
+    "prepare": "husky"
+  },
+  "author": "fantadrinker",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

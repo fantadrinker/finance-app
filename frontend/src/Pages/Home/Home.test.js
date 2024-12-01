@@ -17,10 +17,12 @@ beforeEach(() => {
   )
   API.getMappings.mockReturnValue(new Promise(resolve => resolve([])))
   API.getDeletedActivities.mockReturnValue(
-    new Promise(resolve => resolve({
-      data: [],
-      nextKey: '',
-    }))
+    new Promise(resolve =>
+      resolve({
+        data: [],
+        nextKey: '',
+      })
+    )
   )
 })
 
@@ -131,7 +133,9 @@ describe('if logged in', () => {
     render(<Home />)
     const actTable = await screen.findByTestId('activity-table')
     expect(actTable).toBeInTheDocument()
-    const actionButton = await within(actTable).findAllByTestId('activity-action-dropdown')
+    const actionButton = await within(actTable).findAllByTestId(
+      'activity-action-dropdown'
+    )
     actionButton[0].click()
     const deleteButton = await screen.findByRole('button', { name: /delete/i })
     deleteButton.click()

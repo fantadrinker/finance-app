@@ -10,9 +10,12 @@ import {
   Cell,
 } from 'recharts'
 import { CategoryBreakdown, Insight } from '../api'
-import {  Table } from 'react-bootstrap'
+import { Table } from 'react-bootstrap'
 import { flatten, keys, map, pipe, prop, sort, take, uniq } from 'ramda'
-import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
+import {
+  cmpInsights,
+  transformInsightToMonthlyBreakdown,
+} from '../Helpers/InsightHelpers'
 import { getRandomColorMap } from '../helpers'
 import { FilteredActivitiesModal } from './FilteredActivitiesModal'
 
@@ -30,51 +33,51 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
   const [activeIndex, setActiveIndex] = useState(-1)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
-  const [expandCategoryActivity, setExpandCategoryActivity] = useState<ExpandCategoryActivityProps>({
-    category: '',
-    month: '',
-    expanded: false,
-  })
+  const [expandCategoryActivity, setExpandCategoryActivity] =
+    useState<ExpandCategoryActivityProps>({
+      category: '',
+      month: '',
+      expanded: false,
+    })
 
   const isExpanded = useMemo(() => activeIndex !== -1, [activeIndex])
   const sortedInsights = useMemo(() => sort(cmpInsights, insights), [insights])
-  const monthlyData = useMemo(() =>
-    pipe(
-      (insights: Insight[]) => take(6, insights),
-      map(transformInsightToMonthlyBreakdown)
-    )(sortedInsights)
-  , [sortedInsights])
+  const monthlyData = useMemo(
+    () =>
+      pipe(
+        (insights: Insight[]) => take(6, insights),
+        map(transformInsightToMonthlyBreakdown)
+      )(sortedInsights),
+    [sortedInsights]
+  )
 
   const allCategories = useMemo(() => {
-    return pipe(
-      map(pipe(
-        prop('breakdown'),
-        keys
-      )),
-      flatten,
-      uniq
-    )(monthlyData)
+    return pipe(map(pipe(prop('breakdown'), keys)), flatten, uniq)(monthlyData)
   }, [monthlyData])
 
   const {
     monthStart: expandCategoryMonthStart,
     monthEnd: expandCategoryMonthEnd,
   } = useMemo(() => {
-    const selectedMonthData = monthlyData.find(({ month }) => month === expandCategoryActivity.month)
+    const selectedMonthData = monthlyData.find(
+      ({ month }) => month === expandCategoryActivity.month
+    )
     return {
       monthStart: selectedMonthData?.startDate,
       monthEnd: selectedMonthData?.endDate,
     }
   }, [monthlyData, expandCategoryActivity])
 
-  const topCategories = useMemo(() =>
-    isExpanded
-      ? pipe(
-        sort<CategoryBreakdown>((a, b) => b.amount - a.amount),
-        (c: CategoryBreakdown[]) => take(5, c)
-      )(sortedInsights[activeIndex].categories)
-      : []
-  , [isExpanded, sortedInsights, activeIndex])
+  const topCategories = useMemo(
+    () =>
+      isExpanded
+        ? pipe(
+            sort<CategoryBreakdown>((a, b) => b.amount - a.amount),
+            (c: CategoryBreakdown[]) => take(5, c)
+          )(sortedInsights[activeIndex].categories)
+        : [],
+    [isExpanded, sortedInsights, activeIndex]
+  )
 
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setHoveredIndex(index)
@@ -124,31 +127,32 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
-            {allCategories.map((category) => {
-              return (<Bar
-                key={category}
-                dataKey={category}
-                stackId={1}
-                fill={colorMapForCategories[category]}
-                onClick={handleClickBarChart}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={() => setHoveredIndex(-1)}
-              >
-                {monthlyData.map((_, index) => (
-                  <Cell
-                    cursor="pointer"
-                    fill={
-                      index === activeIndex
-                        ? '#82ca9d'
-                        : index === hoveredIndex
-                        ? '#87a9b5'
-                        : colorMapForCategories[category]
-                    }
-                    key={`cell-${index}`}
-                  />
-                ))}
-              </Bar>)
-
+            {allCategories.map(category => {
+              return (
+                <Bar
+                  key={category}
+                  dataKey={category}
+                  stackId={1}
+                  fill={colorMapForCategories[category]}
+                  onClick={handleClickBarChart}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={() => setHoveredIndex(-1)}
+                >
+                  {monthlyData.map((_, index) => (
+                    <Cell
+                      cursor="pointer"
+                      fill={
+                        index === activeIndex
+                          ? '#82ca9d'
+                          : index === hoveredIndex
+                          ? '#87a9b5'
+                          : colorMapForCategories[category]
+                      }
+                      key={`cell-${index}`}
+                    />
+                  ))}
+                </Bar>
+              )
             })}
           </BarChart>
           {isExpanded && (
@@ -156,7 +160,9 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
               className="mx-4 w-[300px] h-[300px]"
               style={{ maxWidth: '360px', maxHeight: '360px' }}
             >
-              <h4>Top spending categories for {monthlyData[activeIndex].month}</h4>
+              <h4>
+                Top spending categories for {monthlyData[activeIndex].month}
+              </h4>
               <Table>
                 <thead>
                   <tr>
@@ -166,7 +172,15 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                 </thead>
                 <tbody>
                   {topCategories.map(({ category, amount }) => (
-                    <tr key={category} onClick={() => showMoreInModal(category, monthlyData[activeIndex].month)}>
+                    <tr
+                      key={category}
+                      onClick={() =>
+                        showMoreInModal(
+                          category,
+                          monthlyData[activeIndex].month
+                        )
+                      }
+                    >
                       <td>{category}</td>
                       <td>{amount}</td>
                     </tr>
@@ -178,15 +192,23 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
         </div>
       </Card.Body>
 
-      {expandCategoryMonthEnd && expandCategoryMonthStart && expandCategoryActivity.category && (
-        <FilteredActivitiesModal
-          open={expandCategoryActivity.expanded}
-          closeModal={() => setExpandCategoryActivity({ expanded: false, category: '', month: ''})}
-          category={expandCategoryActivity.category}
-          startDate={expandCategoryMonthStart}
-          endDate={expandCategoryMonthEnd}
-        />
-      )}
+      {expandCategoryMonthEnd &&
+        expandCategoryMonthStart &&
+        expandCategoryActivity.category && (
+          <FilteredActivitiesModal
+            open={expandCategoryActivity.expanded}
+            closeModal={() =>
+              setExpandCategoryActivity({
+                expanded: false,
+                category: '',
+                month: '',
+              })
+            }
+            category={expandCategoryActivity.category}
+            startDate={expandCategoryMonthStart}
+            endDate={expandCategoryMonthEnd}
+          />
+        )}
     </Card>
   )
 }

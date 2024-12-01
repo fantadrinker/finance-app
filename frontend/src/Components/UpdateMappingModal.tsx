@@ -70,12 +70,12 @@ const UpdateMappingModal = ({
           setIsLoadingActivities(false)
         })
     }, 500)
-
   }, [show, auth, newDescription])
 
-  const selectCategories = (currentCategory === "" || allCategories.includes(currentCategory))
-    ? allCategories
-    : allCategories.concat([currentCategory])
+  const selectCategories =
+    currentCategory === '' || allCategories.includes(currentCategory)
+      ? allCategories
+      : allCategories.concat([currentCategory])
 
   return (
     <Modal size="lg" show={show} onHide={closeModal}>
@@ -89,7 +89,7 @@ const UpdateMappingModal = ({
           aria-label="description"
           placeholder={currentDescription}
           value={newDescription ?? ''}
-          onChange={(e) => setNewDescription(e.target.value)}
+          onChange={e => setNewDescription(e.target.value)}
         />
         <Form.Label htmlFor="category">Existing Categories</Form.Label>
         <Form.Select
@@ -119,7 +119,7 @@ const UpdateMappingModal = ({
           </>
         )}
 
-        <div className='mt-3 max-h-96 overflow-y-scroll'>
+        <div className="mt-3 max-h-96 overflow-y-scroll">
           {isLoadingActivities && <p>Loading activities...</p>}
           {activitiesMatchingDesc.length > 0 && (
             <>
@@ -127,7 +127,7 @@ const UpdateMappingModal = ({
               <ActivitiesTable
                 activities={activitiesMatchingDesc}
                 options={{
-                  showCategories: true
+                  showCategories: true,
                 }}
               />
             </>
@@ -144,9 +144,9 @@ const UpdateMappingModal = ({
               selectedCategory === ''
                 ? newCategory ?? currentCategory
                 : selectedCategory
-            ).then((shouldClose) => {
+            ).then(shouldClose => {
               setIsProcessingSubmit(false)
-              if(shouldClose) closeModal()
+              if (shouldClose) closeModal()
             })
           }}
         >

@@ -15,7 +15,9 @@ beforeEach(() => {
       })
     )
   )
-  API.getRelatedActivities.mockReturnValue(new Promise(resolve => resolve({data: []})))
+  API.getRelatedActivities.mockReturnValue(
+    new Promise(resolve => resolve({ data: [] }))
+  )
 })
 
 test('should show modal when show is true', () => {

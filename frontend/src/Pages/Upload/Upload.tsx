@@ -1,14 +1,25 @@
-import React, { useState, useEffect, ChangeEvent, useMemo, useCallback } from 'react'
+import React, {
+  useState,
+  useEffect,
+  ChangeEvent,
+  useMemo,
+  useCallback,
+} from 'react'
 import md5 from 'md5'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
 import Toast from 'react-bootstrap/Toast'
 import styles from './Upload.module.css'
-import { ActivityRow, FileUpload, getUploads, previewActivities } from '../../api'
+import {
+  ActivityRow,
+  FileUpload,
+  getUploads,
+  previewActivities,
+} from '../../api'
 import { useAuth0TokenSilent } from '../../hooks'
 import { ButtonGroup } from 'react-bootstrap'
 import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
-import {  MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
+import { MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
 
 enum ColumnFormat {
   cap1 = 'cap1',
@@ -52,7 +63,9 @@ export const Upload = () => {
   )
 
   // file previews
-  const [previewActivityRows, setPreviewActivityRows] = useState<ActivityRow[] | null>(null)
+  const [previewActivityRows, setPreviewActivityRows] = useState<
+    ActivityRow[] | null
+  >(null)
   const [processingFile, setProcessingFile] = useState<boolean>(false)
 
   // success toast
@@ -119,7 +132,11 @@ export const Upload = () => {
     let activities: ActivityRow[] = []
     if (fileContent) {
       try {
-        activities = await previewActivities(token, columnFormat.toString(), fileContent!)
+        activities = await previewActivities(
+          token,
+          columnFormat.toString(),
+          fileContent!
+        )
         setProcessingFile(false)
       } catch (e) {
         setErrorMessage('error when processing file' + e.message)
@@ -130,9 +147,11 @@ export const Upload = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <Toast show={!!showToast} onClose={closeToast} >
+      <Toast show={!!showToast} onClose={closeToast}>
         <Toast.Header>{toastType}</Toast.Header>
-        <Toast.Body>{errorMessage ?? warningMessage ?? toastMessage}</Toast.Body>
+        <Toast.Body>
+          {errorMessage ?? warningMessage ?? toastMessage}
+        </Toast.Body>
       </Toast>
       <Form className={styles.uploadForm}>
         <h2>Upload a File</h2>
@@ -175,11 +194,7 @@ export const Upload = () => {
             >
               Preview File
             </Button>
-            <Button
-              onClick={previewUserFile}
-            >
-              Manually Input
-            </Button>
+            <Button onClick={previewUserFile}>Manually Input</Button>
           </ButtonGroup>
         </Form.Group>
       </Form>

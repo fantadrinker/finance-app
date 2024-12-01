@@ -1,28 +1,28 @@
-import { createContext, useState } from "react";
+import { createContext, useState } from 'react'
 
 interface MultiSelectContextProviderWrapperProps {
-  children: any;
+  children: any
 }
 
 interface MultiSelectContextValues {
-  selectedIds: Set<string>;
+  selectedIds: Set<string>
   updateSelectedIds: (newIds: Set<string>) => void
 }
 
 export const MultiSelectContext = createContext<MultiSelectContextValues>({
   selectedIds: new Set([]),
-  updateSelectedIds: () => {}
+  updateSelectedIds: () => {},
 })
 
-
 export function MultiSelectContextProviderWrapper({
-  children
+  children,
 }: MultiSelectContextProviderWrapperProps) {
-
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set([]))
 
   return (
-    <MultiSelectContext.Provider value={{selectedIds, updateSelectedIds: setSelectedIds}}>
+    <MultiSelectContext.Provider
+      value={{ selectedIds, updateSelectedIds: setSelectedIds }}
+    >
       {children}
     </MultiSelectContext.Provider>
   )

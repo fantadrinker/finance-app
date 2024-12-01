@@ -43,20 +43,20 @@ export const Preferences = () => {
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
-	const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
     if (!token) {
       return
     }
     // fetch data from /preferences endpoint
-		setMappings([])
-		setAllCategories([])
-		setLoading(true)
+    setMappings([])
+    setAllCategories([])
+    setLoading(true)
     getMappings(token)
       .then(result => {
         setMappings(transformMappings(result))
         setAllCategories(deduplicate(result.map(({ category }) => category)))
-				setLoading(false)
+        setLoading(false)
       })
       .catch(err => {
         console.log(err)
@@ -99,7 +99,7 @@ export const Preferences = () => {
         category: newCategory,
       })
       if (!result.ok) {
-        throw Error("mapping update request failed")
+        throw Error('mapping update request failed')
       }
       console.log('mapping updated, updated informations should come later')
       return true
@@ -111,11 +111,9 @@ export const Preferences = () => {
   return (
     <div>
       <h1>Preferences</h1>
-			{loading && <Spinner />}
-      {(!loading && mappings.length === 0) && (
-        <div>No preferences found</div>
-      )}
-			{(!loading && mappings.length > 0) && (
+      {loading && <Spinner />}
+      {!loading && mappings.length === 0 && <div>No preferences found</div>}
+      {!loading && mappings.length > 0 && (
         <Table>
           <thead>
             <tr>
