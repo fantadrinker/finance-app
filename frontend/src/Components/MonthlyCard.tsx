@@ -9,14 +9,12 @@ import {
   CartesianGrid,
   Cell,
 } from 'recharts'
-import { CategoryBreakdown, deleteActivity, Insight } from '../api'
-import { Modal, Table } from 'react-bootstrap'
-import { ActivitiesTable, ActivityActionType } from './ActivitiesTable'
-import { useFinanceDataFetcher } from '../Pages/Home/effects'
-import { useAuth0TokenSilent } from '../hooks'
+import { CategoryBreakdown, Insight } from '../api'
+import {  Table } from 'react-bootstrap'
 import { flatten, keys, map, pipe, prop, sort, take, uniq } from 'ramda'
 import { cmpInsights, transformInsightToMonthlyBreakdown } from '../Helpers/InsightHelpers'
 import { getRandomColorMap } from '../helpers'
+import { FilteredActivitiesModal } from './FilteredActivitiesModal'
 
 interface MonthlyCardProps {
   insights: Array<Insight>
@@ -30,7 +28,6 @@ interface ExpandCategoryActivityProps {
 
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
-  const token = useAuth0TokenSilent()
   const [activeIndex, setActiveIndex] = useState(-1)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
   const [expandCategoryActivity, setExpandCategoryActivity] = useState<ExpandCategoryActivityProps>({
@@ -82,35 +79,6 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   const handleMouseEnter = useCallback((_: any, index: number) => {
     setHoveredIndex(index)
   }, [])
-
-  const serError = useMemo(() => (e: string) => {
-    console.log(e)
-  }, [])
-
-  const {
-    financeData,
-    loading: loadingActivities,
-    reFetch: refetchActivities
-  } = useFinanceDataFetcher(token, serError, {
-    refetchOnChange: true,
-    limit: expandCategoryActivity.expanded? 20: 0,
-    category: expandCategoryActivity.category,
-    startDate: expandCategoryMonthStart,
-    endDate: expandCategoryMonthEnd,
-  })
-
-  function deleteAndFetchActivities(activityId: string) {
-    if (!token) return
-    deleteActivity(token, activityId).then((response) => {
-      if (!response.ok) {
-        console.log('Failed to delete activity')
-        return
-      }
-      refetchActivities(true, 20)
-    }).catch(err => {
-      console.log(err)
-    })
-  }
 
   const handleClickBarChart = (_: any, index: number) => {
     // expands card and show a list of top categories in the month
@@ -209,33 +177,16 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           )}
         </div>
       </Card.Body>
-      <Modal
-        show={expandCategoryActivity.expanded}
-        onHide={() => setExpandCategoryActivity({ expanded: false , category: '', month: ''})}
-        size='lg'
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Activities for {expandCategoryActivity.category} in {expandCategoryActivity.month}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <ActivitiesTable
-            activities={financeData}
-            loading={loadingActivities}
-            options={{
-              actions: [
-                {
-                  type: ActivityActionType.DELETE,
-                  text: 'Delete',
-                  onClick: (activity) => deleteAndFetchActivities(activity.id)
-                }
-              ]
-            }}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <button onClick={() => setExpandCategoryActivity({ expanded: false, category: '', month: ''})}>Close</button>
-        </Modal.Footer>
-      </Modal>
+
+      {expandCategoryMonthEnd && expandCategoryMonthStart && expandCategoryActivity.category && (
+        <FilteredActivitiesModal
+          open={expandCategoryActivity.expanded}
+          closeModal={() => setExpandCategoryActivity({ expanded: false, category: '', month: ''})}
+          category={expandCategoryActivity.category}
+          startDate={expandCategoryMonthStart}
+          endDate={expandCategoryMonthEnd}
+        />
+      )}
     </Card>
   )
 }
