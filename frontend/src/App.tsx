@@ -15,7 +15,6 @@ import Upload from './Pages/Upload'
 import Wishlist from './Pages/Wishlist'
 import { BASE_NAME } from './config'
 import { MultiSelectContextProviderWrapper } from './Contexts/MultiSelectContext'
-import { getActivities } from './api'
 
 function App() {
   const { isLoading, error } = useAuth0()

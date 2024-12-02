@@ -4,9 +4,8 @@
   "description": "This is a webapp to handle tracking my finance, categorizing spending and keep track of how much I spend on what kinds of stuff each month.",
   "main": "index.js",
   "scripts": {
-    "test": "cd frontend && npm run precommit",
     "prepare": "husky",
-    "precommit": "echo 111"
+    "precommit": "cd frontend && npm run precommit"
   },
   "author": "fantadrinker",
   "license": "ISC",
