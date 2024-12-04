@@ -1,16 +1,16 @@
 interface HomeState {
-  showUpdateMappingModal: boolean;
-  showRelatedActivitiesModal: boolean;
-  showSelectedActivitiesModal: boolean;
-  relatedActivityId: string | null;
-  description: string;
-  category: string;
-  allCategories: string[];
+  showUpdateMappingModal: boolean
+  showRelatedActivitiesModal: boolean
+  showSelectedActivitiesModal: boolean
+  relatedActivityId: string | null
+  description: string
+  category: string
+  allCategories: string[]
 }
 
 interface HomeActions {
-  type: string;
-  payload?: any;
+  type: string
+  payload?: any
 }
 
 export function reducer(state: HomeState, action: HomeActions): HomeState {
@@ -21,7 +21,7 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
         ...state,
         showUpdateMappingModal: true,
         description,
-        category
+        category,
       }
     case 'openRelatedActivitiesModal':
       if (!action.payload) {
@@ -30,38 +30,38 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
       return {
         ...state,
         showRelatedActivitiesModal: true,
-        relatedActivityId: action.payload
+        relatedActivityId: action.payload,
       }
     case 'openSelectedActivitiesModal':
       return {
         ...state,
-        showSelectedActivitiesModal: true
+        showSelectedActivitiesModal: true,
       }
     case 'updateAllCategories':
       return {
         ...state,
-        allCategories: action.payload
+        allCategories: action.payload,
       }
     case 'updateNewCategory':
       return {
         ...state,
         showUpdateMappingModal: false,
-        allCategories: [...state.allCategories, action.payload]
+        allCategories: [...state.allCategories, action.payload],
       }
     case 'closeUpdateMappingModal':
       return {
         ...state,
-        showUpdateMappingModal: false
+        showUpdateMappingModal: false,
       }
     case 'closeRelatedActivitiesModal':
       return {
         ...state,
-        showRelatedActivitiesModal: false
+        showRelatedActivitiesModal: false,
       }
     case 'closeSelectedActivitiesModal':
       return {
         ...state,
-        showSelectedActivitiesModal: false
+        showSelectedActivitiesModal: false,
       }
     default:
       return state

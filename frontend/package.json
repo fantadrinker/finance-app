@@ -76,6 +76,8 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
+    "compile": "node scripts/compile.js",
+    "precommit": "npm run prettier && npm run compile",
     "prettier": "prettier --write ."
   },
   "eslintConfig": {

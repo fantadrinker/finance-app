@@ -11,7 +11,6 @@ import { COLORS_GPT } from '../helpers'
  * TODO: animations
  */
 
-
 const OTHERS_CATEGORY = 'Others'
 
 interface Activity {
@@ -108,11 +107,20 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
 
   const handleClick = (event: any) => {
     // todo: type event
-    const categoriesToFetch = event.name === OTHERS_CATEGORY? categoryBreakdown.slice(0, 5).map(cur => cur.category): [event.name]
+    const categoriesToFetch =
+      event.name === OTHERS_CATEGORY
+        ? categoryBreakdown.slice(0, 5).map(cur => cur.category)
+        : [event.name]
     setSelectedCategory(event.name)
     setLoading(true)
     getAccessTokenSilently()
-      .then(accessToken => getActivitiesByCategory(accessToken, categoriesToFetch, event.name === OTHERS_CATEGORY))
+      .then(accessToken =>
+        getActivitiesByCategory(
+          accessToken,
+          categoriesToFetch,
+          event.name === OTHERS_CATEGORY
+        )
+      )
       .then(activities => {
         setActivities(activities.data)
       })

@@ -28,9 +28,7 @@ function App() {
   }
 
   return (
-    <Router
-      basename={BASE_NAME}
-    >
+    <Router basename={BASE_NAME}>
       <MyNavBar />
       <div className="main">
         <Routes>
@@ -38,9 +36,14 @@ function App() {
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/" element={(<MultiSelectContextProviderWrapper>
-            <Home />
-          </MultiSelectContextProviderWrapper>)} />
+          <Route
+            path="/"
+            element={
+              <MultiSelectContextProviderWrapper>
+                <Home />
+              </MultiSelectContextProviderWrapper>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

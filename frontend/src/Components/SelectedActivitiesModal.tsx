@@ -1,25 +1,23 @@
-import { Button, ButtonGroup, Modal } from "react-bootstrap";
-import { ActivityRow } from "../api"
-import { ActivitiesTable } from "./ActivitiesTable";
+import { Button, ButtonGroup, Modal } from 'react-bootstrap'
+import { ActivityRow } from '../api'
+import { ActivitiesTable } from './ActivitiesTable'
 
 interface SelectedActivitiesModalProps {
-  activities: ActivityRow[];
-  show: boolean;
+  activities: ActivityRow[]
+  show: boolean
   closeModal: () => void
 }
 
 export function SelectedActivitiesModal({
   activities,
   show,
-  closeModal
+  closeModal,
 }: SelectedActivitiesModalProps) {
   return (
-    <Modal show={show} onHide={closeModal} size="lg" >
+    <Modal show={show} onHide={closeModal} size="lg">
       <Modal.Header>Selected Activities</Modal.Header>
       <Modal.Body>
-        <ActivitiesTable 
-          activities={activities}
-        />
+        <ActivitiesTable activities={activities} />
       </Modal.Body>
       <Modal.Footer>
         <ButtonGroup>

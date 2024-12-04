@@ -1,4 +1,4 @@
-import { ActivityRow } from "./api"
+import { ActivityRow } from './api'
 
 // "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
 export const processCapitalOneActivities = (rows: Array<string>) => {
@@ -86,7 +86,7 @@ export function getRandomColorMap(input: string[]): Record<string, string> {
   return input.reduce((acc, curr, index) => {
     return {
       ...acc,
-      [curr]: COLORS_GPT[index % COLORS_GPT.length]
+      [curr]: COLORS_GPT[index % COLORS_GPT.length],
     }
   }, {})
 }

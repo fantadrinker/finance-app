@@ -45,8 +45,12 @@ const RelatedActivitiesModal = ({
       </Modal.Header>
       <Modal.Body>
         {loading && <p>Loading...</p>}
-        {!loading && relatedActivities.length > 0 && (<ActivitiesTable activities={relatedActivities} />)}
-        {!loading && relatedActivities.length === 0 && (<p>No related activities found</p>)}
+        {!loading && relatedActivities.length > 0 && (
+          <ActivitiesTable activities={relatedActivities} />
+        )}
+        {!loading && relatedActivities.length === 0 && (
+          <p>No related activities found</p>
+        )}
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={closeModal}>Close</Button>

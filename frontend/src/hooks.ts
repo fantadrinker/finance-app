@@ -7,11 +7,13 @@ export function useAuth0TokenSilent(): string | null {
   const [token, setToken] = useState<string | null>(null)
   useEffect(() => {
     if (isAuthenticated) {
-      getAccessTokenSilently().then(accessToken => {
-        setToken(accessToken)
-      }).catch(err => {
-        console.error(err)
-      })
+      getAccessTokenSilently()
+        .then(accessToken => {
+          setToken(accessToken)
+        })
+        .catch(err => {
+          console.error(err)
+        })
     } else {
       setToken(null)
     }
