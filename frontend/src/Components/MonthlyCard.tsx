@@ -165,6 +165,10 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr key="total">
+                    <td>Total</td>
+                    <td>{monthlyData[activeIndex].amount}</td>
+                  </tr>
                   {topCategories.map(({ category, amount }) => (
                     <tr key={category} onClick={() => showMoreInModal(category, monthlyData[activeIndex].month)}>
                       <td>{category}</td>
