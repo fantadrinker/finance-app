@@ -273,6 +273,43 @@ Resources:
             Path: /wishlist
             Method: PUT
 
+  BudgetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambdas/budget/
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ActivitiesTable
+      Events:
+        GetBudget:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /budget
+            Method: GET
+        PostBudget:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /budget
+            Method: POST
+        DeleteBudget:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /budget
+            Method: DELETE
+        UpdateBudget:
+          Type: HttpApi 
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /budget
+            Method: PUT
+
 
   # s3 bucket to store user-uploaded activities files
   # be EXTRA careful when changing this bucket!!!!
