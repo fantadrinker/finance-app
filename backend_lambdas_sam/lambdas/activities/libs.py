@@ -10,7 +10,7 @@ def serialize_rbc_activity(row):
         return None
 
     if not row[6] or row[6] == "0":
-        print("skipping row")
+        print("skipping row" + ','.join(row))
         return None
 
     date_str = datetime.strptime(
