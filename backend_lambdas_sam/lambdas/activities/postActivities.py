@@ -78,6 +78,8 @@ def getItemsFromBody(body, file_format: str):
             ) if item['description'] else 'Other'
             # iterate through mappings and override category if there is a match
             items.append(item)
+        else:
+            print("item not processed", row)
     return items, start_date, end_date
 
 
@@ -91,12 +93,15 @@ def postActivities(user: str, file_format: str, body, activities_table, s3, prev
 
         items, start_date, end_date = getItemsFromBody(body, file_format)
 
+        def compare_date(item):
+            return item.get("date", "")
+
         if preview:
             mappings = getMappings(user, activities_table)
-            allItems = [{
+            allItems = sorted([{
                 **applyMappings(mappings, item),
                 "amount": str(item["amount"]),
-            } for item in items]
+            } for item in items], key=compare_date, reverse=True)
             return {
                 "statusCode": 200,
                 'headers': {
