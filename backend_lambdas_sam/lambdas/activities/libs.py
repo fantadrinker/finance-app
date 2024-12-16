@@ -59,6 +59,20 @@ def serialize_default_activity(row):
             'amount': Decimal(row['amount'])
     }
 
+def serialize_td_activity(row):
+    date_str = datetime.strptime(
+        row[0], "%m/%d/%Y").strftime("%Y-%m-%d")
+    description = row[1]
+    amount = Decimal(row[2]) if row[2] else 0 - Decimal(row[3])
+    return {
+        'sk': f'{date_str}{str(uuid.uuid4())}',
+        'date': date_str,
+        'account': 'td',
+        'description': description,
+        'category': description,
+        'amount': amount
+    }
+
 
 def getMappings(user: str, activities_table, categories=None):
     params = {

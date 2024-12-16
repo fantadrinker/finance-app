@@ -11,6 +11,7 @@ import botocore
 from libs import (
         serialize_rbc_activity,
         serialize_cap1_activity,
+        serialize_td_activity,
         serialize_default_activity,
         getMappings,
         applyMappings
@@ -56,7 +57,7 @@ def getItemsFromBody(body, file_format: str):
 
     for row in all_activities:
         # skips first header row
-        if firstRow:
+        if (file_format == "cap1" or file_format == "rbc") and firstRow:
             firstRow = False
             continue
         # format and store them in dynamodb
@@ -65,6 +66,8 @@ def getItemsFromBody(body, file_format: str):
             item = serialize_cap1_activity(row)
         elif file_format == "rbc":
             item = serialize_rbc_activity(row)
+        elif file_format == "td":
+            item = serialize_td_activity(row)
         elif not file_format:
             item = serialize_default_activity(row)
         if item:
