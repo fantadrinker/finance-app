@@ -20,6 +20,11 @@ def rbc_file_raw():
 
 
 @pytest.fixture()
+def td_file_raw():
+    return '11/18/2024,PAYMENT - THANK YOU,,1000.00,\n11/17/2024,SAVE ON FOODS #2225,23.48,,\n11/14/2024,PETRO CANADA 77978,92.13,,\n'
+
+
+@pytest.fixture()
 def activities_body_json():
     return json.dumps({
             "data": [
@@ -54,8 +59,18 @@ def apigw_event_post_cap1(user_id, cap1_file_raw):
 
 @pytest.fixture()
 def apigw_event_post_cap1_preview(user_id, cap1_file_raw):
-    """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=cap1&type=preview", body=cap1_file_raw)
+
+@pytest.fixture()
+def apigw_event_post_td_preview(user_id, td_file_raw):
+    return TestHelpers.get_base_event(
+        user_id, 
+        "POST", 
+        "/activity", 
+        "format=td&type=preview", 
+        body=td_file_raw
+    )
+
 
 @pytest.fixture()
 def apigw_event_post_rbc(user_id, rbc_file_raw):
@@ -163,7 +178,6 @@ def mock_activities_with_descriptions(user_id):
 
 
 def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event_post_cap1_preview):
-
     app.s3 = s3
     app.activities_table = activities_table
     # insert some mappings
@@ -202,6 +216,29 @@ def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event
     )
     assert len(activities_response["Items"]) == 0
     assert len(chksum_response["Items"]) == 0
+
+
+def test_post_activities_td_preview(activities_table, s3, user_id, apigw_event_post_td_preview):
+    app.s3 = s3
+    app.activities_table = activities_table
+    # insert some mappings
+    activities_table.put_item(Item={
+        "user": user_id,
+        "sk": "mapping#PETRO CANADA",
+        "description": "PETRO CANADA",
+        "category": "Gas",
+    })
+    ret = app.lambda_handler(apigw_event_post_td_preview, "")
+    assert ret["statusCode"] == 200
+    body = json.loads(ret["body"])
+    items = body["data"]["items"]
+    assert len(items) == 3
+    assert items[0]["description"] == "PAYMENT - THANK YOU"
+    assert items[0]["category"] == "PAYMENT - THANK YOU"
+    assert items[1]["description"] == "SAVE ON FOODS #2225"
+    assert items[1]["category"] == "SAVE ON FOODS #2225"
+    assert items[2]["description"] == "PETRO CANADA 77978"
+    assert items[2]["category"] == "Gas"
 
 
 def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_cap1):
@@ -272,6 +309,7 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     # assert chksum_item["file"] == f"{user_id}/rbc/2021-01-01.csv"
     assert chksum_item["start_date"] == "2023-07-05"
     assert chksum_item["end_date"] == "2023-07-06"
+
 
 
 def test_post_activities(activities_table, s3, user_id, activities_body_json):

@@ -41,6 +41,7 @@ export function UploadPreviewModal({
         closeModal()
       }
       setToastMessage('success')
+      closeModal()
     } catch (e) {
       setToastMessage('something went wrong')
     }

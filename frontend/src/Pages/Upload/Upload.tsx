@@ -13,12 +13,14 @@ import {  MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectCo
 enum ColumnFormat {
   cap1 = 'cap1',
   rbc = 'rbc',
+  td = 'td'
 }
 
-const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc]
+const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc, ColumnFormat.td]
 const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.cap1]: 'Capital One',
   [ColumnFormat.rbc]: 'RBC',
+  [ColumnFormat.td]: 'TD'
 })
 
 function useFetchPrevUploads(token: string | null): Array<FileUpload> {
