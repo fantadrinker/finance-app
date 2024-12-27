@@ -1,4 +1,5 @@
-import { useContext, useEffect, useMemo } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { v4 as uuidV4 } from 'uuid'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
@@ -23,6 +24,7 @@ interface ActivitiesTableProps {
   options?: {
     showCategories?: boolean
     actions?: ActivityAction[]
+    addActivity?: boolean
   }
 }
 
@@ -34,7 +36,19 @@ export function ActivitiesTable({
   onScrollToEnd 
 }: ActivitiesTableProps) {
 
-  const {selectedIds, updateSelectedIds} = useContext(MultiSelectContext)
+  const {selectedIds, updateSelectedActivities, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
+
+  const [newActivities, setNewActivities] = useState<ActivityRow[]>([])
+
+  const [editingActivity, setEditingActivity] = useState<ActivityRow>({
+    id: '',
+    account: '',
+    date: '',
+    category: '', 
+    amount: 0, 
+    desc: ''
+  })
+
   useEffect(() => {
     if (!onScrollToEnd) {
       return
@@ -53,9 +67,10 @@ export function ActivitiesTable({
     }
   }, [loading, onScrollToEnd])
 
+  const allActivities = useMemo(() => [...activities, ...newActivities], [activities, newActivities])
   const isAllSelected = useMemo(() => {
-    return activities.length > 0 && activities.every(({id}) => selectedIds.has(id))
-  }, [selectedIds, activities])
+    return allActivities.length > 0 && allActivities.every(({id}) => selectedIds.has(id))
+  }, [selectedIds, allActivities])
 
   let colCount = 4
   if (options?.showCategories) {
@@ -63,6 +78,37 @@ export function ActivitiesTable({
   }
   if (options?.actions) {
     colCount++
+  }
+
+  const addNewActivities = () => {
+    const {
+      date,
+      account,
+      category,
+      amount,
+      desc
+    } = editingActivity
+    if (date === '' || desc === '' || amount === 0) {
+      // this shouldn't happen
+      return
+    }
+
+    setNewActivities([...newActivities, {
+      id: uuidV4(),
+      date,
+      account: account ?? "",
+      category: category ?? desc,
+      amount,
+      desc,
+    }])
+    setEditingActivity({
+      id: '',
+      account: '',
+      date: '',
+      category: '', 
+      amount: 0, 
+      desc: ''
+    })
   }
 
   return (
@@ -74,10 +120,10 @@ export function ActivitiesTable({
             checked={isAllSelected}
             onChange={(event) => {
               if (event.target.checked) {
-                updateSelectedIds(new Set(activities.map(({id}) => id))) 
+                updateSelectedActivities([...activities, ...newActivities]) 
               }
               else {
-                updateSelectedIds(new Set([]))
+                updateSelectedActivities([])
               }
             }} 
           /></td>
@@ -90,17 +136,68 @@ export function ActivitiesTable({
         </tr>
       </thead>
       <tbody>
+        {options?.addActivity && (<tr>
+          <td>
+            <Form.Control type="checkbox" value={1} />
+          </td>
+          <td>
+            <Form.Control 
+              type="date" 
+              value={editingActivity.date} 
+              onChange={(e) => setEditingActivity({
+                ...editingActivity,
+                date: e.target.value
+              })} />
+          </td>
+          <td>
+            <Form.Control 
+              type="text" 
+              value={editingActivity.account}
+              onChange={(e) => setEditingActivity({
+                ...editingActivity,
+                account: e.target.value
+              })}
+            />
+          </td>
+          <td>
+            <Form.Control 
+              type="text" 
+              value={editingActivity.desc}
+              onChange={(e) => setEditingActivity({
+                ...editingActivity,
+                desc: e.target.value,
+                category: e.target.value
+              })}
+            />
+          </td>
+          {options?.showCategories && (<td>
+            <Form.Control type="text" />
+          </td>)}
+          <td>
+            <Form.Control 
+              type="number" 
+              value={editingActivity.amount}
+              onChange={(e) => setEditingActivity({
+                ...editingActivity,
+                amount: parseInt(e.target.value, 10)
+              })}
+            />
+          </td>
+          <td>
+            <Button onClick={addNewActivities} >Add</Button>
+          </td>
+        </tr>)}
 
-        {activities.map(activity => (
+        {allActivities.map(activity => (
           <tr key={activity.id}>
             <td><Form.Check 
               type="checkbox" 
               checked={selectedIds.has(activity.id)} 
               onChange={(event) => {
                 if (event.target.checked && !selectedIds.has(activity.id)) {
-                  updateSelectedIds(selectedIds.union(new Set([activity.id])))
+                  selectNewActivity(activity)
                 } else if (!event.target.checked && selectedIds.has(activity.id)) {
-                  updateSelectedIds(selectedIds.difference(new Set([activity.id])))
+                  unselectNewActivity(activity.id)
                 }
               }} 
             /></td>
