@@ -4,7 +4,6 @@ import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
-import { set } from 'ramda'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -27,15 +26,6 @@ interface ActivitiesTableProps {
     actions?: ActivityAction[]
     addActivity?: boolean
   }
-}
-
-interface EditingActivity {
-  id: string | null,
-  date: string | null,
-  category: string | null,
-  account: string | null,
-  amount: number | null,
-  desc: string | null
 }
 
 export function ActivitiesTable({ 
