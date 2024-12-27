@@ -20,7 +20,7 @@ export function UploadPreviewModal({
   setToastMessage
 }: UploadPreviewModalProps) {
   const {
-    selectedIds
+    selectedActivities
   } = useContext(MultiSelectContext)
 
   const [processingFile, setProcessingFile] = useState<boolean>(false)
@@ -33,7 +33,6 @@ export function UploadPreviewModal({
     }
 
     setProcessingFile(true)
-    const selectedActivities = activities.filter(({id}) => selectedIds.has(id))
     try {
       await postActivitiesJSON(token, selectedActivities)
       setProcessingFile(false)
@@ -63,14 +62,17 @@ export function UploadPreviewModal({
         <Modal.Body className="max-h-[60vh] overflow-scroll">
           <ActivitiesTable
             activities={activities}
+            options={{
+              addActivity: true
+            }}
           />
         </Modal.Body>
         <Modal.Footer>
           <span>
-            {selectedIds.size} Activities Selected
+            {selectedActivities.length} Activities Selected
           </span>
           <Button onClick={closeModal}>Close</Button>
-          <Button onClick={processActivitiesJSON} disabled={!!processingFile && selectedIds.size > 0}>Process Selected Activities</Button>
+          <Button onClick={processActivitiesJSON} disabled={!!processingFile && selectedActivities.length > 0}>Process Selected Activities</Button>
           <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
         </Modal.Footer>
       </Modal>
