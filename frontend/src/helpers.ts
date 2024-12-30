@@ -90,3 +90,28 @@ export function getRandomColorMap(input: string[]): Record<string, string> {
     }
   }, {})
 }
+
+
+export enum ColumnFormat {
+  cap1 = 'cap1',
+  rbc = 'rbc',
+  td = 'td'
+}
+
+const CAP1_FIRST_LINE = "Transaction Date,Posted Date,Card No.,Description,Category,Debit,Credit"
+
+const RBC_FIRST_LINE = "\"Account Type\",\"Account Number\",\"Transaction Date\",\"Cheque Number\",\"Description 1\",\"Description 2\",\"CAD$\",\"USD$\"\r"
+
+export function guessFileFormat(fileName: string, fileContent: string): ColumnFormat | null {
+  if (fileName.startsWith('csv')) {
+    return ColumnFormat.rbc
+  }
+  if (fileContent.startsWith(CAP1_FIRST_LINE)) {
+    return ColumnFormat.cap1
+  }
+  if (fileContent.startsWith(RBC_FIRST_LINE)) {
+    return ColumnFormat.rbc
+  }
+
+  return null
+}

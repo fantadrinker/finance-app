@@ -9,12 +9,8 @@ import { useAuth0TokenSilent } from '../../hooks'
 import { ButtonGroup } from 'react-bootstrap'
 import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
 import {  MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
+import { ColumnFormat, guessFileFormat } from '../../helpers'
 
-enum ColumnFormat {
-  cap1 = 'cap1',
-  rbc = 'rbc',
-  td = 'td'
-}
 
 const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc, ColumnFormat.td]
 const COLUMN_FORMAT_NAMES = Object.freeze({
@@ -103,6 +99,11 @@ export const Upload = () => {
             'our server indicates this file has already been processed'
           )
         }
+        // then try to guess file format
+        const columnFormat = guessFileFormat(fileName, text)
+        if(columnFormat !== null) {
+          setColumnFormat(columnFormat)
+        }
       })
       .catch(err => {
         console.log('error when parsing file text', err)
@@ -146,28 +147,29 @@ export const Upload = () => {
         {errorMessage !== null && (
           <Form.Text className={styles.errorMessage}>{errorMessage}</Form.Text>
         )}
-        <Form.Group controlId="file" className="mb-3">
-          <Form.Label>Select File</Form.Label>
+        <Form.Group controlId="file" className="mb-3 flex flex-col gap-2">
+          <div className="flex flex-row justify-between">
+            {COLUMN_FORMATS.map((key) => (
+              <Form.Check
+                type="radio"
+                name="column_format"
+                id={`column_format_${key}`}
+                key={`column_format_${key}`}
+                label={COLUMN_FORMAT_NAMES[key]}
+                checked={columnFormat === key}
+                onChange={(e) => {
+                  if (e.target.value)
+                    setColumnFormat(key)
+                }}
+              />
+            ))}
+          </div>
           <Form.Control
             role="file"
             type="file"
             value={fileName}
             onChange={updateUserFile}
           />
-          <Form.Label>Choose Format</Form.Label>
-          <Form.Select
-            aria-label="select input type"
-            value={columnFormat}
-            onChange={e => setColumnFormat(e.target.value as ColumnFormat)}
-          >
-            {COLUMN_FORMATS.map(key => {
-              return (
-                <option key={key} value={key}>
-                  {COLUMN_FORMAT_NAMES[key]}
-                </option>
-              )
-            })}
-          </Form.Select>
           <ButtonGroup>
             <Button
               onClick={previewUserFile}
