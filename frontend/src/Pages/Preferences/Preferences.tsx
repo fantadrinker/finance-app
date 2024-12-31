@@ -11,6 +11,7 @@ import {
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
+import { CategoryMappingsModal } from '../../Components/CategoryMappingsModal'
 
 interface Mapping {
   sk: string
@@ -38,12 +39,13 @@ function deduplicate(arr: Array<string>) {
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
-  const [mappings, setMappings] = useState<Array<Mapping>>([])
+  const [mappings, setMappings] = useState<Array<CategoryMapping>>([])
   const [showModal, setShowModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
 	const [loading, setLoading] = useState<boolean>(false)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   useEffect(() => {
     if (!token) {
       return
@@ -54,7 +56,7 @@ export const Preferences = () => {
 		setLoading(true)
     getMappings(token)
       .then(result => {
-        setMappings(transformMappings(result))
+        setMappings(result)
         setAllCategories(deduplicate(result.map(({ category }) => category)))
 				setLoading(false)
       })
@@ -78,14 +80,15 @@ export const Preferences = () => {
   }
   const deleteMappingAndFetch = (sk: string) => {
     // calls delete /mappings endpoint
-    deleteMapping(token, sk)
+    return deleteMapping(token, sk)
       .then(result => {
         if (!result.ok) {
           return []
         }
+        console.log(111, sk)
         return getMappings(token ?? '')
       })
-      .then(data => setMappings(transformMappings(data)))
+      .then(data => setMappings(data))
       .catch(err => {
         console.log(err)
       })
@@ -132,18 +135,17 @@ export const Preferences = () => {
                 </Button>
               </td>
             </tr>
-            {mappings.map(({ category, description, sk }) => (
+            {mappings.map(({ category }) => (
               <tr key={`${category}${description}`}>
                 <td>{category}</td>
-                <td>{description}</td>
                 <td>
-                  <Button
-                    onClick={() => openModalWithParams(description, category)}
-                  >
-                    Update
+                  <Button onClick={() => setExpandedCategory(category)}>
+                    Show Mappings
                   </Button>
-                  <Button onClick={() => deleteMappingAndFetch(sk)}>
-                    Delete
+                </td>
+                <td>
+                  <Button>
+                    Show Activities
                   </Button>
                 </td>
               </tr>
@@ -151,6 +153,13 @@ export const Preferences = () => {
           </tbody>
         </Table>
       )}
+
+      <CategoryMappingsModal
+        show={!!expandedCategory}
+        closeModal={() => setExpandedCategory(null)}
+        mappings={mappings.filter(({ category }) => category === expandedCategory)[0]?.descriptions ?? []}
+        deleteMapping={deleteMappingAndFetch}
+      />
 
       <UpdateMappingModal
         show={showModal}

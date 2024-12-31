@@ -7,7 +7,7 @@ export const API_GATEWAY_URL_MAP: Record<string, string | undefined> = Object.fr
 export const awsLambdaAddr: string = process.env.NODE_ENV ?
   API_GATEWAY_URL_MAP[process.env.NODE_ENV] || '' : ''
 
-interface CategoryMappingDescription {
+export interface CategoryMappingDescription {
   description: string
   sk: string
 }
@@ -107,9 +107,9 @@ function getCall(
   }
 }
 
-function deleteCall(url: string, auth: string): Promise<Response> {
+function deleteCall(url: string, auth: string, params: string[][] = []): Promise<Response> {
   try {
-    return fetch(awsLambdaAddr + url, {
+    return fetch(`${awsLambdaAddr}${url}?${new URLSearchParams(params)}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -219,7 +219,7 @@ export function deleteMapping(
   if (!auth) {
     throw new Error('no auth')
   }
-  return deleteCall(`/mappings?id=${id}`, auth)
+  return deleteCall(`/mappings`, auth, [['id', id]])
 }
 
 export function getActivities(
@@ -377,7 +377,7 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return deleteCall(`/activities?sk=${id}`, auth)
+  return deleteCall(`/activities`, auth, [['sk', id]])
 }
 
 export interface FileUpload {
@@ -493,7 +493,7 @@ export function deleteWishlistItem(auth: string | null = null, id: string) {
   if (!auth) {
     throw new Error('no auth')
   }
-  return deleteCall(`/wishlist?id=${id}`, auth)
+  return deleteCall(`/wishlist`, auth, [['id', id]])
 }
 
 export function addWishlistItem(
