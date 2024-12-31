@@ -13,25 +13,6 @@ import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import { CategoryMappingsModal } from '../../Components/CategoryMappingsModal'
 
-interface Mapping {
-  sk: string
-  description: string
-  category: string
-}
-
-function transformMappings(mappings: Array<CategoryMapping>) {
-  return mappings.reduce((acc: Mapping[], { category, descriptions }) => {
-    return [
-      ...acc,
-      ...descriptions.map(({ description, sk }) => ({
-        category,
-        description,
-        sk,
-      })),
-    ]
-  }, [])
-}
-
 function deduplicate(arr: Array<string>) {
   return Array.from(new Set(arr))
 }
