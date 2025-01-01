@@ -12,6 +12,7 @@ import {
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import { CategoryMappingsModal } from '../../Components/CategoryMappingsModal'
+import { CategoryTrendModal } from '../../Components/CategoryTrendModal'
 
 function deduplicate(arr: Array<string>) {
   return Array.from(new Set(arr))
@@ -21,12 +22,14 @@ export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
   const [mappings, setMappings] = useState<Array<CategoryMapping>>([])
-  const [showModal, setShowModal] = useState<boolean>(false)
+  const [showNewMappingModal, setShowNewMappingModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
 	const [loading, setLoading] = useState<boolean>(false)
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
+  const [showMappingsForCategory, setShowMappingsForCategory] = useState<string | null>(null)
+  const [showTrendForCategory, setShowTrendForCategory] = useState<string | null>(null)
+
   useEffect(() => {
     if (!token) {
       return
@@ -57,7 +60,7 @@ export const Preferences = () => {
   const openModalWithParams = (desc: string, cat: string) => {
     setDescription(desc)
     setCategory(cat)
-    setShowModal(true)
+    setShowNewMappingModal(true)
   }
   const deleteMappingAndFetch = (sk: string) => {
     // calls delete /mappings endpoint
@@ -120,12 +123,12 @@ export const Preferences = () => {
               <tr key={`${category}${description}`}>
                 <td>{category}</td>
                 <td>
-                  <Button onClick={() => setExpandedCategory(category)}>
+                  <Button onClick={() => setShowMappingsForCategory(category)}>
                     Show Mappings
                   </Button>
                 </td>
                 <td>
-                  <Button>
+                  <Button onClick={() => setShowTrendForCategory(category)}>
                     Show Activities
                   </Button>
                 </td>
@@ -136,19 +139,25 @@ export const Preferences = () => {
       )}
 
       <CategoryMappingsModal
-        show={!!expandedCategory}
-        closeModal={() => setExpandedCategory(null)}
-        mappings={mappings.filter(({ category }) => category === expandedCategory)[0]?.descriptions ?? []}
+        show={!!showMappingsForCategory}
+        closeModal={() => setShowMappingsForCategory(null)}
+        mappings={mappings.filter(({ category }) => category === showMappingsForCategory)[0]?.descriptions ?? []}
         deleteMapping={deleteMappingAndFetch}
       />
 
       <UpdateMappingModal
-        show={showModal}
-        closeModal={() => setShowModal(false)}
+        show={showNewMappingModal}
+        closeModal={() => setShowNewMappingModal(false)}
         currentCategory={category}
         currentDescription={description}
         allCategories={allCategories}
         submit={updateNewCategory}
+      />
+
+      <CategoryTrendModal
+        show={!!showTrendForCategory}
+        category={showTrendForCategory}
+        closeModal={() => setShowTrendForCategory(null)}
       />
     </div>
   )

@@ -403,15 +403,16 @@ export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
     })
 }
 
-export function getInsights(auth: string | null): Promise<Array<Insight>> {
+export function getInsights(auth: string | null, startDate?: string, categories?: string[]): Promise<Array<Insight>> {
   if (!auth) {
     throw new Error('no auth')
   }
   return getCall('/insights', auth, [
-    ['all_categories', 'true'],
+    // TODO: support multiple categories?
+    categories? ['categories', categories[0]] :['all_categories', 'true'],
     ['exclude_negative', 'true'],
     ['by_month', 'true'],
-    ['starting_date', '2023-01-01'] // fix this
+    ['starting_date', startDate ?? '2023-01-01']
   ])
     .then(res => {
       if (res.ok) {
