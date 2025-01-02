@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Modal } from "react-bootstrap";
+import { Button, Modal } from "react-bootstrap";
 import { getInsights } from "../api";
 import { useAuth0TokenSilent } from "../hooks";
+import { CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 
 interface CategoryTrendModalProps {
   show: boolean
@@ -34,7 +35,7 @@ export function CategoryTrendModal(props: CategoryTrendModalProps) {
       return
     }
     const currDate = new Date()
-    const startDate = new Date(currDate.setMonth(currDate.getMonth() - 4))
+    const startDate = new Date(currDate.setMonth(currDate.getMonth() - 6))
     const startDateStr = startDate.toISOString().split('T')[0]
     getInsights(token, startDateStr, [category])
       .then((insights) => {
@@ -56,6 +57,23 @@ export function CategoryTrendModal(props: CategoryTrendModalProps) {
   }, [token, show, category])
 
   return (<Modal show={show} onHide={closeModal}>
-    {JSON.stringify(categoryTrend)}
+    <Modal.Header>
+      <h2>Trends for {category}</h2>
+    </Modal.Header>
+    <Modal.Body>
+      <LineChart width={400} height={400} data={categoryTrend}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="month" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey="amount" />
+      </LineChart>
+    </Modal.Body>
+    <Modal.Footer>
+      <Button onClick={closeModal}>
+        Close
+      </Button>
+    </Modal.Footer>
   </Modal>)
 }
