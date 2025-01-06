@@ -11,25 +11,8 @@ import {
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
-
-interface Mapping {
-  sk: string
-  description: string
-  category: string
-}
-
-function transformMappings(mappings: Array<CategoryMapping>) {
-  return mappings.reduce((acc: Mapping[], { category, descriptions }) => {
-    return [
-      ...acc,
-      ...descriptions.map(({ description, sk }) => ({
-        category,
-        description,
-        sk,
-      })),
-    ]
-  }, [])
-}
+import { CategoryMappingsModal } from '../../Components/CategoryMappingsModal'
+import { CategoryTrendModal } from '../../Components/CategoryTrendModal'
 
 function deduplicate(arr: Array<string>) {
   return Array.from(new Set(arr))
@@ -38,12 +21,15 @@ function deduplicate(arr: Array<string>) {
 export const Preferences = () => {
   // supports display, update and delete description to category mappings
   const token = useAuth0TokenSilent()
-  const [mappings, setMappings] = useState<Array<Mapping>>([])
-  const [showModal, setShowModal] = useState<boolean>(false)
+  const [mappings, setMappings] = useState<Array<CategoryMapping>>([])
+  const [showNewMappingModal, setShowNewMappingModal] = useState<boolean>(false)
   const [description, setDescription] = useState<string>('')
   const [category, setCategory] = useState<string>('')
   const [allCategories, setAllCategories] = useState<Array<string>>([])
 	const [loading, setLoading] = useState<boolean>(false)
+  const [showMappingsForCategory, setShowMappingsForCategory] = useState<string | null>(null)
+  const [showTrendForCategory, setShowTrendForCategory] = useState<string | null>(null)
+
   useEffect(() => {
     if (!token) {
       return
@@ -54,7 +40,7 @@ export const Preferences = () => {
 		setLoading(true)
     getMappings(token)
       .then(result => {
-        setMappings(transformMappings(result))
+        setMappings(result)
         setAllCategories(deduplicate(result.map(({ category }) => category)))
 				setLoading(false)
       })
@@ -74,18 +60,19 @@ export const Preferences = () => {
   const openModalWithParams = (desc: string, cat: string) => {
     setDescription(desc)
     setCategory(cat)
-    setShowModal(true)
+    setShowNewMappingModal(true)
   }
   const deleteMappingAndFetch = (sk: string) => {
     // calls delete /mappings endpoint
-    deleteMapping(token, sk)
+    return deleteMapping(token, sk)
       .then(result => {
         if (!result.ok) {
           return []
         }
+        console.log(111, sk)
         return getMappings(token ?? '')
       })
-      .then(data => setMappings(transformMappings(data)))
+      .then(data => setMappings(data))
       .catch(err => {
         console.log(err)
       })
@@ -132,18 +119,17 @@ export const Preferences = () => {
                 </Button>
               </td>
             </tr>
-            {mappings.map(({ category, description, sk }) => (
+            {mappings.map(({ category }) => (
               <tr key={`${category}${description}`}>
                 <td>{category}</td>
-                <td>{description}</td>
                 <td>
-                  <Button
-                    onClick={() => openModalWithParams(description, category)}
-                  >
-                    Update
+                  <Button onClick={() => setShowMappingsForCategory(category)}>
+                    Show Mappings
                   </Button>
-                  <Button onClick={() => deleteMappingAndFetch(sk)}>
-                    Delete
+                </td>
+                <td>
+                  <Button onClick={() => setShowTrendForCategory(category)}>
+                    Show Activities
                   </Button>
                 </td>
               </tr>
@@ -152,13 +138,26 @@ export const Preferences = () => {
         </Table>
       )}
 
+      <CategoryMappingsModal
+        show={!!showMappingsForCategory}
+        closeModal={() => setShowMappingsForCategory(null)}
+        mappings={mappings.filter(({ category }) => category === showMappingsForCategory)[0]?.descriptions ?? []}
+        deleteMapping={deleteMappingAndFetch}
+      />
+
       <UpdateMappingModal
-        show={showModal}
-        closeModal={() => setShowModal(false)}
+        show={showNewMappingModal}
+        closeModal={() => setShowNewMappingModal(false)}
         currentCategory={category}
         currentDescription={description}
         allCategories={allCategories}
         submit={updateNewCategory}
+      />
+
+      <CategoryTrendModal
+        show={!!showTrendForCategory}
+        category={showTrendForCategory}
+        closeModal={() => setShowTrendForCategory(null)}
       />
     </div>
   )
