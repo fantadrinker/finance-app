@@ -41,9 +41,6 @@ export function CategoryMappingsModal({
                 <Button onClick={() => deleteMapping(mapping.sk)}>
                   Delete
                 </Button>
-                <Button>
-                  Update
-                </Button>
               </ButtonGroup>
             </div>
           )
