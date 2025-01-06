@@ -75,7 +75,7 @@ export function useMonthlyActivities(category: string | null) {
     setLoading(true)
 
     const endDate = new Date(month)
-    endDate.setMonth(endDate.getMonth() + 1, 1)
+    endDate.setMonth(endDate.getMonth() + 2, 0)
 
     getActivities(token, null, {
       size: 10,
