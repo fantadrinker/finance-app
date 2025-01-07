@@ -166,12 +166,17 @@ export function ActivitiesTable({
               onChange={(e) => setEditingActivity({
                 ...editingActivity,
                 desc: e.target.value,
-                category: e.target.value
               })}
             />
           </td>
           {options?.showCategories && (<td>
-            <Form.Control type="text" />
+            <Form.Control type="text" 
+              value={editingActivity.category}
+              onChange={(e) => setEditingActivity({
+                ...editingActivity,
+                category: e.target.value
+              })}
+            />
           </td>)}
           <td>
             <Form.Control 

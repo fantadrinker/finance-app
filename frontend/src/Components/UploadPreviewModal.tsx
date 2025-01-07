@@ -63,7 +63,8 @@ export function UploadPreviewModal({
           <ActivitiesTable
             activities={activities}
             options={{
-              addActivity: true
+              addActivity: true,
+              showCategories: true,
             }}
           />
         </Modal.Body>
