@@ -165,3 +165,6 @@ def test_get_insights_broken_down_by_month(activities_table, apigw_event_get_by_
     assert len(data["data"][0]["categories"]) == 1
     # TODO: fix time range, so each time range is from first day to the last day of the month.
     assert len(data["data"][12]["categories"]) == 2 # transit, dining
+
+
+# TODO: test for individual category

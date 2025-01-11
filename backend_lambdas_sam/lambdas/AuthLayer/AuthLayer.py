@@ -33,7 +33,6 @@ def get_user_id(event):
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
-            f"{url_base}/api/v2/",
             f"{url_base}/userinfo"
         ]
 

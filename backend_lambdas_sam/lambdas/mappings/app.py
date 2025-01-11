@@ -3,7 +3,7 @@ import os
 import boto3
 from datetime import datetime
 from boto3.dynamodb.conditions import Key
-import botocore
+from botocore.exceptions import ClientError
 from AuthLayer import get_user_id
 
 table = None
@@ -12,6 +12,10 @@ MAPPING_TIMESTAMP_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 def post(user, description, category, priority):
     global table
+    if not table:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        table = dynamodb.Table(table_name)
     # creates "user: user, sk: mapping#desc, description: description, category: category, priority: priority"
     try:
         # first see if the mapping already exists
@@ -51,7 +55,7 @@ def post(user, description, category, priority):
             "statusCode": 201,
             "body": "success",
         }
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print(error)
         return {
             "statusCode": 500,
@@ -67,6 +71,10 @@ def post(user, description, category, priority):
 def get(user):
     # returns a list of unique category names
     global table
+    if not table:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        table = dynamodb.Table(table_name)
     try:
         response = table.query(
             KeyConditionExpression=Key("user").eq(user) & Key("sk").begins_with("mapping#"),
@@ -122,7 +130,7 @@ def get(user):
             })
         }
 
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print(error)
         return {
             "statusCode": 500,
@@ -131,6 +139,12 @@ def get(user):
 
 def delete(user, id):
     global table
+
+    if not table:
+        dynamodb = boto3.resource("dynamodb")
+        table_name = os.environ.get("ACTIVITIES_TABLE", "")
+        table = dynamodb.Table(table_name)
+
     try:
         response = table.delete_item(
             Key={
@@ -144,7 +158,7 @@ def delete(user, id):
             "statusCode": 200,
             "body": "success",
         }
-    except botocore.exceptions.ClientError as error:
+    except ClientError as error:
         print(error)
         return {
             "statusCode": 500,
