@@ -8,7 +8,7 @@ import { ActivityRow, FileUpload, getUploads, previewActivities } from '../../ap
 import { useAuth0TokenSilent } from '../../hooks'
 import { ButtonGroup } from 'react-bootstrap'
 import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
-import {  MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
+import { MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
 import { ColumnFormat, guessFileFormat } from '../../helpers'
 
 
@@ -19,14 +19,18 @@ const COLUMN_FORMAT_NAMES = Object.freeze({
   [ColumnFormat.td]: 'TD'
 })
 
-function useFetchPrevUploads(token: string | null): Array<FileUpload> {
+interface useFetchPrevUploadsOptions {
+  limit: number
+}
+
+function useFetchPrevUploads(token: string | null, options?: useFetchPrevUploadsOptions): Array<FileUpload> {
   const [uploads, setUploads] = useState<Array<FileUpload>>([])
   useEffect(() => {
     if (!token) {
       return
     }
     if (token) {
-      getUploads(token)
+      getUploads(token, options?.limit || 10)
         .then(data => {
           setUploads(data)
         })
@@ -72,7 +76,7 @@ export const Upload = () => {
   }, [errorMessage, warningMessage, toastMessage])
 
   const token = useAuth0TokenSilent()
-  const uploads = useFetchPrevUploads(token)
+  const uploads = useFetchPrevUploads(token, { limit: 5 })
 
   const closeToast = useCallback(() => {
     setToastMessage(null)
@@ -101,7 +105,7 @@ export const Upload = () => {
         }
         // then try to guess file format
         const columnFormat = guessFileFormat(fileName, text)
-        if(columnFormat !== null) {
+        if (columnFormat !== null) {
           setColumnFormat(columnFormat)
         }
       })

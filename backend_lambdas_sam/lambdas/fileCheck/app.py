@@ -7,9 +7,11 @@ from AuthLayer import get_user_id
 
 activities_table = None
 
+
 def lambda_handler(event, context):
     global activities_table
     user_id = get_user_id(event)
+    params = event.get("queryStringParameters", {})
 
     if not user_id:
         return {
@@ -24,8 +26,11 @@ def lambda_handler(event, context):
         query_params = {
             "KeyConditionExpression": Key('user').eq(user_id) & Key('sk').begins_with('chksum#'),
             "ProjectionExpression": "checksum, start_date, end_date",
-            "Select": "SPECIFIC_ATTRIBUTES"
+            "Select": "SPECIFIC_ATTRIBUTES",
         }
+        paramsSize = int(params.get("size", 0))
+        if paramsSize > 0:
+            query_params["Limit"] = paramsSize
         data = activities_table.query(
             **query_params
         )
