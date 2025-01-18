@@ -386,11 +386,11 @@ export interface FileUpload {
   start_date: string
 }
 
-export function getUploads(auth: string | null): Promise<Array<FileUpload>> {
+export function getUploads(auth: string | null, limit: number): Promise<Array<FileUpload>> {
   if (!auth) {
     throw new Error('no auth')
   }
-  return getCall('/chksums', auth)
+  return getCall('/chksums', auth, [['size', `${limit}`]])
     .then(res => {
       if (res.status === 200) {
         return res.json()
@@ -409,7 +409,7 @@ export function getInsights(auth: string | null, startDate?: string, categories?
   }
   return getCall('/insights', auth, [
     // TODO: support multiple categories?
-    categories? ['categories', categories[0]] :['all_categories', 'true'],
+    categories ? ['categories', categories[0]] : ['all_categories', 'true'],
     ['exclude_negative', 'true'],
     ['by_month', 'true'],
     ['starting_date', startDate ?? '2023-01-01']
