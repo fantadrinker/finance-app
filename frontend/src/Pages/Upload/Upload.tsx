@@ -38,7 +38,7 @@ function useFetchPrevUploads(token: string | null, options?: useFetchPrevUploads
           console.log(err)
         })
     }
-  }, [token])
+  }, [token, options])
   return uploads
 }
 
