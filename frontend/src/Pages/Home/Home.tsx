@@ -2,6 +2,8 @@ import { useContext, useEffect, useMemo, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
+import Button from 'react-bootstrap/Button'
+import Form from 'react-bootstrap/Form'
 
 import {
   getMappings,
@@ -19,14 +21,13 @@ import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
-import { Button } from 'react-bootstrap'
 
 export function Home() {
   const token = useAuth0TokenSilent()
 
   const {
     selectedIds,
-    updateSelectedIds
+    updateSelectedActivities
   } = useContext(MultiSelectContext)
 
   const [state, dispatch] = useReducer(reducer, {
@@ -37,14 +38,18 @@ export function Home() {
     description: '',
     category: '',
     allCategories: [],
+    filterByCategory: '',
   })
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const [deletedActivities, setDeletedActivities] = useState<ActivityRow[]>([])
 
-  const { financeData, loading, hasMore, fetchMore, reFetch } =
-    useFinanceDataFetcher(token, setErrorMessage)
+  const { financeData, loading, hasMore, fetchMore, reFetch, clearData } =
+    useFinanceDataFetcher(token, setErrorMessage, { 
+      category: state.filterByCategory, 
+      limit: 20,
+    })
 
   useEffect(() => {
     if (token) {
@@ -72,7 +77,7 @@ export function Home() {
   }, [token])
 
   const selectedActivities = useMemo(() => {
-    return financeData.filter(({id}) => selectedIds.has(id))
+    return financeData.filter(({ id }) => selectedIds.has(id))
   }, [financeData, selectedIds])
 
   if (!token) {
@@ -116,7 +121,7 @@ export function Home() {
         payload: updatedMappings.map(({ category }) => category)
       })
       return true
-    } catch(err) {
+    } catch (err) {
       console.log(err)
       setErrorMessage(`Error updating category mapping${err.message}`)
     }
@@ -137,13 +142,37 @@ export function Home() {
             <Button onClick={() => dispatch({
               type: 'openSelectedActivitiesModal'
             })}
-              disabled={selectedIds.size === 0}  
+              disabled={selectedIds.size === 0}
             >
               {selectedIds.size} activities selected
             </Button>
-            {selectedIds.size > 0 && <Button onClick={() => updateSelectedIds(new Set([]))}>
+            {selectedIds.size > 0 && <Button onClick={() => updateSelectedActivities([])}>
               Clear Selected
             </Button>}
+            <div>
+              <Form.Label>Filter by Category:</Form.Label>
+              <Form.Select
+                aria-label="category"
+                role="list"
+                value={state.filterByCategory}
+                onChange={(e) => {
+                  clearData()
+                  dispatch({
+                    type: 'setFilterByCategory',
+                    payload: e.target.value
+                  })
+                }}
+              >
+                {state.allCategories.map((cat, index) => (
+                  <option value={cat} key={index}>
+                    {cat}
+                  </option>
+                ))}
+                <option value={''}>
+                  None
+                </option>
+              </Form.Select>
+            </div>
             <ActivitiesTable
               activities={financeData}
               loading={loading}

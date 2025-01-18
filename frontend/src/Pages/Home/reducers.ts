@@ -6,6 +6,7 @@ interface HomeState {
   description: string;
   category: string;
   allCategories: string[];
+  filterByCategory: string;
 }
 
 interface HomeActions {
@@ -62,6 +63,11 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
       return {
         ...state,
         showSelectedActivitiesModal: false
+      }
+    case 'setFilterByCategory':
+      return {
+        ...state,
+        filterByCategory: action.payload,
       }
     default:
       return state

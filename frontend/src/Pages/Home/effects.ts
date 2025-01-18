@@ -46,7 +46,8 @@ export const useFinanceDataFetcher = (
 
   useEffect(() => {
     if (token && options.limit > 0) {
-      if (options.refetchOnChange) {
+      const refetch = options.refetchOnChange 
+      if (refetch) {
         setFinanceData([])
       }
       setLoading(true)
@@ -57,7 +58,7 @@ export const useFinanceDataFetcher = (
         endDate: options.endDate
       })
         .then(({ data, nextKey }) => {
-          setFinanceData(existingData => options.refetchOnChange? data: [...existingData, ...data])
+          setFinanceData(existingData => refetch? data: [...existingData, ...data])
           setNextKey(nextKey)
         })
         .catch(err => {
@@ -80,5 +81,8 @@ export const useFinanceDataFetcher = (
       setFetchNextKey(nextKey)
     },
     reFetch: (fromStart: boolean = false, limit: number = 20) => fetchData(fromStart, limit),
+    clearData: () => {
+      setFinanceData([])
+    }
   }
 }
