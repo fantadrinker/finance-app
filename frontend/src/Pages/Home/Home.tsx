@@ -21,6 +21,7 @@ import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
+import { CategoriesSelect } from '../../Components/CategoriesSelect'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -151,27 +152,16 @@ export function Home() {
             </Button>}
             <div>
               <Form.Label>Filter by Category:</Form.Label>
-              <Form.Select
-                aria-label="category"
-                role="list"
-                value={state.filterByCategory}
-                onChange={(e) => {
+              <CategoriesSelect
+                selectedCategory={state.filterByCategory}
+                setSelectedCategory={(cat) => {
                   clearData()
                   dispatch({
                     type: 'setFilterByCategory',
-                    payload: e.target.value
+                    payload: cat
                   })
                 }}
-              >
-                {state.allCategories.map((cat, index) => (
-                  <option value={cat} key={index}>
-                    {cat}
-                  </option>
-                ))}
-                <option value={''}>
-                  None
-                </option>
-              </Form.Select>
+              />
             </div>
             <ActivitiesTable
               activities={financeData}
