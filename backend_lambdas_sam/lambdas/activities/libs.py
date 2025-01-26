@@ -100,7 +100,10 @@ def applyMappings(mappings: list, item: dict):
     itemDesc = item.get("description", "")
     # if category is not set, use description
     itemCategory = item.get("category", itemDesc)
+
+    matchedMapping = [mapping for mapping in mappings if mapping["description"] in itemDesc]
     return {
         **item,
-        "category": next((mapping["category"] for mapping in mappings if mapping["description"] in itemDesc), itemCategory)
+        "dirty": len(matchedMapping) > 0,
+        "category": matchedMapping[0]["category"] if len(matchedMapping) > 0 else itemCategory
     }
