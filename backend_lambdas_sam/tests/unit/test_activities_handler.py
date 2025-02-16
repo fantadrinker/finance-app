@@ -369,6 +369,7 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
     assert next_ret["statusCode"] == 200
     assert data["count"] == 5
     assert data["data"][0]["sk"] == "2019-12-275"
+    assert data["data"][0]["dirty"] == False
     assert data["LastEvaluatedKey"] == {}
 
 
@@ -455,6 +456,8 @@ def test_get_activities_by_category_with_mappings(
     assert data["count"] == 2
     assert "test activity 1" in [item["description"] for item in data["data"]]
     assert "test activity 7" in [item["description"] for item in data["data"]]
+
+    assert all([item["dirty"] for item in data["data"]]) == True
 
 def test_get_activities_by_category_with_mappings_partial(
         activities_table,
