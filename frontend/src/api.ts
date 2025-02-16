@@ -321,6 +321,21 @@ export function getDeletedActivities(
     .then(serializeActivitiesAPIResponse)
 }
 
+export function getUnmappedActivities(
+  auth: string | null
+): Promise<GetActivitiesResponse> {
+  if (!auth) {
+    throw new Error('no auth')
+  }
+  return getCall('/activities', auth, [['isDirty', 'false']]).then((res) => {
+    if (!res.ok) {
+      throw new Error('get unmapped failed')
+    } else {
+      return res.json()
+    }
+  }).then(serializeActivitiesAPIResponse)
+}
+
 export function postActivitiesJSON(
   auth: string,
   activities: ActivityRow[]
