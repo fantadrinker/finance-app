@@ -48,6 +48,14 @@ const MyNavBar = () => {
                   Home
                 </Link>
               </Nav.Link>
+              <Nav.Link as="span" href="/">
+                <Link
+                  to="/activities"
+                  style={isPathActive('/activities') ? {} : { textDecoration: 'none' }}
+                >
+                  Activities
+                </Link>
+              </Nav.Link>
               <Nav.Link as="span" href="/preferences">
                 <Link
                   to="/preferences"

@@ -152,61 +152,70 @@ def lambda_handler(event, context):
         dynamodb = boto3.resource("dynamodb")
         table = dynamodb.Table(os.environ.get("ACTIVITIES_TABLE", ""))
     # handle stream update events
-    if event.get("Records", None):
-        try:
-            # initialize mapping: user -> month -> category -> amount
-            insights_activity_mapping = process_activity_insights(
-                event.get("Records", []))
-            if insights_activity_mapping:
-                print("updating insights", insights_activity_mapping)
-                for user_id, per_user_mapping in insights_activity_mapping.items():
-                    for month, per_month_mapping in per_user_mapping.items():
-                        # first get existing mappings
-                        response = table.get_item(
-                            Key={
-                                "user": user_id,
-                                "sk": f"insights#{month}"
-                            }
-                        )
-                        # merge existing mappings with new mappings
-                        if "Item" in response:
-                            existing_mapping = json.loads(
-                                response["Item"]["categories"], parse_float=Decimal)
-                            for category, amount in per_month_mapping.items():
-                                if category in existing_mapping:
-                                    existing_mapping[category] += amount
-                                else:
-                                    existing_mapping[category] = amount
-                            per_month_mapping = existing_mapping
-                            # update insights
-                            table.update_item(
-                                Key={
-                                    "user": user_id,
-                                    "sk": f"insights#{month}"
-                                },
-                                UpdateExpression="set categories = :a",
-                                ExpressionAttributeValues={
-                                    ":a": json.dumps(per_month_mapping)
-                                }
-                            )
-                        else:
-                            # create insights
-                            table.put_item(
-                                Item={
-                                    "user": user_id,
-                                    "sk": f"insights#{month}",
-                                    "categories": json.dumps(per_month_mapping),
-                                    "date": month
-                                }
-                            )
-        except Exception as e:
-            print(e)
-            return {
-                "statusCode": 500,
-                "body": "failed to update activity insights",
-                "error": str(e)
-            }
+    records = event.get("Records", None)
+    if records is None:
         return {
             "statusCode": 200,
-            "body": "successfully updated activity insights",
+            "body": json.dumps("No records found")
         }
+    try:
+        # initialize mapping: user -> month -> category -> amount
+        insights_activity_mapping = process_activity_insights(
+            records)
+        if not insights_activity_mapping:
+            return {
+                "statusCode": 200,
+                "body": json.dumps("No insights found")
+            }
+        print("updating insights", insights_activity_mapping)
+        for user_id, per_user_mapping in insights_activity_mapping.items():
+            for month, per_month_mapping in per_user_mapping.items():
+                # first get existing mappings
+                response = table.get_item(
+                    Key={
+                        "user": user_id,
+                        "sk": f"insights#{month}"
+                    }
+                )
+                # merge existing mappings with new mappings
+                if "Item" in response:
+                    existing_mapping = json.loads(
+                        response["Item"]["categories"], parse_float=Decimal)
+                    for category, amount in per_month_mapping.items():
+                        if category in existing_mapping:
+                            existing_mapping[category] += amount
+                        else:
+                            existing_mapping[category] = amount
+                    per_month_mapping = existing_mapping
+                    # update insights
+                    table.update_item(
+                        Key={
+                            "user": user_id,
+                            "sk": f"insights#{month}"
+                        },
+                        UpdateExpression="set categories = :a",
+                        ExpressionAttributeValues={
+                            ":a": json.dumps(per_month_mapping)
+                        }
+                    )
+                else:
+                    # create insights
+                    table.put_item(
+                        Item={
+                            "user": user_id,
+                            "sk": f"insights#{month}",
+                            "categories": json.dumps(per_month_mapping),
+                            "date": month
+                        }
+                    )
+    except Exception as e:
+        print(e)
+        return {
+            "statusCode": 500,
+            "body": "failed to update activity insights",
+            "error": str(e)
+        }
+    return {
+        "statusCode": 200,
+        "body": "successfully updated activity insights",
+    }
