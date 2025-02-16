@@ -63,6 +63,14 @@ def lambda_handler(event, context):
         amountMin = params.get("amountMin", None)
         startDate = params.get("startDate", "0000-00-00")
         endDate = params.get("endDate", "9999-99-99")
+        isDirty = params.get("isDirty", None)
+        if isDirty is not None:
+            if isDirty == "true": 
+                isDirty = True
+            elif isDirty == "false":
+                isDirty = False
+            else:
+                isDirty = None
 
         checkEmpty = params.get("emptyDescription", False)
         if checkEmpty:
@@ -89,7 +97,8 @@ def lambda_handler(event, context):
             orderByAmount,
             account,
             amountMax,
-            amountMin)
+            amountMin,
+            isDirty)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")

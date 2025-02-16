@@ -114,6 +114,13 @@ def apigw_event_delete(user_id):
     """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "DELETE", "/activity", "sk=2019-12-266")
 
+@pytest.fixture()
+def apigw_event_get_dirty_activities(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "isDirty=true")
+
+@pytest.fixture()
+def apigw_event_get_non_dirty_activities(user_id):
+    return TestHelpers.get_base_event(user_id, "GET", "/activity", "isDirty=false")
 
 @pytest.fixture()
 def mock_activities(user_id):
@@ -372,6 +379,49 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
     assert data["data"][0]["dirty"] == False
     assert data["LastEvaluatedKey"] == {}
 
+def test_get_activities_dirty_flag(activities_table, apigw_event_get_dirty_activities, mock_activities):
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+
+    # add mappings
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#test activity 1",
+        "description": "test activity 1",
+        "category": "test_odd_mapped",
+    })
+
+    ret = app.lambda_handler(apigw_event_get_dirty_activities, "")
+
+    assert ret["statusCode"] == 200
+
+    data = json.loads(ret["body"])
+    assert data["count"] == 1
+    assert data["data"][0]["description"] == "test activity 1"
+    assert data["data"][0]["dirty"] == True
+
+
+def test_get_activities_dirty_flag_false(activities_table, apigw_event_get_non_dirty_activities, mock_activities):
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+
+    # add mappings
+    activities_table.put_item(Item={
+        "user": "test-user-id",
+        "sk": "mapping#test activity 1",
+        "description": "test activity 1",
+        "category": "test_odd_mapped",
+    })
+
+    ret = app.lambda_handler(apigw_event_get_non_dirty_activities, "")
+
+    assert ret["statusCode"] == 200
+
+    data = json.loads(ret["body"])
+    assert data["count"] == 9
+    assert len(data["data"]) == 9
+    assert not any([item for item in data["data"] if item["description"] == "test activity 1"])
+    assert not any([item for item in data["data"] if item["dirty"] == True])
 
 def test_delete_activities(
         activities_table,

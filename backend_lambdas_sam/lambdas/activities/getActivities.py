@@ -1,5 +1,6 @@
 import re
 import json
+from typing import Optional
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
 from functools import reduce
@@ -11,12 +12,13 @@ def getActivities(
         user: str,
         size: int,
         activities_table,
-        startKey: str = None,
-        description: str = None,
+        startKey: Optional[str] = None,
+        description: Optional[str] = None,
         orderByAmount: bool = False,
-        account: str = None,
-        amountMax: int = None,
-        amountMin: int = None):
+        account: Optional[str] = None,
+        amountMax: Optional[int] = None,
+        amountMin: Optional[int] = None,
+        isDirty: Optional[bool] = None):
     try:
         query_params = {
             "KeyConditionExpression": Key('user').eq(user) & Key('sk').between("0000-00-00", "9999-99-99"),
@@ -48,6 +50,9 @@ def getActivities(
         if amountMin:
             filter_exps.append(Attr('amount').gte(int(amountMin)))
             noLimit = True
+        
+        if isDirty is not None:
+            noLimit = True
 
         if filter_exps:
             query_params["FilterExpression"] = reduce(
@@ -74,14 +79,17 @@ def getActivities(
         date_regex = re.compile(r"^\d{4}-\d{2}-\d{2}")
         # TODO: redo lastevaluatedkey to be date instead of sk
 
+        allData = [{
+            **applyMappings(mappings, item),
+            "amount": str(item["amount"]),
+        } for item in items if date_regex.match(item["sk"])]
+        if isDirty is not None:
+            allData = [item for item in allData if item["dirty"] == isDirty]
         return {
             "statusCode": 200,
             "body": json.dumps({
-                "data": [{
-                    **applyMappings(mappings, item),
-                    "amount": str(item["amount"]),
-                } for item in items if date_regex.match(item["sk"])],
-                "count": data.get("Count", 0),
+                "data": allData,
+                "count": len(allData),
                 "LastEvaluatedKey": data.get("LastEvaluatedKey", {})
             })
         }

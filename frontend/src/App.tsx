@@ -41,6 +41,7 @@ function App() {
           <Route path="/" element={(<MultiSelectContextProviderWrapper>
             <Home />
           </MultiSelectContextProviderWrapper>)} />
+          <Route path="/activities" element={(<Activities />)} />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
