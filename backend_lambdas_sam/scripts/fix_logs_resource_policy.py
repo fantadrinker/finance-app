@@ -19,21 +19,27 @@ def __main__():
     # first get resource policies
     logs_client = boto3.client("logs")
     response = logs_client.describe_resource_policies()
-    policyDocs = [policy["policyDocument"] for policy in response["resourcePolicies"]]
     for policy in response["resourcePolicies"]:
       policyName = policy["policyName"]
       oldPolicyDoc = policy["policyDocument"]
-      # do something
-      docJson = json.loads(oldPolicyDoc)
 
-      docJson["Statement"] = [processStatement(acct_number, statement) for statement in docJson["Statement"]]
+      # check if the old policy doc is approaching 5120 character limit, 
+      # if so trim it by removing the resources associated with old 
+      # deployments of test stack
+      print(f"current size of policy doc is {len(oldPolicyDoc)}")
 
-      response = logs_client.put_resource_policy(
-        policyName=policyName,
-        policyDocument=json.dumps(docJson)
-      )
+      if len(oldPolicyDoc) > 4900:
+        print(f"attmepting to trim doc for {policyName}")
+        docJson = json.loads(oldPolicyDoc)
 
-      print(response)
+        docJson["Statement"] = [processStatement(acct_number, statement) for statement in docJson["Statement"]]
+
+        response = logs_client.put_resource_policy(
+          policyName=policyName,
+          policyDocument=json.dumps(docJson)
+        )
+
+        print(response)
   except:
     print("something went wrong when deleting the s3 objects")
 
