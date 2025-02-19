@@ -77,6 +77,9 @@ Resources:
           - "http://localhost:3000"
           - "https://fantadrinker.github.io"
         MaxAge: 600
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 300
 
   ApiLogs:
     Type: AWS::Logs::LogGroup
@@ -304,6 +307,7 @@ Resources:
         WriteCapacityUnits: 5
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
