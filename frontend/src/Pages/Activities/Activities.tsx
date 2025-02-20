@@ -3,6 +3,7 @@ import { ActivitiesTable, ActivityActionType } from "../../Components/Activities
 import { useEffect, useState } from "react";
 import { useAuth0TokenSilent } from "../../hooks";
 import { ActivityRow, getActivities, getDeletedActivities, getUnmappedActivities } from "../../api";
+import { Link } from "react-router-dom";
 
 enum ViewType {
   Default = 'default',
@@ -41,6 +42,14 @@ export function Activities() {
       })
     }
   }, [viewType, token])
+
+  if (!token) {
+    return (
+      <div>
+        Not authenticated, please <Link to="/login">Log in </Link>
+      </div>
+    )
+  }
 
   return (<>
     <Form>
