@@ -74,10 +74,6 @@ const UpdateMappingModal = ({
 
   }, [show, auth, newDescription])
 
-  const selectCategories = (currentCategory === "" || allCategories.includes(currentCategory))
-    ? allCategories
-    : allCategories.concat([currentCategory])
-
   return (
     <Modal size="lg" show={show} onHide={closeModal}>
       <Modal.Header closeButton>

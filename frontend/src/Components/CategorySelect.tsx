@@ -18,7 +18,7 @@ export function CategorySelect({
     allCategories
   } = useContext(CategoriesContext)
 
-  const selectedCategory = category ?? 'Uncategorized'
+  const selectedCategory = category ?? ''
   return (
     <Form.Select
       aria-label="category"
