@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Form } from "react-bootstrap";
+import { Form, Spinner } from "react-bootstrap";
 import { CategoriesContext } from "../Contexts/CategoriesContext";
 
 
@@ -15,11 +15,12 @@ export function CategorySelect({
   defaultLabel,
 }: CategorySelectProps) {
   const {
-    allCategories
+    allCategories,
+    loading
   } = useContext(CategoriesContext)
 
-  const selectedCategory = category ?? ''
-  return (
+  const selectedCategory = allCategories.includes(category ?? '') ? category: ''
+  return loading? <Spinner /> : (
     <Form.Select
       aria-label="category"
       role="list"

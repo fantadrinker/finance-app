@@ -4,11 +4,13 @@ import { getMappings } from "../api";
 
 interface CategoriesContextValues {
   allCategories: string[];
+  loading: boolean,
   refetch: () => void;
 }
 
 export const CategoriesContext = createContext<CategoriesContextValues>({
   allCategories: [],
+  loading: false,
   refetch: () => {}
 })
 
@@ -19,6 +21,7 @@ export function CategoriesContextProviderWrapper({
 }) {
   const token = useAuth0TokenSilent()
   const [allCategories, setAllCategories] = useState<string[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
   useEffect(() => {
     fetchCategories(token)
   }, [token])
@@ -27,6 +30,7 @@ export function CategoriesContextProviderWrapper({
     if (!token) {
       return
     }
+    setLoading(true)
     getMappings(token)
       .then((data) => {
         setAllCategories(data.map(({ category }) => category))
@@ -34,10 +38,14 @@ export function CategoriesContextProviderWrapper({
       .catch((error) => {
         console.log(error)
       })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   return <CategoriesContext.Provider value={{
     allCategories,
+    loading,
     refetch: () => fetchCategories(token)
   }} >
     {children}
