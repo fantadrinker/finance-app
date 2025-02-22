@@ -66,7 +66,7 @@ test('should show new category input box when new category is selected', () => {
     name: /new category/i,
   })
   expect(newCategoryOption).toBeInTheDocument()
-  userEvent.selectOptions(categoryBox, 'new category')
+  userEvent.selectOptions(categoryBox, 'New Category')
   newCategoryBox = screen.getByRole('textbox', { name: /new category/i })
   expect(newCategoryBox).toBeInTheDocument()
 })

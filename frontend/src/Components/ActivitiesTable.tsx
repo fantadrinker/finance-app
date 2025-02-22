@@ -4,6 +4,7 @@ import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
 import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
+import { CategorySelect } from './CategorySelect'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -209,7 +210,17 @@ export function ActivitiesTable({
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>
-            {options?.showCategories && <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.category}</span></td>}
+            {options?.showCategories && <td>
+              <span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">
+                <CategorySelect
+                  category={activity.category}
+                  defaultLabel="Uncategorized"
+                  onCategoryChange={() => {
+                    // opens update mappings modal
+                  }}
+                />
+              </span>
+            </td>}
             <td><span className="inline-block whitespace-nowrap text-truncate lg:w-16 md:w-12">{activity.amount}</span></td>
             {options?.actions && (
               <td>
