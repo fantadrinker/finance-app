@@ -2,6 +2,7 @@ import boto3
 
 stack_name = "backendLambdasSamTest"
 
+# this script deletes s3 files in test stack
 def __main__():
   try:
     client = boto3.client("cloudformation")
