@@ -5,6 +5,7 @@ import Button from 'react-bootstrap/Button'
 import { ActivityRow, getActivitiesWithDescription } from '../api'
 import { useAuth0TokenSilent } from '../hooks'
 import { ActivitiesTable } from './ActivitiesTable'
+import { CategorySelect } from './CategorySelect'
 
 interface UpdateMappingModalProps {
   show: boolean
@@ -73,10 +74,6 @@ const UpdateMappingModal = ({
 
   }, [show, auth, newDescription])
 
-  const selectCategories = (currentCategory === "" || allCategories.includes(currentCategory))
-    ? allCategories
-    : allCategories.concat([currentCategory])
-
   return (
     <Modal size="lg" show={show} onHide={closeModal}>
       <Modal.Header closeButton>
@@ -92,19 +89,11 @@ const UpdateMappingModal = ({
           onChange={(e) => setNewDescription(e.target.value)}
         />
         <Form.Label htmlFor="category">Existing Categories</Form.Label>
-        <Form.Select
-          aria-label="category"
-          role="list"
-          value={selectedCategory}
-          onChange={e => setSelectedCategory(e.target.value)}
-        >
-          {selectCategories.map((cat, index) => (
-            <option value={cat} key={index}>
-              {cat}
-            </option>
-          ))}
-          <option value="">new category</option>
-        </Form.Select>
+        <CategorySelect
+          category={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          defaultLabel="New Category"
+        />
         {selectedCategory === '' && (
           <>
             <Form.Label>New Category</Form.Label>

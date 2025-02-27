@@ -6,7 +6,6 @@ import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
 import {
-  getMappings,
   postMappings,
   deleteActivity,
   ActivityRow,
@@ -21,6 +20,8 @@ import { useFinanceDataFetcher } from './effects'
 import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
+import { CategoriesContext } from '../../Contexts/CategoriesContext'
+import { CategorySelect } from '../../Components/CategorySelect'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -29,6 +30,11 @@ export function Home() {
     selectedIds,
     updateSelectedActivities
   } = useContext(MultiSelectContext)
+
+  const {
+    allCategories: allCategoriesContext,
+    refetch: refetchCategories
+  } = useContext(CategoriesContext)
 
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
@@ -53,17 +59,6 @@ export function Home() {
 
   useEffect(() => {
     if (token) {
-      getMappings(token)
-        .then(data => {
-          dispatch({
-            type: 'updateAllCategories',
-            payload: data.map(({ category }) => category),
-          })
-        })
-        .catch(err => {
-          console.log(err)
-          setErrorMessage(`Error fetching activity mappings ${err.message}`)
-        })
       getDeletedActivities(token).then(({
         data,
         nextKey
@@ -115,11 +110,7 @@ export function Home() {
         throw Error("error updating category mapping, api response not ok")
       }
       reFetch(true, sizeToRefetch)
-      const updatedMappings = await getMappings(token)
-      dispatch({
-        type: 'updateAllCategories',
-        payload: updatedMappings.map(({ category }) => category)
-      })
+      refetchCategories()
       return true
     } catch (err) {
       console.log(err)
@@ -151,27 +142,17 @@ export function Home() {
             </Button>}
             <div>
               <Form.Label>Filter by Category:</Form.Label>
-              <Form.Select
-                aria-label="category"
-                role="list"
-                value={state.filterByCategory}
-                onChange={(e) => {
+              <CategorySelect
+                category={state.filterByCategory}
+                onCategoryChange={(cat) => {
                   clearData()
                   dispatch({
                     type: 'setFilterByCategory',
-                    payload: e.target.value
+                    payload: cat
                   })
                 }}
-              >
-                {state.allCategories.map((cat, index) => (
-                  <option value={cat} key={index}>
-                    {cat}
-                  </option>
-                ))}
-                <option value={''}>
-                  None
-                </option>
-              </Form.Select>
+                defaultLabel="None"
+              />
             </div>
             <ActivitiesTable
               activities={financeData}
@@ -221,7 +202,7 @@ export function Home() {
         closeModal={() => dispatch({ type: 'closeUpdateMappingModal' })}
         currentCategory={state.category}
         currentDescription={state.description}
-        allCategories={state.allCategories}
+        allCategories={allCategoriesContext}
         submit={updateNewCategory}
       />
       <RelatedActivitiesModal

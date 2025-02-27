@@ -38,11 +38,6 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
         ...state,
         showSelectedActivitiesModal: true
       }
-    case 'updateAllCategories':
-      return {
-        ...state,
-        allCategories: action.payload
-      }
     case 'updateNewCategory':
       return {
         ...state,

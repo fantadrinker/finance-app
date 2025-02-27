@@ -53,6 +53,12 @@ def activities_body_json():
             })
 
 @pytest.fixture()
+def activity_item_patch_category_json():
+    return json.dumps({
+        "category": "NewCategory"
+    })
+
+@pytest.fixture()
 def apigw_event_post_cap1(user_id, cap1_file_raw):
     """ Generates API GW Event"""
     return TestHelpers.get_base_event(user_id, "POST", "/activity", "format=cap1", body=cap1_file_raw)
@@ -123,6 +129,10 @@ def apigw_event_get_non_dirty_activities(user_id):
     return TestHelpers.get_base_event(user_id, "GET", "/activity", "isDirty=false")
 
 @pytest.fixture()
+def apigw_event_patch_activity(user_id, activity_item_patch_category_json):
+    return TestHelpers.get_base_event(user_id, "PATCH", "/activity", "sk=2019-12-266", body=activity_item_patch_category_json)
+
+@pytest.fixture()
 def mock_activities(user_id):
     base_date = datetime(2020, 1, 1)
     return [
@@ -130,6 +140,7 @@ def mock_activities(user_id):
             "user": user_id,
             # ranging from 2019-12-23 to 2020-01-01
             "sk": (base_date - timedelta(days=i)).strftime("%Y-%m-%d") + str(i),
+            "date": (base_date - timedelta(days=i)).strftime("%Y-%m-%d"),
             "description": f"test activity {i}",
             "category": "test_odd" if i % 2 != 0 else "test_even",
             "amount": 10 + i,
@@ -195,6 +206,7 @@ def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event
         "category": "Ramen",
     })
     ret = app.lambda_handler(apigw_event_post_cap1_preview, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     body = json.loads(ret["body"])
     items = body["data"]["items"]
@@ -236,6 +248,7 @@ def test_post_activities_td_preview(activities_table, s3, user_id, apigw_event_p
         "category": "Gas",
     })
     ret = app.lambda_handler(apigw_event_post_td_preview, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     body = json.loads(ret["body"])
     items = body["data"]["items"]
@@ -253,6 +266,7 @@ def test_post_activities_cap1(activities_table, s3, user_id, apigw_event_post_ca
     app.s3 = s3
     app.activities_table = activities_table
     ret = app.lambda_handler(apigw_event_post_cap1, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     bucket = s3.Bucket('test-bucket')
@@ -289,6 +303,7 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
     app.s3 = s3
     app.activities_table = activities_table
     ret = app.lambda_handler(apigw_event_post_rbc, {})
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     bucket = s3.Bucket('test-bucket')
@@ -325,6 +340,7 @@ def test_post_activities(activities_table, s3, user_id, activities_body_json):
     evt = TestHelpers.get_base_event(user_id, "POST", "/activity", "", body=activities_body_json)
     ret = app.lambda_handler(evt, {})
 
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     activities_response = activities_table.query(
@@ -360,6 +376,8 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
         }
     )
     ret = app.lambda_handler(apigw_event_get_max_5, "")
+
+    assert ret is not None
     data = json.loads(ret["body"])
     nextKey = data["LastEvaluatedKey"]
     assert ret["statusCode"] == 200
@@ -372,7 +390,10 @@ def test_get_activities(activities_table, user_id, apigw_event_get_max_5, mock_a
         "queryStringParameters": {"size": "10", "nextDate": nextKey["sk"]},
     }, "")
 
+    assert next_ret is not None
+
     data = json.loads(next_ret["body"])
+
     assert next_ret["statusCode"] == 200
     assert data["count"] == 5
     assert data["data"][0]["sk"] == "2019-12-275"
@@ -393,6 +414,7 @@ def test_get_activities_dirty_flag(activities_table, apigw_event_get_dirty_activ
 
     ret = app.lambda_handler(apigw_event_get_dirty_activities, "")
 
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     data = json.loads(ret["body"])
@@ -415,6 +437,7 @@ def test_get_activities_dirty_flag_false(activities_table, apigw_event_get_non_d
 
     ret = app.lambda_handler(apigw_event_get_non_dirty_activities, "")
 
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     data = json.loads(ret["body"])
@@ -433,6 +456,7 @@ def test_delete_activities(
         activities_table.put_item(Item=item)
 
     ret = app.lambda_handler(apigw_event_delete, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
 
     remaining_items = activities_table.query(
@@ -456,6 +480,7 @@ def test_get_activities_by_category(
         activities_table.put_item(Item=item)
 
     ret = app.lambda_handler(apigw_event_get_by_category_size_5, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5
@@ -463,6 +488,7 @@ def test_get_activities_by_category(
     assert int(data["data"][0]["amount"]) == 19
 
     ret = app.lambda_handler(apigw_event_get_by_category_size_3, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5
@@ -470,6 +496,7 @@ def test_get_activities_by_category(
     assert int(data["data"][0]["amount"]) == 19
 
     ret = app.lambda_handler(apigw_event_get_by_category_multiple, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 10
@@ -501,6 +528,7 @@ def test_get_activities_by_category_with_mappings(
     })
 
     ret = app.lambda_handler(apigw_event_get_by_category_mapped, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 2
@@ -526,6 +554,7 @@ def test_get_activities_by_category_with_mappings_partial(
     })
 
     ret = app.lambda_handler(TestHelpers.get_base_event(user_id, "GET", "/activities", "category=test_category_mapped"), "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 10
@@ -539,6 +568,8 @@ def test_get_activities_by_category_with_start_end_date(
 
     event = TestHelpers.get_base_event(user_id, "GET", "/activity", "category=test_odd&startDate=2019-12-28&endDate=2020-01-01")
     ret = app.lambda_handler(event, "")
+
+    assert ret is not None
 
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
@@ -554,6 +585,7 @@ def test_get_activities_exclude_categories(user_id, activities_table, mock_activ
 
     ret = app.lambda_handler(event, "")
 
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5
@@ -566,6 +598,8 @@ def test_get_activities_by_account(activities_table, apigw_event_get_by_account,
         activities_table.put_item(Item=items)
 
     ret = app.lambda_handler(apigw_event_get_by_account, "")
+
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 5
@@ -582,6 +616,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_get_activi
         **apigw_get_activities_base,
         "queryStringParameters": {"amountMax": "30"},
     }, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 3
@@ -592,6 +627,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_get_activi
         **apigw_get_activities_base,
         "queryStringParameters": {"amountMin": "20"},
     }, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 4
@@ -602,6 +638,7 @@ def test_get_activities_by_amount_upper_lower(activities_table, apigw_get_activi
         **apigw_get_activities_base,
         "queryStringParameters": {"amountMin": "20", "amountMax": "40"},
     }, "")
+    assert ret is not None
     assert ret["statusCode"] == 200
     data = json.loads(ret["body"])
     assert data["count"] == 3
@@ -617,6 +654,8 @@ def test_get_activities_by_description(activities_table, apigw_get_activities_ba
         **apigw_get_activities_base,
         "queryStringParameters": {"description": "SAFEWAY"},
     }, "")
+
+    assert resposne_match_start is not None
     assert resposne_match_start["statusCode"] == 200
     data = json.loads(resposne_match_start["body"])
     assert data["count"] == 3
@@ -630,6 +669,8 @@ def test_get_activities_by_description(activities_table, apigw_get_activities_ba
         **apigw_get_activities_base,
         "queryStringParameters": {"description": "2345"},
     }, "")
+
+    assert resposne_match_end is not None
     assert resposne_match_end["statusCode"] == 200
     data = json.loads(resposne_match_end["body"])
     assert data["count"] == 2
@@ -642,6 +683,8 @@ def test_get_activities_by_description(activities_table, apigw_get_activities_ba
         **apigw_get_activities_base,
         "queryStringParameters": {"description": "SAFEWAY #2345"},
     }, "")
+
+    assert resposne_match_exact is not None
     assert resposne_match_exact["statusCode"] == 200
     data = json.loads(resposne_match_exact["body"])
     assert data["count"] == 1
@@ -667,6 +710,8 @@ def test_get_activities_with_mappings(activities_table, apigw_get_activities_bas
 
     # first should match everything that starts with key
     resposne_match_start = app.lambda_handler(apigw_get_activities_base, "")
+
+    assert resposne_match_start is not None
     assert resposne_match_start["statusCode"] == 200
     data = json.loads(resposne_match_start["body"])
     assert data["count"] == 4
@@ -682,3 +727,22 @@ def test_get_activities_with_mappings(activities_table, apigw_get_activities_bas
 
     fourth_item_category = next((x["category"] for x in data["data"] if x["sk"] == "2020-01-01#4"), None)
     assert fourth_item_category == "SAFEWAY" # not mapped
+
+
+def test_patch_activity(user_id, activities_table, apigw_event_patch_activity, mock_activities):
+    for item in mock_activities:
+        activities_table.put_item(Item=item)
+    
+    response = app.lambda_handler(apigw_event_patch_activity, "")
+
+    assert response is not None
+    assert response["statusCode"] == 200
+
+    getItemResponse = activities_table.get_item(
+        Key={
+            'user':  user_id,
+            'sk':  '2019-12-266'
+        },
+        ProjectionExpression="category"
+    )
+    assert getItemResponse["Item"]["category"] == "NewCategory"
