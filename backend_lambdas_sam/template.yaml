@@ -68,6 +68,8 @@ Resources:
           - POST
           - GET
           - DELETE
+          - PUT
+          - PATCH
         AllowHeaders:
           - Content-Type
           - X-Amz-Date

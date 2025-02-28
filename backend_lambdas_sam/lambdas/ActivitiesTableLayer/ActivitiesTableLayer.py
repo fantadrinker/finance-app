@@ -122,7 +122,8 @@ class ActivitiesTable:
 
       return response
     except botocore.exceptions.ClientError as e:
-      print(f"db error while patching activity, {e.response["Error"]}")
+      error_message = e.response["Error"]
+      print(f"db error while patching activity, {error_message}")
       raise e
     except Exception as e:
       print("error in code" ,e )
