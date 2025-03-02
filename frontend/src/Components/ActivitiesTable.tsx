@@ -26,6 +26,7 @@ interface ActivitiesTableProps {
     showCategories?: boolean
     actions?: ActivityAction[]
     addActivity?: boolean
+    onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
   }
 }
 
@@ -215,8 +216,11 @@ export function ActivitiesTable({
                 <CategorySelect
                   category={activity.category}
                   defaultLabel="Uncategorized"
-                  onCategoryChange={() => {
-                    // opens update mappings modal
+                  onCategoryChange={(category) => {
+                    if (options?.onActivityCategoryChange) {
+                      options?.onActivityCategoryChange(activity, category)
+
+                    }
                   }}
                 />
               </span>

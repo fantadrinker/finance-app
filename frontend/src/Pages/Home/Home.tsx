@@ -10,6 +10,7 @@ import {
   deleteActivity,
   ActivityRow,
   getDeletedActivities,
+  patchActivity,
 } from '../../api'
 import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
@@ -119,6 +120,13 @@ export function Home() {
     return false
   }
 
+  function patchActivityCategory(activity: ActivityRow, newCategory: string) {
+    if (!token) return
+    patchActivity(token, activity.id, newCategory).then(() => {
+      reFetch(true, financeData.length)
+    })
+  }
+
   return (
     <div className="p-10 w-4/5">
       <Tabs defaultActiveKey="activities" id="uncontrolled-tab-example">
@@ -188,7 +196,8 @@ export function Home() {
                       payload: id
                     })
                   }
-                ]
+                ],
+                onActivityCategoryChange: patchActivityCategory
               }}
             />
           </div>
