@@ -3,10 +3,10 @@ import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
 import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'
 import { Form, Spinner } from 'react-bootstrap'
-import { useAuth0 } from '@auth0/auth0-react'
 import { ActivitiesTable } from './ActivitiesTable'
 import { COLORS_GPT } from '../helpers'
 import { prop } from 'ramda'
+import { useAuth0TokenSilent } from '../hooks'
 
 /**
  * TODO: animations
@@ -90,7 +90,7 @@ const activeSlice = (props: SectorProps) => {
 }
 
 export const CategoryCard = ({ insights }: CategoryCardProps) => {
-  const { getAccessTokenSilently } = useAuth0()
+  const token = useAuth0TokenSilent()
 
   const [categoryBreakdown, setCategoryBreakdown] = useState<
     Array<CategoryBreakdown>
@@ -126,12 +126,24 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
     const categoriesToFetch = event.name === OTHERS_CATEGORY? categoryBreakdown.slice(0, 5).map(cur => cur.category): [event.name]
     setSelectedCategory(event.name)
     setLoading(true)
-    getAccessTokenSilently()
-      .then(accessToken => getActivitiesByCategory(accessToken, categoriesToFetch, event.name === OTHERS_CATEGORY))
-      .then(activities => {
-        setActivities(activities.data)
-      })
-      .finally(() => setLoading(false))
+
+    if (token === null) {
+      console.error('token is null')
+      return
+    }
+    getActivitiesByCategory(
+        token, 
+        categoriesToFetch, 
+        event.name === OTHERS_CATEGORY,
+        selectedInsight !== undefined ? {
+          startDate: selectedInsight.start_date,
+          endDate: selectedInsight.end_date
+        }: undefined
+      )
+    .then(activities => {
+      setActivities(activities.data)
+    })
+    .finally(() => setLoading(false))
   }
 
   const isExpanded = selectedCategory.length > 0
@@ -218,7 +230,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
               style={{ maxWidth: '360px', maxHeight: '360px' }}
               onClick={() => setSelectedCategory('')}
             >
-              <h5>Top Activities for {selectedCategory}</h5>
+              <h5>Top Activities for {selectedCategory} in {selectedMonth} </h5>
               {loading ? (
                 <Spinner animation="border" />
               ) : (
