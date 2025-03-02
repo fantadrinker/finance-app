@@ -481,14 +481,25 @@ export function getInsights(auth: string | null, startDate?: string, categories?
 export function getActivitiesByCategory(
   auth: string,
   categories: string[],
-  exclude: boolean = false
+  exclude: boolean = false,
+  options?: {
+    startDate?: string,
+    endDate?: string
+  }
 ): Promise<GetActivitiesResponse> {
   if (!auth) {
     throw new Error('no auth')
   }
   const urlParams = [...categories.map(cat => ['category', cat]), ['size', '5']]
+
   if (exclude) {
     urlParams.push(['exclude', 'true'])
+  }
+  if (options?.startDate) {
+    urlParams.push(['startDate', options.startDate])
+  }
+  if (options?.endDate) {
+    urlParams.push(['endDate', options.endDate])
   }
   return getCall(`/activities`, auth, urlParams)
     .then(res => {
