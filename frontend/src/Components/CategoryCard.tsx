@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Card from 'react-bootstrap/Card'
 import { PieChart, Pie, Cell, Sector, Tooltip, Legend } from 'recharts'
 import { Insight, CategoryBreakdown, getActivitiesByCategory } from '../api'
-import { Spinner } from 'react-bootstrap'
+import { Form, Spinner } from 'react-bootstrap'
 import { useAuth0 } from '@auth0/auth0-react'
 import { ActivitiesTable } from './ActivitiesTable'
 import { COLORS_GPT } from '../helpers'
+import { prop } from 'ramda'
 
 /**
  * TODO: animations
  */
 
+const MONTHS_SELECT_ALL = 'All'
 
 const OTHERS_CATEGORY = 'Others'
 
@@ -93,6 +95,9 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
   const [categoryBreakdown, setCategoryBreakdown] = useState<
     Array<CategoryBreakdown>
   >([])
+
+  const [selectedMonth, setSelectedMonth] = useState<string>('')
+
   const [activities, setActivities] = useState<Array<Activity>>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -102,9 +107,19 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
     setHoveredIndex(index)
   }, [])
 
-  useEffect(() => {
-    setCategoryBreakdown(calculateCategoryBreakdown(insights, 5))
+  const allMonthsList = useMemo(() => {
+    return insights
+      .filter((insight) => insight.categories.length > 0)
+      .map(prop('start_date'))
   }, [insights])
+
+  const selectedInsight = useMemo(() => {
+    return insights.find(insight => insight.start_date === selectedMonth)
+  }, [insights, selectedMonth])
+
+  useEffect(() => {
+    setCategoryBreakdown(calculateCategoryBreakdown(selectedInsight?[selectedInsight]: insights, 5 ))
+  }, [insights, selectedInsight])
 
   const handleClick = (event: any) => {
     // todo: type event
@@ -149,42 +164,55 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
             cursor: isExpanded ? 'pointer' : 'default',
           }}
         >
-          <PieChart width={360} height={360}>
-            <Pie
-              dataKey="value"
-              isAnimationActive={false}
-              data={categoryBreakdown.map(({ category, amount }) => ({
-                name: category,
-                value: amount,
-              }))}
-              activeShape={activeSlice}
-              activeIndex={selectedIndex === -1 ? hoveredIndex : selectedIndex}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              fill="#8884d8"
-              label
-              onClick={handleClick}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={() => setHoveredIndex(-1)}
-              style={{ cursor: 'pointer' }}
+          <div className='flex flex-col'>
+            <Form.Select
+              aria-label="month"
+              role="list"
+              value={selectedMonth}
+              onChange={e => setSelectedMonth(e.target.value)}
             >
-              {categoryBreakdown.map(({ category }, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={
-                    isExpanded &&
-                    category !== selectedCategory &&
-                    index !== hoveredIndex
-                      ? 'grey'
-                      : COLORS_GPT[index % COLORS_GPT.length]
-                  }
-                />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
+              {[MONTHS_SELECT_ALL, ...allMonthsList].map((month, index) => (
+                <option value={month} key={index}>
+                  {month}
+                </option> ))}
+            </Form.Select>
+            <PieChart width={360} height={360}>
+              <Pie
+                dataKey="value"
+                isAnimationActive={false}
+                data={categoryBreakdown.map(({ category, amount }) => ({
+                  name: category,
+                  value: amount,
+                }))}
+                activeShape={activeSlice}
+                activeIndex={selectedIndex === -1 ? hoveredIndex : selectedIndex}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                fill="#8884d8"
+                label
+                onClick={handleClick}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={() => setHoveredIndex(-1)}
+                style={{ cursor: 'pointer' }}
+              >
+                {categoryBreakdown.map(({ category }, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={
+                      isExpanded &&
+                      category !== selectedCategory &&
+                      index !== hoveredIndex
+                        ? 'grey'
+                        : COLORS_GPT[index % COLORS_GPT.length]
+                    }
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </div>
           {isExpanded && (
             <div
               style={{ maxWidth: '360px', maxHeight: '360px' }}
@@ -194,7 +222,7 @@ export const CategoryCard = ({ insights }: CategoryCardProps) => {
               {loading ? (
                 <Spinner animation="border" />
               ) : (
-                <ActivitiesTable activities={activities} />
+                <ActivitiesTable activities={activities} size="s" />
               )}
             </div>
           )}

@@ -21,6 +21,7 @@ interface ActivitiesTableProps {
   activities: ActivityRow[]
   hasMore?: boolean
   loading?: boolean
+  size?: 's' | 'm' | 'l'
   onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
@@ -35,7 +36,8 @@ export function ActivitiesTable({
   hasMore, 
   options, 
   loading, 
-  onScrollToEnd 
+  onScrollToEnd,
+  size,
 }: ActivitiesTableProps) {
 
   const {selectedIds, updateSelectedActivities, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
@@ -117,20 +119,24 @@ export function ActivitiesTable({
     <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
-          <td className="w-4"><Form.Check
-            type="checkbox"
-            checked={isAllSelected}
-            onChange={(event) => {
-              if (event.target.checked) {
-                updateSelectedActivities([...activities, ...newActivities]) 
-              }
-              else {
-                updateSelectedActivities([])
-              }
-            }} 
-          /></td>
+          {size !== 's' && (
+            <td className="w-4"><Form.Check
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={(event) => {
+                if (event.target.checked) {
+                  updateSelectedActivities([...activities, ...newActivities]) 
+                }
+                else {
+                  updateSelectedActivities([])
+                }
+              }} 
+            /></td>
+          )}
           <td className="lg:w-32 md:w-16">Date</td>
-          <td className="lg:w-40 md:w-20">Account</td>
+          {size !== 's' && (
+            <td className="lg:w-40 md:w-20">Account</td>
+          )}
           <td className="">Description</td>
           {options?.showCategories && <td className="lg:w-20 md:w-10">Category</td>}
           <td className="w-20">Amount</td>
@@ -139,10 +145,12 @@ export function ActivitiesTable({
       </thead>
       <tbody>
         {options?.addActivity && (<tr>
-          <td>
-            <Form.Control type="checkbox" value={1} />
-          </td>
-          <td>
+          {size !== 's' && (
+            <td>
+              <Form.Control type="checkbox" value={1} />
+            </td>
+          )}
+         <td>
             <Form.Control 
               type="date" 
               value={editingActivity.date} 
@@ -151,16 +159,18 @@ export function ActivitiesTable({
                 date: e.target.value
               })} />
           </td>
-          <td>
-            <Form.Control 
-              type="text" 
-              value={editingActivity.account}
-              onChange={(e) => setEditingActivity({
-                ...editingActivity,
-                account: e.target.value
-              })}
-            />
-          </td>
+          {size !== 's' && (
+            <td>
+              <Form.Control 
+                type="text" 
+                value={editingActivity.account}
+                onChange={(e) => setEditingActivity({
+                  ...editingActivity,
+                  account: e.target.value
+                })}
+              />
+            </td>
+          )}
           <td>
             <Form.Control 
               type="text" 
@@ -197,19 +207,23 @@ export function ActivitiesTable({
 
         {allActivities.map(activity => (
           <tr key={activity.id}>
-            <td><Form.Check 
-              type="checkbox" 
-              checked={selectedIds.has(activity.id)} 
-              onChange={(event) => {
-                if (event.target.checked && !selectedIds.has(activity.id)) {
-                  selectNewActivity(activity)
-                } else if (!event.target.checked && selectedIds.has(activity.id)) {
-                  unselectNewActivity(activity.id)
-                }
-              }} 
-            /></td>
+            {size !== 's' && (
+              <td><Form.Check 
+                type="checkbox" 
+                checked={selectedIds.has(activity.id)} 
+                onChange={(event) => {
+                  if (event.target.checked && !selectedIds.has(activity.id)) {
+                    selectNewActivity(activity)
+                  } else if (!event.target.checked && selectedIds.has(activity.id)) {
+                    unselectNewActivity(activity.id)
+                  }
+                }} 
+              /></td>
+            )}
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
-            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
+            {size !== 's' && (
+              <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
+            )}
             <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>
             {options?.showCategories && <td>
               <span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">
