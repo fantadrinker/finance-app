@@ -47,6 +47,7 @@ const UpdateMappingModal = ({
     setNewCategory('')
     setSelectedCategory(currentCategory)
     setNewDescription(currentDescription)
+    setActivitiesMatchingDesc([])
   }, [currentCategory, currentDescription, allCategories])
 
   useEffect(() => {
