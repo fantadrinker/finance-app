@@ -167,7 +167,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
                 <tbody>
                   <tr key="total">
                     <td>Total</td>
-                    <td>{monthlyData[activeIndex].amount}</td>
+                    <td>{Math.round(monthlyData[activeIndex].amount * 100) / 100}</td>
                   </tr>
                   {topCategories.map(({ category, amount }) => (
                     <tr key={category} onClick={() => showMoreInModal(category, monthlyData[activeIndex].month)}>
