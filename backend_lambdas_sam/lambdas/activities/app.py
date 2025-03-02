@@ -7,6 +7,7 @@ from AuthLayer import get_user_id
 from getActivities import getActivitiesForCategory, getActivities, getRelatedActivities, getEmptyDescriptionActivities
 from postActivities import postActivities
 from deleteActivities import delete_activities
+from patchActivity import patchActivity
 
 activities_table = None
 
@@ -35,9 +36,6 @@ def lambda_handler(event, context):
     print(f"got user id {user_id}")
     print(event)
     method = event.get("routeKey", "").split(' ')[0]
-    if not method:
-        print("debug: no method found in request")
-        print(event)
     if method == "POST":
         params = event.get("queryStringParameters", {})
         file_format = params.get("format")
@@ -104,7 +102,14 @@ def lambda_handler(event, context):
         sk = params.get("sk", "")
         print(f"processing DELETE request")
         return delete_activities(user_id, sk, activities_table)
+    elif method == "PATCH":
+        params = event.get("queryStringParameters", {})
+        sk = params.get("sk", "")
+        body = event["body"]
+        return patchActivity(user_id, sk, body)
     else:
+        print("debug: no method found in request")
+        print(event)
         return {
             "statusCode": 400,
             "body": "invalid method"

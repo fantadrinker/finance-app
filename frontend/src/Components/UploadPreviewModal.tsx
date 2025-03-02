@@ -54,7 +54,7 @@ export function UploadPreviewModal({
       <Modal
         show={!!show}
         onHide={closeModal}
-        size='lg'
+        size='xl'
       >
         <Modal.Header closeButton>
           <Modal.Title>Preview Activities</Modal.Title>

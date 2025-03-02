@@ -39,6 +39,7 @@ Globals:
             - '0'
     Layers:
       - !Ref AuthLayer
+      - !Ref ActivitiesTableLayer
   Api:
     TracingEnabled: true
 
@@ -67,6 +68,8 @@ Resources:
           - POST
           - GET
           - DELETE
+          - PUT
+          - PATCH
         AllowHeaders:
           - Content-Type
           - X-Amz-Date
@@ -89,6 +92,17 @@ Resources:
     Properties:
       LayerName: AuthLayer
       ContentUri: lambdas/AuthLayer
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+      BuildArchitecture: x86_64
+
+  ActivitiesTableLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: ActivitiesTableLayer
+      ContentUri: lambdas/ActivitiesTableLayer
       CompatibleRuntimes:
         - python3.9
     Metadata:
@@ -129,6 +143,13 @@ Resources:
               Ref: FinanceAPI
             Path: /activities
             Method: DELETE
+        PatchActivities:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: FinanceAPI
+            Path: /activities
+            Method: PATCH
 
 
   FileCheckFunction:

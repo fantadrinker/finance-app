@@ -4,14 +4,19 @@ import requests
 import jwt
 import os
 from jwt.exceptions import InvalidSignatureError
+from jwt.algorithms import RSAAlgorithm
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 
+VERIFY_TOKEN_ERROR_TEXT = "Token verification failed."
 
 def verify_token_with_jwks(token, jwks_url, audiences):
     # Get the JSON Web Key Set from the provided URL
     jwks = requests.get(jwks_url).json()
 
     # Extract the public key from the JSON Web Key Set
-    key = jwt.algorithms.RSAAlgorithm.from_jwk(jwks["keys"][0])
+    key = RSAAlgorithm.from_jwk(jwks["keys"][0])
+    if isinstance(key, RSAPrivateKey):
+        raise ValueError(VERIFY_TOKEN_ERROR_TEXT)
 
     try:
         # Verify the token using the extracted public key
@@ -22,7 +27,7 @@ def verify_token_with_jwks(token, jwks_url, audiences):
         return decoded_token
     except InvalidSignatureError:
         # If the token could not be verified, raise an exception
-        raise ValueError("Token verification failed.")
+        raise ValueError(VERIFY_TOKEN_ERROR_TEXT)
 
 
 def get_user_id(event):

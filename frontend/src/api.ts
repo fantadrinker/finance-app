@@ -140,6 +140,23 @@ function putCall(url: string, body: string, auth: string): Promise<Response> {
   }
 }
 
+function patchCall(url: string, body: string, auth: string): Promise<Response> {
+  try {
+    return fetch(awsLambdaAddr + url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: auth,
+      },
+      mode: 'cors',
+      body,
+    })
+  } catch (err) {
+    console.log('patch error' , err)
+    throw err
+  }
+}
+
 function serializeActivityResponse2Row(item: ActivityResponse): ActivityRow {
   const {
     sk,
@@ -393,6 +410,10 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
     throw new Error('no auth')
   }
   return deleteCall(`/activities`, auth, [['sk', id]])
+}
+
+export function patchActivity(auth: string, id: string, category: string) {
+  return patchCall(`/activities?sk=${id}`, JSON.stringify({category}), auth)
 }
 
 export interface FileUpload {
