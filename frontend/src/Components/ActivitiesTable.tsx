@@ -219,7 +219,6 @@ export function ActivitiesTable({
                   onCategoryChange={(category) => {
                     if (options?.onActivityCategoryChange) {
                       options?.onActivityCategoryChange(activity, category)
-
                     }
                   }}
                 />

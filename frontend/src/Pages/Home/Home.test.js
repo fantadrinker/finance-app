@@ -2,6 +2,7 @@ import { within, waitFor, render, screen, fireEvent } from '../../test-utils'
 import * as auth0Helper from '../../hooks'
 import * as API from '../../api'
 import Home from './Home'
+import { CategoriesContext, CategoriesContextProviderWrapper } from '../../Contexts/CategoriesContext'
 
 jest.mock('../../hooks')
 jest.mock('../../api')
@@ -76,7 +77,10 @@ describe('if logged in', () => {
         })
       )
     )
-    render(<Home />)
+    render(<CategoriesContext.Provider value={{
+      allCategories: ['test activity', 'test activity 2']
+    }}>
+      <Home /></CategoriesContext.Provider>)
     await waitFor(() =>
       expect(auth0Helper.useAuth0TokenSilent).toHaveBeenCalled()
     )
