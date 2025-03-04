@@ -54,5 +54,7 @@ jobs:
               run: sam validate
             - name: build backend
               run: sam build --use-container
-            - name: run integration tests
-              run: pytest tests/integration -v -rP
+            # TODO: this should be smoke test after 
+            # test stack deployed
+            # - name: run integration tests
+            #   run: pytest tests/integration -v -rP
