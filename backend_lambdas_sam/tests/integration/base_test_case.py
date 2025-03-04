@@ -1,9 +1,13 @@
 import boto3
 import pytest
 from boto3.dynamodb.conditions import Key
+import requests
+from dotenv import load_dotenv
+import os
+from auth0.authentication import GetToken
 
 
-stack_name = "backendLambdasSamTest"
+stack_name = "backendLambdasSamDev"
 
 def get_stack_outputs(stack_name):
   if stack_name is None:
@@ -62,19 +66,21 @@ class BaseTestCase:
   @pytest.fixture(scope="class")
   def api_auth_token(self):
     # unique token for each test
-    auth_token="test-user-1"
-    # setup - clear all activities with test user 1
-    print("set up - deleting all activities")
-    stack_outputs = get_stack_outputs(stack_name) 
-    print(stack_outputs)
-    dynamodb_outputs = [
-        output for output in stack_outputs if output["OutputKey"] == "DynamoDB"
-    ]
-    dynamodb = boto3.resource("dynamodb")
-    activities_table = dynamodb.Table(dynamodb_outputs[0]["OutputValue"])
-    delete_all_activities(activities_table, auth_token)
+    load_dotenv()
+    test_token_response = requests.post(
+        'https://dev-55m1hzkqt35ta6tx.us.auth0.com/oauth/token',
+        json={
+            "client_id": os.getenv('ENV_AUTH0_TEST_CLIENT_ID'),
+            "client_secret": os.getenv('ENV_AUTH0_TEST_CLIENT_SECRET'),
+            "audience": os.getenv('ENV_AUTH0_TEST_CLIENT_AUD'),
+            "grant_type": "client_credentials"
+        },
+        headers={
+           'content-type': 'application/json'
+        }
+    )
+    assert test_token_response.status_code == 200
+    test_token = test_token_response.json()["access_token"]
 
-    yield auth_token
-
-    # teardown - delete all activities again
-    delete_all_activities(activities_table, auth_token)
+    yield test_token
+    # todo: think about how to destroy all the test data with this token

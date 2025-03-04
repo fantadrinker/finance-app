@@ -34,14 +34,16 @@ def get_user_id(event):
     token = event.get("headers", {}).get("authorization", "")
     if os.environ.get('SKIP_AUTH', '') == '1':
         return token
+    apiUrl = event.get("headers", {}).get("host", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
-            f"{url_base}/userinfo"
+            f"https://{apiUrl}/Test/"
         ]
 
         decoded = verify_token_with_jwks(token, jwks_url, audiences)
         return decoded.get("sub", "")
-    except:
+    except Exception as e:
+        print(e)
         return ""
