@@ -1,4 +1,3 @@
-import boto3
 import pytest
 import requests
 from base_test_case import BaseTestCase
