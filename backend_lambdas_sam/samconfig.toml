@@ -64,15 +64,4 @@ parameter_overrides = "BranchPrefix='prod' ApiStageName='Prod'"
 [test]
 [test.global]
 [test.global.parameters]
-stack_name="backendLambdasSamTest"
-
-
-[test.deploy]
-[test.deploy.parameters]
-resolve_s3 = true
-stack_name = "backendLambdasSamTest"
-s3_prefix="backendLambdasSamTest"
-capabilities = "CAPABILITY_IAM"
-confirm_changeset = true
-region = "us-east-1"
-parameter_overrides = "BranchPrefix='test'"
+stack_name="backendLambdasSamDev"

@@ -54,9 +54,7 @@ jobs:
               run: sam validate
             - name: build backend
               run: sam build --use-container
-            - name: deploy to test stack
-              run: sam deploy --config-env=test --no-confirm-changeset --no-fail-on-empty-changeset
-            - name: run integration tests
-              run: pytest tests/integration -v -rP
-            - name: clean up and teardown test stack
-              run: python scripts/delete_files.py && sam delete --config-env=test --no-prompts
+            # TODO: this should be smoke test after 
+            # test stack deployed
+            # - name: run integration tests
+            #   run: pytest tests/integration -v -rP

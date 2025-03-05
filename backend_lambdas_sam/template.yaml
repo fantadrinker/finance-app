@@ -13,11 +13,6 @@ Parameters:
     Type: String
     Default: "Test"
 
-Conditions:
-  IsCI: !Equals
-    - !Ref BranchPrefix
-    - test
-
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
@@ -32,11 +27,6 @@ Globals:
       Variables:
         ACTIVITIES_TABLE: !Ref ActivitiesTable
         BASE_URL: "https://dev-55m1hzkqt35ta6tx.us.auth0.com"
-        SKIP_AUTH:
-          'Fn::If':
-            - IsCI
-            - '1'
-            - '0'
     Layers:
       - !Ref AuthLayer
       - !Ref ActivitiesTableLayer
@@ -303,7 +293,7 @@ Resources:
   ActivitiesFiles:
     Type: 'AWS::S3::Bucket'
     UpdateReplacePolicy: Retain
-    DeletionPolicy: !If [IsCI, Delete, Retain]
+    DeletionPolicy: Retain
     Properties:
       BucketName: !Sub
         - "${AWS::AccountId}-${Branch}-activities-files"

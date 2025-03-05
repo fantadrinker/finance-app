@@ -8,3 +8,4 @@ requests-mock
 pytest-env
 simplejson
 uuid
+python-dotenv
