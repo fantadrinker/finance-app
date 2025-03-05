@@ -3,7 +3,7 @@ boto3
 requests
 pyjwt
 cryptography
-moto[all]==4.2.7
+moto[all]==5.1.1
 requests-mock
 pytest-env
 simplejson

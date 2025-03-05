@@ -1,6 +1,6 @@
 import os
 import pytest
-from moto import mock_dynamodb, mock_s3
+from moto import mock_aws
 import boto3
 # All shared fixtures for unit tests
 
@@ -16,7 +16,7 @@ def aws_credentials():
 @pytest.fixture(scope="function")
 def activities_table(aws_credentials):
     """ Creates a dynamodb table for testing purposes"""
-    with mock_dynamodb():
+    with mock_aws():
         dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
         table = dynamodb.create_table(
             TableName="activities",
@@ -36,7 +36,7 @@ def activities_table(aws_credentials):
 
 @pytest.fixture(scope="function")
 def s3(aws_credentials):
-    with mock_s3():
+    with mock_aws():
         s3 = boto3.resource('s3', region_name="us-east-1")
         s3.create_bucket(Bucket="test-bucket")
         yield s3
