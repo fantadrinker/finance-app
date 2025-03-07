@@ -4,7 +4,7 @@ import boto3
 from datetime import datetime
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from AuthLayer import get_user_id
+from auth_layer import get_user_id
 
 table = None
 

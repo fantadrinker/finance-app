@@ -1,8 +1,8 @@
 # this is the base layer that includes
 # authentication, database connection, and
+import os
 import requests
 import jwt
-import os
 from jwt.exceptions import InvalidSignatureError
 from jwt.algorithms import RSAAlgorithm
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
@@ -10,8 +10,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 VERIFY_TOKEN_ERROR_TEXT = "Token verification failed."
 
 def verify_token_with_jwks(token, jwks_url, audiences):
-    # Get the JSON Web Key Set from the provided URL
-    jwks = requests.get(jwks_url).json()
+    """ Get the JSON Web Key Set from the provided URL """
+    jwks = requests.get(jwks_url, timeout=3).json()
 
     # Extract the public key from the JSON Web Key Set
     key = RSAAlgorithm.from_jwk(jwks["keys"][0])
@@ -25,25 +25,26 @@ def verify_token_with_jwks(token, jwks_url, audiences):
 
         # If the token was successfully verified, return the decoded token
         return decoded_token
-    except InvalidSignatureError:
+    except InvalidSignatureError as exc:
         # If the token could not be verified, raise an exception
-        raise ValueError(VERIFY_TOKEN_ERROR_TEXT)
+        raise ValueError(VERIFY_TOKEN_ERROR_TEXT) from exc
 
 
 def get_user_id(event):
+    """ for lambda http api event, get user id from authorization token in header"""
     token = event.get("headers", {}).get("authorization", "")
     if os.environ.get('SKIP_AUTH', '') == '1':
         return token
-    apiUrl = event.get("headers", {}).get("host", "")
+    api_url = event.get("headers", {}).get("host", "")
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
-            f"https://{apiUrl}/Test/"
+            f"https://{api_url}/Test/"
         ]
 
         decoded = verify_token_with_jwks(token, jwks_url, audiences)
         return decoded.get("sub", "")
-    except Exception as e:
-        print(e)
+    except Exception as exc:
+        print("Error while verifying token", exc)
         return ""
