@@ -81,7 +81,7 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       LayerName: AuthLayer
-      ContentUri: lambdas/AuthLayer
+      ContentUri: lambdas/auth_layer
       CompatibleRuntimes:
         - python3.9
     Metadata:

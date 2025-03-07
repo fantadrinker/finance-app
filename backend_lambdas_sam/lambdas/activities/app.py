@@ -2,8 +2,7 @@ import os
 
 import boto3
 
-from AuthLayer import get_user_id
-
+from auth_layer import get_user_id
 from getActivities import getActivitiesForCategory, getActivities, getRelatedActivities, getEmptyDescriptionActivities
 from postActivities import postActivities
 from deleteActivities import delete_activities
@@ -14,7 +13,7 @@ activities_table = None
 s3 = None
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, _):
     # processes user activities data, store in db
     # right now just pings and returns body
     global activities_table
@@ -25,7 +24,7 @@ def lambda_handler(event, context):
         activities_table = dynamodb.Table(table_name)
 
     if not s3:
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource("s3")
 
     user_id = get_user_id(event)
     if not user_id:
@@ -35,44 +34,56 @@ def lambda_handler(event, context):
         }
     print(f"got user id {user_id}")
     print(event)
-    method = event.get("routeKey", "").split(' ')[0]
+    method = event.get("routeKey", "").split(" ")[0]
     if method == "POST":
         params = event.get("queryStringParameters", {})
         file_format = params.get("format")
         body = event["body"]
         preview = params.get("type", "") == "preview"
-        print(f"processing POST request", preview)
+        print("processing POST request", preview)
 
-        return postActivities(user_id, file_format, body, activities_table, s3, preview)
+        return postActivities(
+            user_id,
+            file_format,
+            body,
+            activities_table,
+            s3,
+            preview)
     elif method == "GET":
         params = event.get("queryStringParameters", {})
         print("processing GET request")
 
-        checkRelated = params.get("related", False)
-        if checkRelated:
-            return getRelatedActivities(user_id, checkRelated, activities_table)
+        check_related = params.get("related", False)
+        if check_related:
+            return getRelatedActivities(
+                user_id,
+                check_related,
+                activities_table)
 
         size = int(params.get("size", 0))
-        nextDate = params.get("nextDate", "")
+        next_date = params.get("nextDate", "")
         description = params.get("description", "")
-        orderByAmount = params.get("orderByAmount", False)
+        order_by_amount = params.get("orderByAmount", False)
         account = params.get("account", "")
-        amountMax = params.get("amountMax", None)
-        amountMin = params.get("amountMin", None)
-        startDate = params.get("startDate", "0000-00-00")
-        endDate = params.get("endDate", "9999-99-99")
-        isDirty = params.get("isDirty", None)
-        if isDirty is not None:
-            if isDirty == "true": 
-                isDirty = True
-            elif isDirty == "false":
-                isDirty = False
+        amount_max = params.get("amountMax", None)
+        amount_min = params.get("amountMin", None)
+        start_date = params.get("startDate", "0000-00-00")
+        end_date = params.get("endDate", "9999-99-99")
+        is_dirty = params.get("isDirty", None)
+        if is_dirty is not None:
+            if is_dirty == "true":
+                is_dirty = True
+            elif is_dirty == "false":
+                is_dirty = False
             else:
-                isDirty = None
+                is_dirty = None
 
-        checkEmpty = params.get("emptyDescription", False)
-        if checkEmpty:
-            return getEmptyDescriptionActivities(user_id, size, activities_table)
+        check_empty = params.get("emptyDescription", False)
+        if check_empty:
+            return getEmptyDescriptionActivities(
+                user_id,
+                size,
+                activities_table)
 
         category = params.get("category", "")
         if category:
@@ -82,25 +93,25 @@ def lambda_handler(event, context):
                 category.split(","),
                 activities_table,
                 exclude,
-                startDate,
-                endDate,
+                start_date,
+                end_date,
                 5 if size == 0 else size
             )
         return getActivities(
             user_id,
             size,
             activities_table,
-            nextDate,
+            next_date,
             description,
-            orderByAmount,
+            order_by_amount,
             account,
-            amountMax,
-            amountMin,
-            isDirty)
+            amount_max,
+            amount_min,
+            is_dirty)
     elif method == "DELETE":
         params = event.get("queryStringParameters", {})
         sk = params.get("sk", "")
-        print(f"processing DELETE request")
+        print("processing DELETE request")
         return delete_activities(user_id, sk, activities_table)
     elif method == "PATCH":
         params = event.get("queryStringParameters", {})

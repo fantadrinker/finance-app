@@ -5,7 +5,7 @@ import json
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
 import botocore
-from AuthLayer import get_user_id
+from auth_layer import get_user_id
 
 activities_table = None
 
