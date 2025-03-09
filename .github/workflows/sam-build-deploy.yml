@@ -38,3 +38,4 @@ jobs:
       # sadly this would not work, fails with
       # Error: Cannot use both --resolve-s3 and --s3-bucket parameters in non-guided deployments. Please use only one or use the --guided option for a guided deployment.
       - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env=prod
+      # TODO: run smoke test

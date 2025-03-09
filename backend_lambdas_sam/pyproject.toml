@@ -1,0 +1,8 @@
+[project]
+name="backend_lambdas_sam"
+
+[tool.pyright]
+include = ["lambdas"]
+
+reportMissingImports = "error"
+reportMissingTypeStubs = false
