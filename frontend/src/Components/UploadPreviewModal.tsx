@@ -73,7 +73,7 @@ export function UploadPreviewModal({
             {selectedActivities.length} Activities Selected
           </span>
           <Button onClick={closeModal}>Close</Button>
-          <Button onClick={processActivitiesJSON} disabled={!!processingFile && selectedActivities.length > 0}>Process Selected Activities</Button>
+          <Button onClick={processActivitiesJSON} disabled={!!processingFile || selectedActivities.length === 0}>Process Selected Activities</Button>
           <Button onClick={downloadAsCsv} disabled={!!processingFile}>Download as CSV</Button>
         </Modal.Footer>
       </Modal>
