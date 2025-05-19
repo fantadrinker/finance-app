@@ -35,13 +35,14 @@ def get_user_id(event):
     token = event.get("headers", {}).get("authorization", "")
     if os.environ.get('SKIP_AUTH', '') == '1':
         return token
-    api_url = event.get("headers", {}).get("host", "")
+    # api_url = event.get("headers", {}).get("host", "")
+    api_url = "my.finance-app.com"
     stage = event.get("rawPath", "").split("/")[1]
     try:
         url_base = os.environ.get("BASE_URL", "")
         jwks_url = f"{url_base}/.well-known/jwks.json"
         audiences = [
-            f"https://{api_url}/{stage}/"
+            f"https://{api_url}/{stage}"
         ]
 
         decoded = verify_token_with_jwks(token, jwks_url, audiences)

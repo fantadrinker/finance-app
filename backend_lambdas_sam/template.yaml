@@ -48,7 +48,7 @@ Resources:
             JwtConfiguration:
               issuer: "https://dev-55m1hzkqt35ta6tx.us.auth0.com/"
               audience:
-                - https://v3rmvn9yri.execute-api.us-east-1.amazonaws.com/Test/
+                - !Sub "https://my.finance-app.com/${ApiStageName}"
             IdentitySource: "$request.header.Authorization"
         # TODO: re-enable this line
         # DefaultAuthorizer: OAuthAuthorizer
@@ -325,7 +325,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   ApiUrl:
     Description: API Gateway endpoint URL
-    Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/Test"
+    Value: !Sub "https://${FinanceAPI}.execute-api.${AWS::Region}.amazonaws.com/${ApiStageName}"
   Function:
     Description: Activities Lambda Function ARN
     Value: !GetAtt ActivitiesFunction.Arn

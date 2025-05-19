@@ -1,5 +1,5 @@
 {
   "domain": "dev-55m1hzkqt35ta6tx.us.auth0.com",
   "clientId": "cGKz2Of9EaChECh0YWtm2FcT3P9omdCP",
-  "audience": "https://v3rmvn9yri.execute-api.us-east-1.amazonaws.com/Test/"
+  "audience_base": "https://my.finance-app.com/"
 }
