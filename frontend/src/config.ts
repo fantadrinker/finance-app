@@ -13,10 +13,12 @@ export function getConfig(): AuthConfig {
   // don't have an API).
   // If this resolves to `null`, the API page changes to show some helpful info about what to do
   // with the audience.
-  const audience: string | null =
-    configJson.audience && configJson.audience !== 'YOUR_API_IDENTIFIER'
-      ? configJson.audience
+  const audience_base: string | null =
+    configJson.audience_base && configJson.audience_base !== 'YOUR_API_IDENTIFIER'
+      ? configJson.audience_base
       : null
+
+  const audience = `${audience_base}${process.env.NODE_ENV === 'production' ? 'Prod': 'Test'}`
 
   return {
     domain: configJson.domain,
