@@ -11,7 +11,7 @@ import {
 } from 'recharts'
 import { CategoryBreakdown, Insight } from '../api'
 import { Table } from 'react-bootstrap'
-import { filter, flatten, keys, map, pipe, prop, sort, take, uniq } from 'ramda'
+import { flatten, keys, map, pipe, prop, sort, take, uniq } from 'ramda'
 import {
   cmpInsights,
   transformInsightToMonthlyBreakdown,
