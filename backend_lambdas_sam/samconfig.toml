@@ -21,12 +21,11 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-stack_name = "backendLambdasSamDev"
-s3_prefix = "backendLambdasSam/dev"
+s3_prefix = "backendLambdasSamDev"
 region = "us-east-1"
 disable_rollback = false
 image_repositories = []
-parameter_overrides = "BranchPrefix='dev'"
+parameter_overrides = "BranchPrefix=\"dev\" ApiStageName=\"Test\""
 
 [default.package]
 [default.package.parameters]

@@ -9,9 +9,12 @@ from auth_layer import get_user_id
 
 activities_table = None
 
-def get_grouped_by_categories(items, all_categories, categories):
+def get_grouped_by_categories(items, all_categories, categories, exclude_negatives = False):
     # todo: calculate and return an array of {category: amount} objects
     # with first object with category = "all"
+
+    if exclude_negatives:
+        items = [item for item in items if item["amount"] > 0]
 
     results = []
 
@@ -42,6 +45,13 @@ def get_grouped_by_categories(items, all_categories, categories):
             "amount": str(amount)
         })
     return results
+
+def getSumNegatives(items):
+    result = 0
+    for item in items:
+        if item["amount"] < 0:
+            result -= Decimal(item["amount"])
+    return result
 
 def getAllMappings(user: str):
     global activities_table
@@ -76,7 +86,6 @@ def get_new(
     ending_date,
     all_categories = False,
     categories = [],
-    exclude_negative = False,
     monthlyBreakdown = False
 ):
     global activities_table
@@ -111,9 +120,6 @@ def get_new(
                 ending_date.strftime("%Y-%m-%d")
             ),
         }
-        if exclude_negative:
-            params["FilterExpression"] = Attr("amount").gt(0)
-
         response = activities_table.query(
             **params
         )
@@ -142,7 +148,9 @@ def get_new(
                         [applyMappings(mappings, item) for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")],
                         all_categories,
                         categories,
-                    )
+                        True
+                    ),
+                    "negatives": str(getSumNegatives([item for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")]))
                 } for period_start, period_end in breakdownPeriods]
             })
         }
@@ -176,7 +184,6 @@ def lambda_handler(event, context):
             query_params.get("ending_date", None),
             all_categories=query_params.get("all_categories", False),
             categories=query_params.get("categories", []),
-            exclude_negative=query_params.get("exclude_negative", False),
             monthlyBreakdown=query_params.get("by_month", False)
         )  # need to get from multivalue query params
     else:

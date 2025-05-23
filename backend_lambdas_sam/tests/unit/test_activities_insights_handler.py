@@ -29,12 +29,12 @@ def apigw_event_get_by_category(user_id):
     )
 
 @pytest.fixture()
-def apigw_event_get_exclude_negative(user_id):
+def apigw_event_get_2022_01_to_2023_02(user_id):
     return TestHelpers.get_base_event(
         user_id,
         "GET",
         "/activityInsights",
-        "starting_date=2022-01-01&ending_date=2023-02-10&all_categories=false&exclude_negative=true"
+        "starting_date=2022-01-01&ending_date=2023-02-10&all_categories=false"
     )
 
 @pytest.fixture()
@@ -103,8 +103,10 @@ def test_get_activities_insights(activities_table, apigw_event_get_2022_01, mock
     assert len(data["data"]) == 1
     categories = data["data"][0]['categories']
     assert len(categories) == 2
-    assert "Transit" in [c["category"] for c in categories]
-    assert "Dining" in [c["category"] for c in categories]
+    all_category_texts = [c["category"] for c in categories]
+    assert "Transit" in all_category_texts
+    assert "Dining" in all_category_texts
+    assert data["data"][0]['negatives'] == "0"
 
 
 def test_get_activities_insights_by_category(activities_table, apigw_event_get_by_category, mock_activities):
@@ -116,14 +118,15 @@ def test_get_activities_insights_by_category(activities_table, apigw_event_get_b
     assert ret["statusCode"] == 200
     assert len(data["data"][0]["categories"]) == 2
 
-def test_get_activities_insights_exclude_negative(activities_table, apigw_event_get_exclude_negative, mock_activities):
+def test_get_activities_insights_with_negatives(activities_table, apigw_event_get_2022_01_to_2023_02, mock_activities):
     for item in mock_activities:
         activities_table.put_item(Item=item)
-    ret = app.lambda_handler(apigw_event_get_exclude_negative, "")
+    ret = app.lambda_handler(apigw_event_get_2022_01_to_2023_02, "")
     data = json.loads(ret["body"])
     assert ret["statusCode"] == 200
     assert len(data["data"][0]["categories"]) == 2
     assert "Income" not in [c["category"] for c in data["data"][0]["categories"]]
+    assert data["data"][0]["negatives"] == "4000"
 
 def test_get_insights_with_existing_mappings(activities_table, apigw_event_get_2022_01, mock_activities):
     # setup table and insert some activities data in there
