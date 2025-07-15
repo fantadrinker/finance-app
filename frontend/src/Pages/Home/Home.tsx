@@ -223,9 +223,12 @@ export function Home() {
       />
       <SelectedActivitiesModal
         show={state.showSelectedActivitiesModal}
-        closeModal={() => dispatch({
-          type: 'closeSelectedActivitiesModal'
-        })}
+        closeModal={() => {
+          dispatch({
+            type: 'closeSelectedActivitiesModal'
+          })
+          reFetch(true, financeData.length)
+        }}
         activities={selectedActivities}
       />
     </div>
