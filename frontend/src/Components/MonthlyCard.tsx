@@ -29,6 +29,8 @@ interface ExpandCategoryActivityProps {
   expanded: boolean
 }
 
+const MAX_CATEGORIES = 100
+
 export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
   // TODO: call an api to get the top categories for recent months
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -73,7 +75,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
       isExpanded
         ? pipe(
             sort<CategoryBreakdown>((a, b) => b.amount - a.amount),
-            (c: CategoryBreakdown[]) => take(5, c)
+            (c: CategoryBreakdown[]) => take(MAX_CATEGORIES, c)
           )(sortedInsights[activeIndex].categories)
         : [],
     [isExpanded, sortedInsights, activeIndex]
@@ -161,7 +163,7 @@ export const MonthlyCard = ({ insights }: MonthlyCardProps) => {
           </BarChart>
           {isExpanded && (
             <div
-              className="mx-4 w-[300px] h-[300px]"
+              className="mx-4 overflow-y-scroll"
               style={{ maxWidth: '360px', maxHeight: '360px' }}
             >
               <h4>
