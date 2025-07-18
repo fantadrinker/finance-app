@@ -1,8 +1,10 @@
+import { ActivityRow } from "../../api";
+
 interface HomeState {
   showUpdateMappingModal: boolean;
   showRelatedActivitiesModal: boolean;
   showSelectedActivitiesModal: boolean;
-  relatedActivityId: string | null;
+  relatedActivity: ActivityRow | null;
   description: string;
   category: string;
   allCategories: string[];
@@ -31,7 +33,7 @@ export function reducer(state: HomeState, action: HomeActions): HomeState {
       return {
         ...state,
         showRelatedActivitiesModal: true,
-        relatedActivityId: action.payload
+        relatedActivity: action.payload
       }
     case 'openSelectedActivitiesModal':
       return {
