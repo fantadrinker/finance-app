@@ -1,4 +1,4 @@
-import { render, screen, within } from '../test-utils'
+import { render, screen, waitFor, within } from '../test-utils'
 import * as auth0Helper from '../hooks'
 import * as API from '../api'
 import RelatedActivitiesModal from './RelatedActivitiesModal'
@@ -25,7 +25,9 @@ test('should show modal when show is true', () => {
     <RelatedActivitiesModal
       show={true}
       closeModal={() => {}}
-      activityId="test id"
+      activity={{
+        id: "test id"
+      }}
     />
   )
   const modalElement = screen.getByRole('dialog')
@@ -39,7 +41,9 @@ test('should show loading when loading', async () => {
     <RelatedActivitiesModal
       show={true}
       closeModal={() => {}}
-      activityId="test id"
+      activity={{
+        id: "test id"
+      }}
     />
   )
   const loadingText = screen.getByText('Loading...')
@@ -78,11 +82,21 @@ test('should show related activities table if data were returned', async () => {
     <RelatedActivitiesModal
       show={true}
       closeModal={() => {}}
-      activityId="test id"
+      activity={{
+        id: "test id"
+      }}
     />
   )
-  const table = await screen.findByRole('table')
-  expect(table).toBeInTheDocument()
-  const rows = within(table).getAllByRole('row')
-  expect(rows.length).toBe(3) // 1 header row + 2 data rows
+  let table
+
+  await waitFor(async () => {
+    table = await screen.findAllByRole('table')
+    expect(table).toHaveLength(2)
+
+  })
+  const firstTableRows = within(table[0]).getAllByRole('row') // first table should contain the current activity
+  expect(firstTableRows).toHaveLength(2)
+
+  const secondTableRows = within(table[1]).getAllByRole('row')
+  expect(secondTableRows).toHaveLength(3) // 1 header row + 2 data rows
 })
