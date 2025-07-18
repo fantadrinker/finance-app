@@ -41,7 +41,7 @@ export function Home() {
     showUpdateMappingModal: false,
     showRelatedActivitiesModal: false,
     showSelectedActivitiesModal: false,
-    relatedActivityId: null,
+    relatedActivity: null,
     description: '',
     category: '',
     allCategories: [],
@@ -191,9 +191,9 @@ export function Home() {
                   {
                     type: ActivityActionType.SEE_RELATED,
                     text: 'Related',
-                    onClick: ({ id }) => dispatch({
+                    onClick: (activity) => dispatch({
                       type: 'openRelatedActivitiesModal',
-                      payload: id
+                      payload: activity
                     })
                   }
                 ],
@@ -216,10 +216,14 @@ export function Home() {
       />
       <RelatedActivitiesModal
         show={state.showRelatedActivitiesModal}
-        closeModal={() => dispatch({
-          type: 'closeRelatedActivitiesModal'
-        })}
-        activityId={state.relatedActivityId || undefined}
+        closeModal={(shouldRefetch: boolean) => {
+          dispatch({
+            type: 'closeRelatedActivitiesModal'
+          })
+          if (shouldRefetch) 
+            reFetch(true, financeData.length)
+        }}
+        activity={state.relatedActivity || undefined}
       />
       <SelectedActivitiesModal
         show={state.showSelectedActivitiesModal}
