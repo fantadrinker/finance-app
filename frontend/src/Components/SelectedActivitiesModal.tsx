@@ -1,9 +1,10 @@
 import { Button, ButtonGroup, Modal } from "react-bootstrap";
-import { ActivityRow, deleteActivity } from "../api"
+import { ActivityRow, deleteActivity, patchActivity } from "../api"
 import { ActivitiesTable } from "./ActivitiesTable";
 import { useCallback, useContext, useState } from "react";
 import { MultiSelectContext } from "../Contexts/MultiSelectContext";
 import { useAuth0TokenSilent } from "../hooks";
+import { CategorySelect } from "./CategorySelect";
 
 interface SelectedActivitiesModalProps {
   activities: ActivityRow[];
@@ -21,6 +22,7 @@ export function SelectedActivitiesModal({
     selectedActivities
   } = useContext(MultiSelectContext)
 
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   const [loading, setLoading] = useState<boolean>(false)
 
@@ -43,6 +45,27 @@ export function SelectedActivitiesModal({
       setLoading(false)
     })
   }, [auth, selectedActivities, closeModal])
+
+  const bulkUpdate = useCallback(() => {
+    if (!auth) {
+      console.error('missing auth token')
+      setError('missing auth token')
+      return
+    }
+    if (!selectedCategory) {
+      return
+    }
+    setLoading(true)
+    const results = selectedActivities.map(({id}) => patchActivity(auth, id, selectedCategory))
+    Promise.all(results).then(() => {
+      closeModal("updated successful")
+    }).catch((err) => {
+      console.error(err)
+      setError(err)
+    }).finally(() => {
+      setLoading(false)
+    })
+  }, [auth, selectedCategory, selectedActivities, closeModal])
   return (
     <Modal show={show} onHide={closeModal} size="lg" >
       <Modal.Header>Selected Activities</Modal.Header>
@@ -51,11 +74,16 @@ export function SelectedActivitiesModal({
         <ActivitiesTable 
           activities={activities}
         />
+        <CategorySelect
+          category={selectedCategory ?? undefined}
+          onCategoryChange={setSelectedCategory}
+          defaultLabel="New Category"
+        />
       </Modal.Body>
       <Modal.Footer>
         <ButtonGroup>
           <Button disabled={loading} onClick={bulkDelete}>Delete</Button>
-          <Button disabled={loading} >Categorize</Button>
+          <Button disabled={loading || !selectedCategory} onClick={bulkUpdate}>Categorize</Button>
           <Button disabled={loading} onClick={() => closeModal()}>Close</Button>
         </ButtonGroup>
       </Modal.Footer>
