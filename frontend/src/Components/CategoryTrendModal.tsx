@@ -122,7 +122,12 @@ export function CategoryTrendModal(props: CategoryTrendModalProps) {
     setMonth(state.activeLabel ?? null)
   }
 
-  return (<Modal show={show} onHide={closeModal}>
+  const closeModalAndClearData = () => {
+    setMonth(null)
+    closeModal()
+  }
+
+  return (<Modal show={show} onHide={closeModalAndClearData}>
     <Modal.Header>
       <h2>Trends for {category}</h2>
     </Modal.Header>
@@ -142,19 +147,22 @@ export function CategoryTrendModal(props: CategoryTrendModalProps) {
           <Line type="monotone" dataKey="amount" />
         </LineChart>
       )}
-      {loadingActivities? (
+      {loadingActivities && (
         <p>loading...</p>
-      ): (
+      )} 
+      {month !== null? (
         <div>
           <h2>Activities for {month}</h2>
           <ActivitiesTable 
             activities={activities}
           />
         </div>
+      ): (
+        <h3>Select a month to start.</h3>
       )}
     </Modal.Body>
     <Modal.Footer>
-      <Button onClick={closeModal}>
+      <Button onClick={closeModalAndClearData}>
         Close
       </Button>
     </Modal.Footer>
