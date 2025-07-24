@@ -28,7 +28,7 @@ def post(user, description, category, priority):
         item = response.get("Item")
         if item:
             # if already exist, then update the mapping
-            print(f"found mapping, updating original category {item["category"]} to new category {category}")
+            print(f"found mapping, updating original category {item['category']} to new category {category}")
             table.update_item(
                 Key={
                     "user": user,
