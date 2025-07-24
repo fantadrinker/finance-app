@@ -25,8 +25,10 @@ def post(user, description, category, priority):
                 "sk": f'mapping#{description}',
             }
         )
-        if response.get("Item"):
+        item = response.get("Item")
+        if item:
             # if already exist, then update the mapping
+            print(f"found mapping, updating original category {item["category"]} to new category {category}")
             table.update_item(
                 Key={
                     "user": user,
@@ -50,7 +52,6 @@ def post(user, description, category, priority):
                     "created_at": datetime.strftime(datetime.now(), MAPPING_TIMESTAMP_FORMAT)
                 }
             )
-        # TODO: update the activities rows here
         return {
             "statusCode": 201,
             "body": "success",
