@@ -3,7 +3,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 import json
 import boto3
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 import botocore
 from auth_layer import get_user_id
 
@@ -12,6 +12,7 @@ activities_table = None
 def get_grouped_by_categories(items, all_categories, categories, exclude_negatives = False):
     # todo: calculate and return an array of {category: amount} objects
     # with first object with category = "all"
+    print(f"filtering for {categories}, all items: ", items)
 
     if exclude_negatives:
         items = [item for item in items if item["amount"] > 0]
@@ -86,7 +87,7 @@ def get_new(
     ending_date,
     all_categories = False,
     categories = [],
-    monthlyBreakdown = False
+    monthly_breakdown = False
 ):
     global activities_table
 
@@ -100,18 +101,18 @@ def get_new(
     else:
         starting_date = datetime.strptime(starting_date, "%Y-%m-%d")
 
-    breakdownPeriods = []
-    if monthlyBreakdown:
+    breakdown_periods = []
+    if monthly_breakdown:
         # get all the months in the range
         curr_date = starting_date
         while curr_date < ending_date:
             curr_month = curr_date.month
             next_month = curr_date.replace(year=curr_date.year+1, month=1) if curr_month == 12 else curr_date.replace(month=curr_month+1)
             curr_month_end = next_month - timedelta(days=1)
-            breakdownPeriods.append((curr_date, curr_month_end))
+            breakdown_periods.append((curr_date, curr_month_end))
             curr_date = next_month
     else:
-        breakdownPeriods = [(starting_date, ending_date)]
+        breakdown_periods = [(starting_date, ending_date)]
     try:
         # first get all transactions for the time period
         params = {
@@ -151,7 +152,7 @@ def get_new(
                         True
                     ),
                     "negatives": str(getSumNegatives([item for item in items if item["date"] >= period_start.strftime("%Y-%m-%d") and item["date"] <= period_end.strftime("%Y-%m-%d")]))
-                } for period_start, period_end in breakdownPeriods]
+                } for period_start, period_end in breakdown_periods]
             })
         }
     except botocore.exceptions.ClientError as error:
@@ -184,7 +185,7 @@ def lambda_handler(event, context):
             query_params.get("ending_date", None),
             all_categories=query_params.get("all_categories", False),
             categories=query_params.get("categories", []),
-            monthlyBreakdown=query_params.get("by_month", False)
+            monthly_breakdown=query_params.get("by_month", False)
         )  # need to get from multivalue query params
     else:
         return {
