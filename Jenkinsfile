@@ -12,6 +12,9 @@ pipeline {
               sh 'pwd'
               sh 'node --version'
               sh 'npm --version'
+              sh 'npm ci'
+              sh 'npx jest'
+              sh 'PUBLIC_URL=https://fantadrinker.github.io/finance-app/ node scripts/build.js'
             }
           }
         }
@@ -25,6 +28,9 @@ pipeline {
               sh 'pwd'
               sh 'python --version'
               sh 'python3 --version'
+              sh 'pip install ruff pytest'
+              sh 'if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi'
+              sh 'pytest tests/unit -v -rP'
             }
           }
         }
