@@ -214,9 +214,11 @@ def test_post_activities_cap1_preview(activities_table, s3, user_id, apigw_event
     assert items[0]["description"] == "RAMEN DANBO ROBSON"
     assert items[0]["category"] == "Ramen"
     assert items[0]["account"] == "0733"
+    assert items[0]["predicted"] == ["Ramen"]
     assert items[1]["description"] == "SAFEWAY #4931"
     assert items[1]["category"] == "Merchandise"
     assert items[1]["account"] == "0733"
+    assert items[1]["predicted"] == []
 
     # make sure the files are not uploaded to s3 yet
     bucket = s3.Bucket('test-bucket')

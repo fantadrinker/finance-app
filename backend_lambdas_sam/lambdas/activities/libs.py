@@ -105,5 +105,6 @@ def applyMappings(mappings: list, item: dict):
     return {
         **item,
         "dirty": len(matchedMapping) > 0,
-        "category": matchedMapping[0]["category"] if len(matchedMapping) > 0 else itemCategory
+        "category": matchedMapping[0]["category"] if len(matchedMapping) > 0 else itemCategory,
+        "predicted": [mapping["category"] for mapping in matchedMapping]
     }
