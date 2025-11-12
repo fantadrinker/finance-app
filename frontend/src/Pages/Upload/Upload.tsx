@@ -31,7 +31,7 @@ function useFetchPrevUploads(token: string | null, options?: useFetchPrevUploads
       return
     }
     if (token) {
-      getUploads(token, options?.limit || 10)
+      getUploads(token, options?.limit || 5)
         .then(data => {
           setUploads(data)
         })
@@ -77,7 +77,8 @@ export const Upload = () => {
   }, [errorMessage, warningMessage, toastMessage])
 
   const token = useAuth0TokenSilent()
-  const uploads = useFetchPrevUploads(token, { limit: 5 })
+  const uploadOptions = useMemo(() => ({limit: 5}), [])
+  const uploads = useFetchPrevUploads(token, uploadOptions)
 
   const closeToast = useCallback(() => {
     setToastMessage(null)

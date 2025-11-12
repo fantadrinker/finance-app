@@ -1,11 +1,10 @@
 import { useContext, useState } from "react"
-import { Dropdown, Form } from 'react-bootstrap'
+import { Badge, Dropdown, Form } from 'react-bootstrap'
 import { ActivityRow, patchActivity } from "../api"
 import { MultiSelectContext } from "../Contexts/MultiSelectContext"
 import { useAuth0TokenSilent } from "../hooks"
 import { ActivityAction } from "./ActivitiesTable"
 import { CategorySelect } from "./CategorySelect"
-
 
 interface ActivityTableRowProps {
   activity: ActivityRow
@@ -14,10 +13,11 @@ interface ActivityTableRowProps {
   onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
   actions?: ActivityAction[]
   refetch?: () => void
+  showPredictions?: boolean
 }
 
 export function ActivityTableRow(props: ActivityTableRowProps) {
-  const { activity, size, showCategories, onActivityCategoryChange, actions, refetch} = props
+  const { activity, size, showCategories, showPredictions, onActivityCategoryChange, actions, refetch} = props
   const token = useAuth0TokenSilent()
   const {selectedIds, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
   const [editingDescription, setEditingDescription] = useState<string | null>(null)
@@ -73,6 +73,16 @@ export function ActivityTableRow(props: ActivityTableRowProps) {
                   }}
                 />
               </span>
+            {showPredictions && activity.predicted.length > 0 && activity.predicted.map((val) => {
+                const isPredictedApplied = activity.category === val
+                return (<Badge
+                  className="cursor-pointer"
+                  // TODO: figure out what to do when user clicks this
+                  // onClick={() => setLocalActivities(updateActivityCategory(localActivities, activity.id, val))}
+                  bg={isPredictedApplied? "primary": "secondary"}>
+                    {val}
+                  </Badge>)
+              })}
             </td>}
             <td><span className="inline-block whitespace-nowrap text-truncate lg:w-16 md:w-12">{activity.amount}</span></td>
             {actions && (
