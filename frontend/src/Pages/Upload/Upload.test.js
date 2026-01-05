@@ -8,9 +8,11 @@ jest.mock('../../api')
 
 beforeEach(() => {
   API.getUploads.mockReturnValue(new Promise(resolve => resolve([])))
+  API.getMappings.mockReturnValue(new Promise(resolve => resolve([])))
 })
 
 describe('Upload page, user logged in', () => {
+
   beforeEach(() => {
     auth0Helper.useAuth0TokenSilent.mockReturnValue('test token')
   })
