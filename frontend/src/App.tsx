@@ -36,7 +36,9 @@ function App() {
       <MyNavBar />
       <div className="main">
         <Routes>
-          <Route path="/upload" element={<Upload />} />
+          <Route path="/upload" element={
+              <Upload />
+          } />
           <Route path="/insights" element={<Insights />} />
           <Route path="/preferences" element={<Preferences />} />
           <Route path="/wishlist" element={<Wishlist />} />

@@ -10,6 +10,7 @@ import { ButtonGroup } from 'react-bootstrap'
 import { UploadPreviewModal } from '../../Components/UploadPreviewModal'
 import { MultiSelectContextProviderWrapper } from '../../Contexts/MultiSelectContext'
 import { ColumnFormat, guessFileFormat } from '../../helpers'
+import { CategoriesContextProviderWrapper } from '../../Contexts/CategoriesContext'
 
 
 const COLUMN_FORMATS = [ColumnFormat.cap1, ColumnFormat.rbc, ColumnFormat.td]
@@ -204,12 +205,14 @@ export const Upload = () => {
         </ul>
       </div>
       <MultiSelectContextProviderWrapper>
-        <UploadPreviewModal
-          show={!!previewActivityRows}
-          closeModal={() => setPreviewActivityRows(null)}
-          setToastMessage={setToastMessage}
-          activities={previewActivityRows ?? []}
-        />
+        <CategoriesContextProviderWrapper>
+          <UploadPreviewModal
+            show={!!previewActivityRows}
+            closeModal={() => setPreviewActivityRows(null)}
+            setToastMessage={setToastMessage}
+            activities={previewActivityRows ?? []}
+          />
+        </CategoriesContextProviderWrapper>
       </MultiSelectContextProviderWrapper>
     </div>
   )
