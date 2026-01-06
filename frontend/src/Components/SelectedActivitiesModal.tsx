@@ -56,7 +56,7 @@ export function SelectedActivitiesModal({
       return
     }
     setLoading(true)
-    const results = selectedActivities.map(({id}) => patchActivity(auth, id, selectedCategory))
+    const results = selectedActivities.map(({id}) => patchActivity(auth, id, { category: selectedCategory}))
     Promise.all(results).then(() => {
       closeModal("updated successful")
     }).catch((err) => {

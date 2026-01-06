@@ -122,7 +122,7 @@ export function Home() {
 
   function patchActivityCategory(activity: ActivityRow, newCategory: string) {
     if (!token) return
-    patchActivity(token, activity.id, newCategory).then(() => {
+    patchActivity(token, activity.id, { category: newCategory } ).then(() => {
       reFetch(true, financeData.length)
     })
   }
