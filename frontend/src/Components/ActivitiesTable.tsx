@@ -1,17 +1,18 @@
-import { useContext, useEffect, useMemo, useState } from 'react'
+import {useContext, useEffect, useMemo, useState } from 'react'
 import { v4 as uuidV4 } from 'uuid'
 import Table from 'react-bootstrap/Table'
 import { ActivityRow } from '../api'
-import { Button, Dropdown, Form, Spinner } from 'react-bootstrap'
+import { Button, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
-import { CategorySelect } from './CategorySelect'
+import { ActivityTableRow } from './ActivitiesTableRow'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
   UPDATE = 'UPDATE',
   SEE_RELATED = 'SEE_RELATED',
 }
-interface ActivityAction {
+
+export interface ActivityAction {
   type: ActivityActionType
   text: string
   onClick: (val: ActivityRow) => void
@@ -28,6 +29,7 @@ interface ActivitiesTableProps {
     actions?: ActivityAction[]
     addActivity?: boolean
     onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
+    refetch?: () => void
   }
 }
 
@@ -40,7 +42,7 @@ export function ActivitiesTable({
   size,
 }: ActivitiesTableProps) {
 
-  const {selectedIds, updateSelectedActivities, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
+  const {selectedIds, updateSelectedActivities} = useContext(MultiSelectContext)
 
   const [newActivities, setNewActivities] = useState<ActivityRow[]>([])
 
@@ -206,56 +208,13 @@ export function ActivitiesTable({
         </tr>)}
 
         {allActivities.map(activity => (
-          <tr key={activity.id}>
-            {size !== 's' && (
-              <td><Form.Check 
-                type="checkbox" 
-                checked={selectedIds.has(activity.id)} 
-                onChange={(event) => {
-                  if (event.target.checked && !selectedIds.has(activity.id)) {
-                    selectNewActivity(activity)
-                  } else if (!event.target.checked && selectedIds.has(activity.id)) {
-                    unselectNewActivity(activity.id)
-                  }
-                }} 
-              /></td>
-            )}
-            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">{activity.date}</span></td>
-            {size !== 's' && (
-              <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-32 md:w-20">{activity.account}</span></td>
-            )}
-            <td><span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-56 md:w-40">{activity.desc}</span></td>
-            {options?.showCategories && <td>
-              <span className="inline-block whitespace-nowrap text-truncate overflow-hidden lg:w-28 md:w-20">
-                <CategorySelect
-                  category={activity.category}
-                  defaultLabel="Uncategorized"
-                  onCategoryChange={(category) => {
-                    if (options?.onActivityCategoryChange) {
-                      options?.onActivityCategoryChange(activity, category)
-                    }
-                  }}
-                />
-              </span>
-            </td>}
-            <td><span className="inline-block whitespace-nowrap text-truncate lg:w-16 md:w-12">{activity.amount}</span></td>
-            {options?.actions && (
-              <td>
-                <Dropdown>
-                  <Dropdown.Toggle variant="success" id="dropdown-basic" data-testid="activity-action-dropdown">
-                    Actions
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                    {options.actions.map(action => (
-                      <Dropdown.Item key={`${activity.id}_${action.type}`} role="button" onClick={() => action.onClick(activity)}>
-                        {action.text}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
-              </td>
-            )}
-          </tr>
+          <ActivityTableRow activity={activity}
+            key={activity.id}
+            onActivityCategoryChange={options?.onActivityCategoryChange}
+            actions={options?.actions ?? []}
+            showCategories={options?.showCategories ?? false}
+            refetch={options?.refetch}
+          />
         ))}
         {loading && (
           <tr>

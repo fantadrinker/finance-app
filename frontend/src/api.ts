@@ -434,8 +434,12 @@ export function deleteActivity(auth: string, id: string): Promise<Response> {
   return deleteCall(`/activities`, auth, [['sk', id]])
 }
 
-export function patchActivity(auth: string, id: string, category: string) {
-  return patchCall(`/activities?sk=${id}`, JSON.stringify({ category }), auth)
+export function patchActivity(auth: string, id: string, updateActivity: Partial<ActivityRow>) {
+  const { category , desc } = updateActivity
+  return patchCall(`/activities?sk=${id}`, JSON.stringify({ 
+    ...(category ? { category }: {}),
+    ...(desc ? { description: desc }: {}) 
+  }), auth)
 }
 
 export interface FileUpload {
