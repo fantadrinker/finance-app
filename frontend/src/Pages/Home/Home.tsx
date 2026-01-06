@@ -197,7 +197,8 @@ export function Home() {
                     })
                   }
                 ],
-                onActivityCategoryChange: patchActivityCategory
+                onActivityCategoryChange: patchActivityCategory,
+                refetch: () => reFetch()
               }}
             />
           </div>

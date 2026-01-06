@@ -13,10 +13,11 @@ interface ActivityTableRowProps {
   showCategories?: boolean
   onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
   actions?: ActivityAction[]
+  refetch?: () => void
 }
 
 export function ActivityTableRow(props: ActivityTableRowProps) {
-  const { activity, size, showCategories, onActivityCategoryChange, actions } = props
+  const { activity, size, showCategories, onActivityCategoryChange, actions, refetch} = props
   const token = useAuth0TokenSilent()
   const {selectedIds, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
   const [editingDescription, setEditingDescription] = useState<string | null>(null)
@@ -46,6 +47,11 @@ export function ActivityTableRow(props: ActivityTableRowProps) {
                 onBlur={() => {
                   if (token) {
                     patchActivity(token, activity.id, { desc: editingDescription} )
+                      .then(() => {
+                        if (refetch) {
+                          refetch()
+                        }
+                      })
                   }
                   setEditingDescription(null)
                 }}

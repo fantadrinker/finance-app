@@ -29,7 +29,7 @@ interface ActivitiesTableProps {
     actions?: ActivityAction[]
     addActivity?: boolean
     onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
-    onEditDescription?: (activityId: string, newDescription: string) => void
+    refetch?: () => void
   }
 }
 
@@ -213,6 +213,7 @@ export function ActivitiesTable({
             onActivityCategoryChange={options?.onActivityCategoryChange}
             actions={options?.actions ?? []}
             showCategories={options?.showCategories ?? false}
+            refetch={options?.refetch}
           />
         ))}
         {loading && (
