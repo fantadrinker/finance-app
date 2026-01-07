@@ -26,11 +26,22 @@ interface ActivitiesTableProps {
   onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
+    showPredictions?: boolean
     actions?: ActivityAction[]
     addActivity?: boolean
     onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
     refetch?: () => void
   }
+}
+
+const BASE_EDITING_ACTIVITY = {
+  id: '',
+  account: '',
+  date: '',
+  category: '', 
+  amount: 0, 
+  desc: '',
+  predicted: []
 }
 
 export function ActivitiesTable({ 
@@ -44,16 +55,13 @@ export function ActivitiesTable({
 
   const {selectedIds, updateSelectedActivities} = useContext(MultiSelectContext)
 
-  const [newActivities, setNewActivities] = useState<ActivityRow[]>([])
+  const [editingActivity, setEditingActivity] = useState<ActivityRow>(BASE_EDITING_ACTIVITY)
 
-  const [editingActivity, setEditingActivity] = useState<ActivityRow>({
-    id: '',
-    account: '',
-    date: '',
-    category: '', 
-    amount: 0, 
-    desc: ''
-  })
+  const [localActivities, setLocalActivities] = useState<ActivityRow[]>(activities)
+
+  useEffect(() => {
+    setLocalActivities(activities)
+  }, [activities])
 
   useEffect(() => {
     if (!onScrollToEnd) {
@@ -73,10 +81,9 @@ export function ActivitiesTable({
     }
   }, [loading, onScrollToEnd])
 
-  const allActivities = useMemo(() => [...activities, ...newActivities], [activities, newActivities])
   const isAllSelected = useMemo(() => {
-    return allActivities.length > 0 && allActivities.every(({id}) => selectedIds.has(id))
-  }, [selectedIds, allActivities])
+    return localActivities.length > 0 && localActivities.every(({id}) => selectedIds.has(id))
+  }, [selectedIds, localActivities])
 
   let colCount = 4
   if (options?.showCategories) {
@@ -99,22 +106,16 @@ export function ActivitiesTable({
       return
     }
 
-    setNewActivities([...newActivities, {
+    setLocalActivities([{
+      ...BASE_EDITING_ACTIVITY,
       id: uuidV4(),
       date,
       account: account ?? "",
       category: category ?? desc,
       amount,
       desc,
-    }])
-    setEditingActivity({
-      id: '',
-      account: '',
-      date: '',
-      category: '', 
-      amount: 0, 
-      desc: ''
-    })
+    }, ...localActivities])
+    setEditingActivity(BASE_EDITING_ACTIVITY)
   }
 
   return (
@@ -127,7 +128,7 @@ export function ActivitiesTable({
               checked={isAllSelected}
               onChange={(event) => {
                 if (event.target.checked) {
-                  updateSelectedActivities([...activities, ...newActivities]) 
+                  updateSelectedActivities(localActivities) 
                 }
                 else {
                   updateSelectedActivities([])
@@ -202,18 +203,22 @@ export function ActivitiesTable({
               })}
             />
           </td>
+          {options?.showCategories && (<td>
+
+            </td>)}
           <td>
             <Button onClick={addNewActivities} >Add</Button>
           </td>
         </tr>)}
 
-        {allActivities.map(activity => (
+        {localActivities.map(activity => (
           <ActivityTableRow activity={activity}
             key={activity.id}
             onActivityCategoryChange={options?.onActivityCategoryChange}
             actions={options?.actions ?? []}
             showCategories={options?.showCategories ?? false}
             refetch={options?.refetch}
+            showPredictions={options?.showPredictions}
           />
         ))}
         {loading && (

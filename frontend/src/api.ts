@@ -26,6 +26,7 @@ interface ActivityResponse {
   account: string
   amount: string
   description: string
+  predicted?: string[]
 }
 
 interface ActivitiesAPIResponse {
@@ -47,6 +48,7 @@ export interface ActivityRow {
   account: string
   amount: number
   desc: string
+  predicted: string[]
 }
 
 export interface Insight {
@@ -173,7 +175,7 @@ function patchCall(url: string, body: string, auth: string): Promise<Response> {
 }
 
 function serializeActivityResponse2Row(item: ActivityResponse): ActivityRow {
-  const { sk, date, category, account, amount, description } = item
+  const { sk, date, category, account, amount, description, predicted } = item
   return {
     id: sk,
     date,
@@ -181,6 +183,7 @@ function serializeActivityResponse2Row(item: ActivityResponse): ActivityRow {
     account,
     amount: isNaN(parseFloat(amount)) ? 0 : parseFloat(amount),
     desc: description,
+    predicted: predicted ?? [],
   }
 }
 

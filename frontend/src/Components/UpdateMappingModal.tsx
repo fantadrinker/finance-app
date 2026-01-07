@@ -95,7 +95,7 @@ const UpdateMappingModal = ({
           onCategoryChange={setSelectedCategory}
           defaultLabel="New Category"
         />
-        {selectedCategory === '' && (
+        {!selectedCategory && (
           <>
             <Form.Label>New Category</Form.Label>
             <Form.Control

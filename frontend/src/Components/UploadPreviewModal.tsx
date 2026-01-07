@@ -65,6 +65,7 @@ export function UploadPreviewModal({
             options={{
               addActivity: true,
               showCategories: true,
+              showPredictions: true
             }}
           />
         </Modal.Body>
