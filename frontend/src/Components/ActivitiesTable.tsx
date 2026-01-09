@@ -6,6 +6,7 @@ import { Button, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
 import { ActivityTableRow } from './ActivitiesTableRow'
 import { ActivitiesContext } from '../Contexts/ActivitiesContext'
+import { UpdateMappingContext } from '../Contexts/UpdateMappingContext'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -20,6 +21,7 @@ export interface ActivityAction {
 }
 
 interface ActivitiesTableProps {
+  activities?: ActivityRow[]
   size?: 's' | 'm' | 'l'
   options?: {
     showCategories?: boolean
@@ -40,21 +42,26 @@ const BASE_EDITING_ACTIVITY = {
 }
 
 export function ActivitiesTable({ 
+  activities: propActivities,
   options, 
   size,
 }: ActivitiesTableProps) {
 
   const {selectedIds, updateSelectedActivities} = useContext(MultiSelectContext)
 
-  const { activities, loading, hasMore, fetchMore, deleteActivity } = useContext(ActivitiesContext)
+  const { activities, loading, hasMore, fetchMore, deleteActivity , error} = useContext(ActivitiesContext)
+
+  const { openModal } = useContext(UpdateMappingContext)
 
   const [editingActivity, setEditingActivity] = useState<ActivityRow>(BASE_EDITING_ACTIVITY)
 
-  const [localActivities, setLocalActivities] = useState<ActivityRow[]>(activities)
+  const [localActivities, setLocalActivities] = useState<ActivityRow[]>(propActivities ?? activities ?? [])
 
-  useEffect(() => setLocalActivities(activities), [activities])
+  useEffect(() => {
+    setLocalActivities(propActivities ?? activities)
+  }, [propActivities, activities])
 
-  const onScrollToEnd = hasMore ? fetchMore : () => { }
+  const onScrollToEnd = useMemo(() => (hasMore ? fetchMore: () => { }), [hasMore, fetchMore])
 
   useEffect(() => {
     if (!onScrollToEnd) {
@@ -111,8 +118,10 @@ export function ActivitiesTable({
     setEditingActivity(BASE_EDITING_ACTIVITY)
   }
 
-  return (
-    <Table striped bordered hover width="100%" data-testid="activity-table">
+  return ( <>
+          {error && <span>{error}</span>}
+          {!loading && (!localActivities || localActivities.length === 0) && (<span>No data to display</span>)}
+          <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
           {size !== 's' && (
@@ -212,14 +221,7 @@ export function ActivitiesTable({
                 type: ActivityActionType.UPDATE,
                 text: 'Update Mapping',
                 onClick: (activity) => {
-                  const action = {
-                    type: 'openUpdateMappingModal',
-                    payload: {
-                      description: activity.desc || '',
-                      category: activity.category
-                    }
-                  }
-                  // todo: perform action
+                  openModal(activity.category, activity.desc)
                 }
               },
               {
@@ -248,5 +250,6 @@ export function ActivitiesTable({
         )}
       </tbody>
     </Table>
+    </>
   )
 }

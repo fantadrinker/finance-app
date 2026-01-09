@@ -97,7 +97,6 @@ describe('if logged in', () => {
       new Promise((resolve, reject) => reject('test error'))
     )
     render(<Home />)
-    // await waitFor(() => expect(screen.getByText(/failed to load activities/i)).toBeInTheDocument())
     expect(
       await screen.findByText(/failed to load activities/i)
     ).toBeInTheDocument()

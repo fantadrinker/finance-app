@@ -1,4 +1,4 @@
-import { createContext, useEffect } from "react";
+import { createContext, useEffect, useState } from "react";
 import { ActivityRow, deleteActivity } from "../api";
 import { useAuth0TokenSilent } from "../hooks";
 import { useFinanceDataFetcher } from "../Pages/Home/effects";
@@ -22,6 +22,7 @@ interface ActivitiesContextValues {
   fetchMore: () => void,
   clearData: () => void,
   deleteActivity: (id: string) => Promise<void>
+  error?: string
 }
 
 export const ActivitiesContext = createContext<ActivitiesContextValues>({
@@ -32,7 +33,7 @@ export const ActivitiesContext = createContext<ActivitiesContextValues>({
   hasMore: false,
   fetchMore: () => {},
   clearData: () => {},
-  deleteActivity: async (id: string) => {}
+  deleteActivity: async (id: string) => {},
 })
 
 export function ActivitiesContextProviderWrapper({
@@ -44,8 +45,9 @@ export function ActivitiesContextProviderWrapper({
   children
 }: ActivitiesContextProviderWrapperProps) {
   const token = useAuth0TokenSilent()
+  const [error, setError] = useState<string | null>(null)
   const { financeData, loading, hasMore, fetchMore, reFetch, clearData } =
-    useFinanceDataFetcher(token, console.error, { 
+    useFinanceDataFetcher(token, setError, { 
       category: categories[0], // TODO: pass in multiple categories 
       limit: 20, // this is an initial limit
       startDate: dateStart,
@@ -55,8 +57,8 @@ export function ActivitiesContextProviderWrapper({
 
   useEffect(() => {
     clearData()
-    reFetch()
-  }, [categories])
+    reFetch(false, 20)
+  }, [categories, clearData, reFetch])
 
   const deleteAndFetch = async (id: string) => {
     if (!token) {
@@ -80,7 +82,8 @@ export function ActivitiesContextProviderWrapper({
       fetchMore,
       clearData,
       setActivities,
-      deleteActivity: (id: string) => deleteAndFetch(id)
+      deleteActivity: (id: string) => deleteAndFetch(id),
+      error,
     }}>
     {children}
     </ActivitiesContext.Provider>

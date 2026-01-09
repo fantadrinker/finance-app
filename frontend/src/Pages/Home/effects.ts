@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ActivityRow, getActivities } from "../../api"
 
 export const useFinanceDataFetcher = (
@@ -20,7 +20,7 @@ export const useFinanceDataFetcher = (
 
   const [loading, setLoading] = useState<boolean>(false)
 
-  function fetchData(fromStart: boolean, limit: number = 20) {
+  const fetchData = useCallback((fromStart: boolean, limit: number = 20) => {
     if (token) {
       setLoading(true)
       getActivities(token, fromStart? null: fetchNextKey, {
@@ -42,7 +42,7 @@ export const useFinanceDataFetcher = (
           setLoading(false)
         })
     }
-  }
+  }, [token, fetchNextKey])
 
   useEffect(() => {
     if (token && options.limit > 0) {
@@ -81,9 +81,9 @@ export const useFinanceDataFetcher = (
     fetchMore: () => {
       setFetchNextKey(nextKey)
     },
-    reFetch: (fromStart: boolean = false, limit: number = 20) => fetchData(fromStart, limit),
-    clearData: () => {
+    reFetch: fetchData,
+    clearData: useCallback(() => {
       setFinanceData([])
-    }
+    }, [setFinanceData])
   }
 }

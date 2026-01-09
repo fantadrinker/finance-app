@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useReducer, useState } from 'react'
+import { useContext, useEffect, useReducer, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Tabs from 'react-bootstrap/Tabs'
 import Tab from 'react-bootstrap/Tab'
@@ -6,22 +6,19 @@ import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
 import {
-  postMappings,
-  deleteActivity,
   ActivityRow,
   getDeletedActivities,
 } from '../../api'
-import UpdateMappingModal from '../../Components/UpdateMappingModal'
 import { useAuth0TokenSilent } from '../../hooks'
 import RelatedActivitiesModal from '../../Components/RelatedActivitiesModal'
 import DeletedActivitiesTable from '../../Components/DeletedActivitiesTable'
 import { reducer } from './reducers'
-import { ActivitiesTable, ActivityActionType } from '../../Components/ActivitiesTable'
+import { ActivitiesTable } from '../../Components/ActivitiesTable'
 import { MultiSelectContext } from '../../Contexts/MultiSelectContext'
 import { SelectedActivitiesModal } from '../../Components/SelectedActivitiesModal'
-import { CategoriesContext } from '../../Contexts/CategoriesContext'
 import { CategorySelect } from '../../Components/CategorySelect'
 import { ActivitiesContextProviderWrapper } from '../../Contexts/ActivitiesContext'
+import { UpdateMappingContextProviderWrapper } from '../../Contexts/UpdateMappingContext'
 
 export function Home() {
   const token = useAuth0TokenSilent()
@@ -30,11 +27,6 @@ export function Home() {
     selectedIds,
     updateSelectedActivities
   } = useContext(MultiSelectContext)
-
-  const {
-    allCategories: allCategoriesContext,
-    refetch: refetchCategories
-  } = useContext(CategoriesContext)
 
   const [state, dispatch] = useReducer(reducer, {
     showUpdateMappingModal: false,
@@ -73,38 +65,6 @@ export function Home() {
     )
   }
 
-  const deleteAndFetch = async (id: string) => {
-    if (!token) {
-      return
-    }
-    try {
-      const response = await deleteActivity(token, id)
-      if (response.ok) {
-      }
-    } catch (err) {
-      console.log(err)
-      setErrorMessage(`Error deleting activities${err.message}`)
-    }
-  }
-
-  async function updateNewCategory(desc: string, newCategory: string): Promise<boolean> {
-    try {
-      const postResponse = await postMappings(token, {
-        description: desc,
-        category: newCategory,
-      })
-      if (!postResponse.ok) {
-        throw Error("error updating category mapping, api response not ok")
-      }
-      refetchCategories()
-      return true
-    } catch (err) {
-      console.log(err)
-      setErrorMessage(`Error updating category mapping${err.message}`)
-    }
-    return false
-  }
-
   return (
     <div className="p-10 w-4/5">
       <Tabs defaultActiveKey="activities" id="uncontrolled-tab-example">
@@ -139,19 +99,13 @@ export function Home() {
             <ActivitiesContextProviderWrapper
               categories={[state.filterByCategory]}
             >
-              <ActivitiesTable
-                options={{
-                  showCategories: true,
-                }}
-              />
-              <UpdateMappingModal
-                show={state.showUpdateMappingModal}
-                closeModal={() => dispatch({ type: 'closeUpdateMappingModal' })}
-                currentCategory={state.category}
-                currentDescription={state.description}
-                allCategories={allCategoriesContext}
-                submit={updateNewCategory}
-              />
+              <UpdateMappingContextProviderWrapper>
+                <ActivitiesTable
+                  options={{
+                    showCategories: true,
+                  }}
+                />
+              </UpdateMappingContextProviderWrapper>
               <RelatedActivitiesModal
                 show={state.showRelatedActivitiesModal}
                 closeModal={(shouldRefetch: boolean) => {
