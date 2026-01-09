@@ -1,17 +1,19 @@
 import { createContext, useEffect, useState } from "react";
 import { useAuth0TokenSilent } from "../hooks";
-import { getMappings } from "../api";
+import { getMappings, postMappings } from "../api";
 
 interface CategoriesContextValues {
   allCategories: string[];
   loading: boolean,
   refetch: () => void;
+  addMapping: (cat: string, desc: string) => Promise<boolean>
 }
 
 export const CategoriesContext = createContext<CategoriesContextValues>({
   allCategories: [],
   loading: false,
-  refetch: () => {}
+  refetch: () => {},
+  addMapping: async (cat, desc) => {return false}
 })
 
 export function CategoriesContextProviderWrapper({
@@ -46,7 +48,18 @@ export function CategoriesContextProviderWrapper({
   return <CategoriesContext.Provider value={{
     allCategories,
     loading,
-    refetch: () => fetchCategories(token)
+    refetch: () => fetchCategories(token),
+    addMapping: async (cat: string, desc: string) => {
+      const postResponse = await postMappings(token, {
+        description: desc,
+        category: cat,
+      })
+      if (!postResponse.ok) {
+        throw Error("error updating category mapping, api response not ok")
+      }
+      fetchCategories(token)
+      return true
+    }
   }} >
     {children}
   </CategoriesContext.Provider>

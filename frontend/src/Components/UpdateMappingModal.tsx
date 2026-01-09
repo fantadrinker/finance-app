@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import Button from 'react-bootstrap/Button'
@@ -6,14 +6,13 @@ import { ActivityRow, getActivitiesWithDescription } from '../api'
 import { useAuth0TokenSilent } from '../hooks'
 import { ActivitiesTable } from './ActivitiesTable'
 import { CategorySelect } from './CategorySelect'
+import { CategoriesContext } from '../Contexts/CategoriesContext'
 
 interface UpdateMappingModalProps {
   show: boolean
   closeModal: () => void
   currentCategory: string
   currentDescription: string
-  allCategories: string[]
-  submit: (newCategory: string, newDescription: string) => Promise<boolean>
 }
 
 const UpdateMappingModal = ({
@@ -21,11 +20,13 @@ const UpdateMappingModal = ({
   closeModal,
   currentCategory,
   currentDescription,
-  allCategories,
-  submit, // TODO: remove this, call api directly
 }: UpdateMappingModalProps) => {
   const auth = useAuth0TokenSilent()
+
   const [newCategory, setNewCategory] = useState<string>(currentCategory)
+
+  const { allCategories, addMapping } = useContext(CategoriesContext)
+
   const [selectedCategory, setSelectedCategory] = useState<string>(
     allCategories.length > 0 ? currentCategory : ''
   )
@@ -74,6 +75,19 @@ const UpdateMappingModal = ({
     }, 500)
 
   }, [show, auth, newDescription])
+
+  const submit = async (newDesc: string, newCat: string) => {
+    try {
+      addMapping(newCat, newDesc).then(() => {
+        closeModal()
+      })
+    } catch (err) {
+      console.log(err)
+      console.log(`Error updating category mapping${err.message}`)
+    }
+    return false
+  }
+
 
   return (
     <Modal size="lg" show={show} onHide={closeModal}>

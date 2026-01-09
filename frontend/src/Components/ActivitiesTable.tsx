@@ -5,6 +5,8 @@ import { ActivityRow } from '../api'
 import { Button, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
 import { ActivityTableRow } from './ActivitiesTableRow'
+import { ActivitiesContext } from '../Contexts/ActivitiesContext'
+import { UpdateMappingContext } from '../Contexts/UpdateMappingContext'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -19,18 +21,13 @@ export interface ActivityAction {
 }
 
 interface ActivitiesTableProps {
-  activities: ActivityRow[]
-  hasMore?: boolean
-  loading?: boolean
+  activities?: ActivityRow[]
   size?: 's' | 'm' | 'l'
-  onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
     showPredictions?: boolean
     actions?: ActivityAction[]
     addActivity?: boolean
-    onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
-    refetch?: () => void
   }
 }
 
@@ -45,23 +42,26 @@ const BASE_EDITING_ACTIVITY = {
 }
 
 export function ActivitiesTable({ 
-  activities, 
-  hasMore, 
+  activities: propActivities,
   options, 
-  loading, 
-  onScrollToEnd,
   size,
 }: ActivitiesTableProps) {
 
   const {selectedIds, updateSelectedActivities} = useContext(MultiSelectContext)
 
+  const { activities, loading, hasMore, fetchMore, deleteActivity , error} = useContext(ActivitiesContext)
+
+  const { openModal } = useContext(UpdateMappingContext)
+
   const [editingActivity, setEditingActivity] = useState<ActivityRow>(BASE_EDITING_ACTIVITY)
 
-  const [localActivities, setLocalActivities] = useState<ActivityRow[]>(activities)
+  const [localActivities, setLocalActivities] = useState<ActivityRow[]>(propActivities ?? activities ?? [])
 
   useEffect(() => {
-    setLocalActivities(activities)
-  }, [activities])
+    setLocalActivities(propActivities ?? activities)
+  }, [propActivities, activities])
+
+  const onScrollToEnd = useMemo(() => (hasMore ? fetchMore: () => { }), [hasMore, fetchMore])
 
   useEffect(() => {
     if (!onScrollToEnd) {
@@ -118,8 +118,10 @@ export function ActivitiesTable({
     setEditingActivity(BASE_EDITING_ACTIVITY)
   }
 
-  return (
-    <Table striped bordered hover width="100%" data-testid="activity-table">
+  return ( <>
+          {error && <span>{error}</span>}
+          {!loading && (!localActivities || localActivities.length === 0) && (<span>No data to display</span>)}
+          <Table striped bordered hover width="100%" data-testid="activity-table">
       <thead>
         <tr>
           {size !== 's' && (
@@ -214,10 +216,21 @@ export function ActivitiesTable({
         {localActivities.map(activity => (
           <ActivityTableRow activity={activity}
             key={activity.id}
-            onActivityCategoryChange={options?.onActivityCategoryChange}
-            actions={options?.actions ?? []}
+            actions={options?.actions ?? [
+              {
+                type: ActivityActionType.UPDATE,
+                text: 'Update Mapping',
+                onClick: (activity) => {
+                  openModal(activity.category, activity.desc)
+                }
+              },
+              {
+                type: ActivityActionType.DELETE,
+                text: 'Delete',
+                onClick: ({ id }) => deleteActivity(id)
+              },
+            ]}
             showCategories={options?.showCategories ?? false}
-            refetch={options?.refetch}
             showPredictions={options?.showPredictions}
           />
         ))}
@@ -237,5 +250,6 @@ export function ActivitiesTable({
         )}
       </tbody>
     </Table>
+    </>
   )
 }

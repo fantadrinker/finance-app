@@ -1,6 +1,7 @@
 import { useContext, useState } from "react"
 import { Badge, Dropdown, Form } from 'react-bootstrap'
 import { ActivityRow, patchActivity } from "../api"
+import { ActivitiesContext } from "../Contexts/ActivitiesContext"
 import { MultiSelectContext } from "../Contexts/MultiSelectContext"
 import { useAuth0TokenSilent } from "../hooks"
 import { ActivityAction } from "./ActivitiesTable"
@@ -10,16 +11,15 @@ interface ActivityTableRowProps {
   activity: ActivityRow
   size?: 's' | 'm' | 'l'
   showCategories?: boolean
-  onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
   actions?: ActivityAction[]
-  refetch?: () => void
   showPredictions?: boolean
 }
 
 export function ActivityTableRow(props: ActivityTableRowProps) {
-  const { activity, size, showCategories, showPredictions, onActivityCategoryChange, actions, refetch} = props
+  const { activity, size, showCategories, showPredictions, actions } = props
   const token = useAuth0TokenSilent()
   const {selectedIds, selectNewActivity, unselectNewActivity} = useContext(MultiSelectContext)
+  const { refresh } = useContext(ActivitiesContext)
   const [editingDescription, setEditingDescription] = useState<string | null>(null)
   return (
           <tr>
@@ -47,11 +47,7 @@ export function ActivityTableRow(props: ActivityTableRowProps) {
                 onBlur={() => {
                   if (token) {
                     patchActivity(token, activity.id, { desc: editingDescription} )
-                      .then(() => {
-                        if (refetch) {
-                          refetch()
-                        }
-                      })
+                      .then(refresh)
                   }
                   setEditingDescription(null)
                 }}
@@ -67,8 +63,9 @@ export function ActivityTableRow(props: ActivityTableRowProps) {
                   category={activity.category}
                   defaultLabel="Uncategorized"
                   onCategoryChange={(category) => {
-                    if (onActivityCategoryChange) {
-                      onActivityCategoryChange(activity, category)
+                    if (token) {
+                      patchActivity(token, activity.id, { category } )
+                      .then(refresh)
                     }
                   }}
                 />
