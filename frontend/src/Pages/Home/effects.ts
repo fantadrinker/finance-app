@@ -42,6 +42,7 @@ export const useFinanceDataFetcher = (
           setLoading(false)
         })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, fetchNextKey])
 
   useEffect(() => {
