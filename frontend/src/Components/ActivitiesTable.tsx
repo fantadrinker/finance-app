@@ -5,6 +5,7 @@ import { ActivityRow } from '../api'
 import { Button, Form, Spinner } from 'react-bootstrap'
 import { MultiSelectContext } from '../Contexts/MultiSelectContext'
 import { ActivityTableRow } from './ActivitiesTableRow'
+import { ActivitiesContext } from '../Contexts/ActivitiesContext'
 
 export enum ActivityActionType {
   DELETE = 'DELETE',
@@ -19,18 +20,12 @@ export interface ActivityAction {
 }
 
 interface ActivitiesTableProps {
-  activities: ActivityRow[]
-  hasMore?: boolean
-  loading?: boolean
   size?: 's' | 'm' | 'l'
-  onScrollToEnd?: () => void
   options?: {
     showCategories?: boolean
     showPredictions?: boolean
     actions?: ActivityAction[]
     addActivity?: boolean
-    onActivityCategoryChange?: (activity: ActivityRow, newCategory: string) => void
-    refetch?: () => void
   }
 }
 
@@ -45,23 +40,21 @@ const BASE_EDITING_ACTIVITY = {
 }
 
 export function ActivitiesTable({ 
-  activities, 
-  hasMore, 
   options, 
-  loading, 
-  onScrollToEnd,
   size,
 }: ActivitiesTableProps) {
 
   const {selectedIds, updateSelectedActivities} = useContext(MultiSelectContext)
 
+  const { activities, loading, hasMore, fetchMore, deleteActivity } = useContext(ActivitiesContext)
+
   const [editingActivity, setEditingActivity] = useState<ActivityRow>(BASE_EDITING_ACTIVITY)
 
   const [localActivities, setLocalActivities] = useState<ActivityRow[]>(activities)
 
-  useEffect(() => {
-    setLocalActivities(activities)
-  }, [activities])
+  useEffect(() => setLocalActivities(activities), [activities])
+
+  const onScrollToEnd = hasMore ? fetchMore : () => { }
 
   useEffect(() => {
     if (!onScrollToEnd) {
@@ -214,10 +207,28 @@ export function ActivitiesTable({
         {localActivities.map(activity => (
           <ActivityTableRow activity={activity}
             key={activity.id}
-            onActivityCategoryChange={options?.onActivityCategoryChange}
-            actions={options?.actions ?? []}
+            actions={options?.actions ?? [
+              {
+                type: ActivityActionType.UPDATE,
+                text: 'Update Mapping',
+                onClick: (activity) => {
+                  const action = {
+                    type: 'openUpdateMappingModal',
+                    payload: {
+                      description: activity.desc || '',
+                      category: activity.category
+                    }
+                  }
+                  // todo: perform action
+                }
+              },
+              {
+                type: ActivityActionType.DELETE,
+                text: 'Delete',
+                onClick: ({ id }) => deleteActivity(id)
+              },
+            ]}
             showCategories={options?.showCategories ?? false}
-            refetch={options?.refetch}
             showPredictions={options?.showPredictions}
           />
         ))}

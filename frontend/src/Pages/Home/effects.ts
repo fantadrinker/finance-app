@@ -69,6 +69,7 @@ export const useFinanceDataFetcher = (
           setLoading(false)
         })
     } else {
+      console.log("token not found")
       setNextKey(null)
     }
   }, [token, options.refetchOnChange, fetchNextKey, setError, options.limit, options.category, options.startDate, options.endDate])
