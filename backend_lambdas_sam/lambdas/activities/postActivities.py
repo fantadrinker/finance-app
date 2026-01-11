@@ -1,20 +1,24 @@
 
+from decimal import Decimal
 import os
 import json
+from typing import List, Tuple
 import uuid
 import hashlib
 import csv
 from datetime import datetime, date
 
+from boto3.dynamodb.conditions import Key
 import botocore
 
 from libs import (
+        Activity,
+        isDuplicate,
         serialize_rbc_activity,
         serialize_cap1_activity,
         serialize_td_activity,
         serialize_default_activity,
         getMappings,
-        applyMappings
 )
 
 
@@ -39,7 +43,7 @@ def uploadToS3(user: str, file_format: str, body, activities_table, s3):
     return s3_key, chksum
 
 
-def getItemsFromBody(body, file_format: str):
+def getItemsFromBody(body, file_format: str) -> Tuple[List[Activity], str, str]:
     all_activities = []
     if file_format:
         # parse the csv
@@ -61,7 +65,7 @@ def getItemsFromBody(body, file_format: str):
             firstRow = False
             continue
         # format and store them in dynamodb
-        item = {}
+        item = None
         if file_format == "cap1":
             item = serialize_cap1_activity(row)
         elif file_format == "rbc":
@@ -72,18 +76,40 @@ def getItemsFromBody(body, file_format: str):
             item = serialize_default_activity(row)
         if item:
             # first update first and last dates
-            if item['date'] < start_date:
-                start_date = item['date']
-            if item['date'] > end_date:
-                end_date = item['date']
-            item['description'] = item['category'] if not item['description'] else item['description']
-            item['search_term'] = item['description'].lower(
-            ) if item['description'] else 'Other'
+            if item.date < start_date:
+                start_date = item.date
+            if item.date > end_date:
+                end_date = item.date
             # iterate through mappings and override category if there is a match
             items.append(item)
         else:
             print("item not processed", row)
     return items, start_date, end_date
+
+
+# fetches items between start_date and end_date from the database to compare
+def getExistingItems(activities_table, user: str, start_date: str, end_date: str) -> List[Activity]:
+    query_params = {
+        "KeyConditionExpression": Key('user').eq(user) & Key('sk').between(start_date, end_date),
+        "ScanIndexForward": False
+    }
+    data = activities_table.query(
+        **query_params
+    )
+
+    return [Activity(
+            sk=item["sk"],
+            account=item["account"],
+            date=item["date"],
+            amount=Decimal(item["amount"]),
+            description=item["description"],
+            category=item["category"],
+        ) for item in data.get("Items", [])]
+
+
+# finds potential duplicates between existing items and current item
+def findDuplicates(curr_item: Activity, items: List[Activity]) -> List[str]:
+    return [item.sk for item in items if isDuplicate(item, curr_item)]
 
 
 def postActivities(user: str, file_format: str, body, activities_table, s3, preview: bool):
@@ -96,14 +122,19 @@ def postActivities(user: str, file_format: str, body, activities_table, s3, prev
 
         items, start_date, end_date = getItemsFromBody(body, file_format)
 
-        def compare_date(item):
+        # get the items from the same range that we already have
+        existing_items = getExistingItems(activities_table, user, start_date, end_date)
+
+        def compare_date(item: dict):
             return item.get("date", "")
 
         if preview:
             mappings = getMappings(user, activities_table)
+            for item in items:
+                item.applyMappings(mappings)
             allItems = sorted([{
-                **applyMappings(mappings, item),
-                "amount": str(item["amount"]),
+                **(item.toDict()),
+                "duplicate_to": findDuplicates(item, existing_items)
             } for item in items], key=compare_date, reverse=True)
             return {
                 "statusCode": 200,
@@ -124,9 +155,10 @@ def postActivities(user: str, file_format: str, body, activities_table, s3, prev
 
         with activities_table.batch_writer() as batch:
             for item in items:
+                print(f"debug - writing item as batch {item.toDict()}")
                 batch.put_item(
                     Item={
-                        **item,
+                        **(item.toDict()),
                         'user': user,
                         'chksum': chksum,
                     }

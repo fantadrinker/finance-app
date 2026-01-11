@@ -16,7 +16,7 @@ def cap1_file_raw():
 
 @pytest.fixture()
 def rbc_file_raw():
-    return '"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA",,69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n'
+    return '"Account Type","Account Number","Transaction Date","Cheque Number","Description 1","Description 2","CAD$","USD$"\nSavings,07702-5084629,7/5/2023,,"FIND&SAVE FROM PDA","test desc",69.00,,\nSavings,07702-5084629,7/6/2023,,"FIND&SAVE FROM PDA",,65.00,,\nSavings,07702-4526828,6/1/2023,,"DEPOSIT INTEREST",,,1.09,\nSavings,07702-4526828,7/4/2023,,"DEPOSIT INTEREST",,,1.09,\n'
 
 
 @pytest.fixture()
@@ -323,8 +323,8 @@ def test_post_activities_rbc(activities_table, s3, user_id, apigw_event_post_rbc
             user_id) & Key("sk").begins_with("chksum#")
     )
     assert len(activities_response["Items"]) == 2
-    assert activities_response["Items"][0]["description"] == "FIND&SAVE FROM PDA"
-    assert activities_response["Items"][0]["search_term"] == "find&save from pda"
+    assert activities_response["Items"][0]["description"] == "test desc"
+    assert activities_response["Items"][0]["search_term"] == "test desc"
     assert activities_response["Items"][0]["account"] == "4629-Savings"
     assert len(chksum_response["Items"]) == 1
     chksum_item = chksum_response["Items"][0]
