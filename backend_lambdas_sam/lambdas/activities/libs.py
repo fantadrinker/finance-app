@@ -1,11 +1,61 @@
+from typing import List, Optional
 import uuid
 from datetime import datetime
 from decimal import Decimal
 
 from boto3.dynamodb.conditions import Key, Attr
 
+class Activity:
 
-def serialize_rbc_activity(row):
+    sk: str
+    account: str
+    date: str
+    description: str
+    predicted: List[str]
+    dirty: bool
+    def __init__(self,
+                 account: str,
+                 date: str,
+                 amount: Decimal,
+                 description: str,
+                 sk: Optional[str] = None,
+                 category: Optional[str] = None
+                 ):
+        self.sk = date + str(uuid.uuid4()) if sk is None else sk
+        self.account = account
+        self.date = date
+        self.description = description
+        self.category = category if category is not None else description
+        self.amount = amount
+        self.search_term = description.lower() if description else 'other'
+        self.predicted = []
+        self.dirty = False
+        
+    def toDict(self):
+        # TODO: implement properly
+        return {
+                "sk": self.sk,
+                "account": self.account,
+                "date": self.date,
+                "description": self.description,
+                "amount": str(self.amount),
+                "search_term": self.search_term,
+                "category": self.category,
+                "predicted": self.predicted,
+                "dirty": self.dirty,
+                }
+
+    def applyMappings(self, mappings: list):
+        matchedMapping = [mapping for mapping in mappings if mapping["description"] in self.description]
+        self.dirty = len(matchedMapping) > 0
+        self.category = matchedMapping[0]["category"] if len(matchedMapping) > 0 else self.category
+        self.predicted = [mapping["category"] for mapping in matchedMapping]
+
+def isDuplicate(activity: Activity, another: Activity):
+    return activity.date == another.date and activity.amount == another.amount and activity.description == another.description 
+
+
+def serialize_rbc_activity(row) -> Optional[Activity]:
     if len(row) < 7:
         return None
 
@@ -16,14 +66,14 @@ def serialize_rbc_activity(row):
     date_str = datetime.strptime(
         row[2], "%m/%d/%Y").strftime("%Y-%m-%d")
     amount = 0 - Decimal(row[6])
-    return {
-        'sk': date_str + str(uuid.uuid4()),
-        'account': f"{mask_account_number(row[1])}-{row[0]}",
-        'date': date_str,
-        'description': row[5],
-        'category': row[4],  # in the future we should get this
-        'amount': amount  # rbc uses negative val for expense
-    }
+    activity = Activity(
+        account=f"{mask_account_number(row[1])}-{row[0]}",
+        date=date_str,
+        description=row[5],
+        category=row[4],  # in the future we should get this
+        amount=amount  # rbc uses negative val for expense
+    )
+    return activity
 
 
 def mask_account_number(account: str):
@@ -31,47 +81,43 @@ def mask_account_number(account: str):
     return account[-4:] if len(account) > 4 else account
 
 
-def serialize_cap1_activity(row):
+def serialize_cap1_activity(row) -> Optional[Activity]:
     if len(row) < 6:
         return None
 
     date_str = datetime.strptime(
         row[0], "%Y-%m-%d").strftime("%Y-%m-%d")
     amount = Decimal(row[5]) if row[5] else 0 - Decimal(row[6])
-    return {
-        'sk': date_str + str(uuid.uuid4()),
-        # concat uuid with date to make unique keys but also keep date ordering
-        'date': date_str,
-        'account': row[2],
-        'description': row[3],
-        'category': row[4],
-        'amount': amount
-    }
+    activity = Activity(
+        account=row[2],
+        date=date_str,
+        description=row[3],
+        category=row[4],  # in the future we should get this
+        amount=amount  # rbc uses negative val for expense
+    )
+    return activity
 
-def serialize_default_activity(row):
+def serialize_default_activity(row) -> Optional[Activity]:
     date_str = row['date']
-    return {
-            'sk': f'{date_str}{str(uuid.uuid4())}',
-            'date': date_str,
-            'account': row['account'],
-            'description': row['description'],
-            'category': row['category'],
-            'amount': Decimal(row['amount'])
-    }
+    return Activity(
+        date=date_str,
+        account=row['account'],
+        description=row['description'],
+        category=row['category'],  # in the future we should get this
+        amount=Decimal(row['amount'])  # rbc uses negative val for expense
+    )
 
-def serialize_td_activity(row):
+def serialize_td_activity(row) -> Optional[Activity]:
     date_str = datetime.strptime(
         row[0], "%m/%d/%Y").strftime("%Y-%m-%d")
     description = row[1]
     amount = Decimal(row[2]) if row[2] else 0 - Decimal(row[3])
-    return {
-        'sk': f'{date_str}{str(uuid.uuid4())}',
-        'date': date_str,
-        'account': 'td',
-        'description': description,
-        'category': description,
-        'amount': amount
-    }
+    return Activity(
+        date=date_str,
+        account='td',
+        description=description,
+        amount=amount  # rbc uses negative val for expense
+    )
 
 
 def getMappings(user: str, activities_table, categories=None):
